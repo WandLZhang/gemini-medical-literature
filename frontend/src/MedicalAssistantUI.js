@@ -1,22 +1,28 @@
 // src/MedicalAssistantUI.js
 import React, { useState } from 'react';
 import Header from './components/Header/Header';
-import Sidebar from './components/Sidebar';
 import ExpandableSidebar from './components/ExpandableSidebar';
 import ChatContainer from './components/Chat/ChatContainer';
 import ChatInput from './components/ChatInput';
 import { useAuth } from './hooks/useAuth';
 import useChat from './hooks/useChat';
-import useTemplates from './hooks/useTemplates';
 import { generateSampleCase, extractDisease, extractEvents } from './utils/api';
+
+const LoadingSpinner = () => (
+  <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+  </svg>
+);
 
 const MedicalAssistantUI = ({ user }) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isGeneratingSample, setIsGeneratingSample] = useState(false);
-  const [expandedSection, setExpandedSection] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [extractedDisease, setExtractedDisease] = useState('');
   const [extractedEvents, setExtractedEvents] = useState([]);
+  
+  const [isPromptExpanded, setIsPromptExpanded] = useState(true);
   const [promptContent, setPromptContent] = useState(`You are an expert pediatric oncologist and chair of the International Leukemia Tumor Board (iLTB). Your role is to analyze complex patient case notes, identify key actionable events that may guide treatment strategies, and formulate precise search queries for PubMed to retrieve relevant clinical research articles.
 
 **Input:** Patient case notes, as provided by a clinician. This will include information on diagnosis, treatment history, and relevant diagnostic findings including genetics and flow cytometry results.
@@ -33,8 +39,8 @@ const MedicalAssistantUI = ({ user }) => {
     *  **Disease location:** For example, "CNS2 involvement", "femoral extramedullary disease"
     *  **Response to therapy:** For example, "MRD reduction to 0.1%"
     *  **Treatment resistance:** For example, "relapsed after second HSCT"
-   *  Focus on information that is directly relevant to potential therapy selection or clinical management. Avoid vague or redundant information like "very good clinical condition". 
-   
+   *  Focus on information that is directly relevant to potential therapy selection or clinical management. Avoid vague or redundant information like "very good clinical condition".
+
 **Example:**
 
 *  **Case Note Input:** "A now almost 4-year-old female diagnosed with KMT2A-rearranged AML and CNS2 involvement exhibited refractory disease after NOPHO DBH AML 2012 protocol. Post- MEC and ADE, MRD remained at 35% and 53%. Vyxeos-clofarabine therapy reduced MRD to 18%. Third-line FLAG-Mylotarg lowered MRD to 3.5% (flow) and 1% (molecular). After a cord blood HSCT in December 2022, she relapsed 10 months later with 3% MRD and femoral extramedullary disease.
@@ -42,20 +48,10 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
 Diagnostic tests:                                                     
 WES and RNAseq were performed on the 1st relapse sample showing KMT2A::MLLT3 fusion and NRAS (p.Gln61Lys) mutation.
 Flow cytometry from the current relapse showed positive CD33 and CD123.
-WES and RNAseq of the current relapse sample is pending. "
+WES and RNAseq of the current relapse sample is pending."
 
 **Output:**  
-"KMT2A::MLLT3 fusion" "NRAS" "CD33" "CD123"
-
-**Reasoning and Guidance:**
-
-*  **Focus on Actionable Events:** We are not trying to summarize the case but to find what information is relevant to decision-making. This helps filter noise and focus on clinically significant findings.
-*  **Prioritization:** Starting with pediatric studies ensures that we tailor our searches to the specific patient population.
-*  **Specific Search Terms:** Using exact terms such as "KMT2A::MLLT3 fusion" is essential for precision. Adding "therapy", "treatment" or "clinical trials" helps to find relevant studies.
-*  **Combinations:** Combining genetic and immunophenotypic features allows for refined searches that might be more relevant to the patient.
-*  **Iteration:** If initial search results are not helpful, we can modify and refine the queries based on the available data.
-
-Extract actionable events from the provided patient information, such as gene fusions, mutations, and positive markers.  Only output the list of actionable events. Do not include any other text or formatting.`);
+"KMT2A::MLLT3 fusion" "NRAS" "CD33" "CD123"`);
 
   // Preloaded case notes
   const [caseNotes, setCaseNotes] = useState(`A now almost 4-year-old female diagnosed with KMT2A-rearranged AML and CNS2 involvement exhibited refractory disease after NOPHO DBH AML 2012 protocol. Post- MEC and ADE, MRD remained at 35% and 53%. Vyxeos-clofarabine therapy reduced MRD to 18%. Third-line FLAG-Mylotarg lowered MRD to 3.5% (flow) and 1% (molecular). After a cord blood HSCT in December 2022, she relapsed 10 months later with 3% MRD and femoral extramedullary disease.
@@ -71,23 +67,7 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
 						 							
   WES and RNAseq of the current relapse sample is pending.`);
 
-  const handleExpand = (section) => {
-    if (expandedSection === section) {
-      setExpandedSection(null);
-    } else {
-      setExpandedSection(section);
-    }
-  };
-
   const { handleLogin, handleLogout } = useAuth(setShowUserMenu);
-  const { 
-    templates, 
-    selectedTemplate, 
-    setSelectedTemplate, 
-    addTemplate, 
-    editTemplate,
-    deleteTemplate
-  } = useTemplates();
   
   const {
     chatHistory,
@@ -99,7 +79,7 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
     handleChatSelect,
     handleSendMessage,
     initializeNewChat
-  } = useChat(user, selectedTemplate);
+  } = useChat(user);
 
   const handleGenerateSampleCase = async () => {
     setIsGeneratingSample(true);
@@ -122,6 +102,7 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
         "\nLab Results:",
         labResults
       ].join('\n\n');
+
 
       const [disease, events] = await Promise.all([
         extractDisease(combinedNotes),
@@ -168,25 +149,17 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
           />
         </div>
 
-        <div className="w-[50%] pl-12 pt-10 z-0">
+        <div className="w-[40%] pl-12 pt-10 z-0">
           <div className="space-y-4">
               <div className="bg-white shadow rounded-lg p-4">
-                <div className="flex justify-between items-center mb-1">
-                  <h2 className="text-xs font-medium text-gray-700">First, input your case notes and lab results</h2>
-                  <button 
-                    onClick={() => handleExpand('notes')}
-                    className="text-xs text-blue-500 hover:text-blue-600"
-                  >
-                    {expandedSection === 'notes' ? 'Collapse' : 'Expand'}
-                  </button>
+                <div className="mb-1">
+                  <h2 className="text-xs font-medium text-gray-700">1 - Input your case notes and lab results</h2>
                 </div>
                 <div className="space-y-2">
                   <div>
                     <label className="flex justify-center text-[10px] font-light text-gray-700 mb-1">Case Notes</label>
                     <textarea
-                      className={`w-full p-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs ${
-                        expandedSection === 'notes' ? 'h-32' : 'h-16'
-                      }`}
+                      className="w-full p-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs h-16"
                       value={caseNotes}
                       onChange={(e) => setCaseNotes(e.target.value)}
                       placeholder="Enter case notes here..."
@@ -195,9 +168,7 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
                   <div>
                     <label className="flex justify-center text-[10px] font-light text-gray-700 mb-1">Lab Results</label>
                     <textarea
-                      className={`w-full p-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs ${
-                        expandedSection === 'notes' ? 'h-32' : 'h-16'
-                      }`}
+                      className="w-full p-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs h-16"
                       value={labResults}
                       onChange={(e) => setLabResults(e.target.value)}
                       placeholder="Enter lab results here..."
@@ -208,15 +179,15 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
 
             <div className="bg-white shadow rounded-lg p-4">
               <div className="flex justify-between items-center mb-2">
-                <h2 className="text-xs font-medium text-gray-700">Next, press Extract to get disease and actionable events</h2>
+                <h2 className="text-xs font-medium text-gray-700">2 - Press Extract to get disease and actionable events</h2>
                 <button 
                   onClick={handleExtract}
                   disabled={isProcessing}
-                  className={`text-xs px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                  className={`text-xs px-3 py-1 bg-gray-400 text-white rounded hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 w-[60px] flex items-center justify-center ${
                     isProcessing ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
-                  {isProcessing ? 'Extracting...' : 'Extract'}
+                  {isProcessing ? <LoadingSpinner /> : 'Extract'}
                 </button>
               </div>
               <div className="h-32 overflow-hidden">
@@ -225,7 +196,7 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
                     <label className="flex justify-center text-[10px] font-light text-gray-700 mb-1">Extracted disease</label>
                     <div className="relative">
                       <textarea
-                        className="w-full p-1.5 bg-gray-50 rounded text-xs h-[36px] resize-none overflow-y-auto"
+                        className="w-full p-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs h-[36px] resize-none overflow-y-auto"
                         value={extractedDisease}
                         onChange={(e) => setExtractedDisease(e.target.value)}
                       />
@@ -240,9 +211,9 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
                     <label className="flex justify-center text-[10px] font-light text-gray-700 mb-1">Extracted events</label>
                     <div className="relative">
                       <textarea
-                        className="w-full p-1.5 bg-gray-50 rounded text-xs h-[36px] resize-none overflow-y-auto"
+                        className="w-full p-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs h-[36px] resize-none overflow-y-auto"
                         value={extractedEvents.length > 0 ? extractedEvents.join(', ') : ''}
-                        onChange={(e) => setExtractedEvents(e.target.value.split(', '))}
+                        onChange={(e) => setExtractedEvents(e.target.value.split(',').map(event => event.trim()))}
                       />
                       {extractedEvents.length === 0 && (
                         <div className="absolute inset-0 p-1.5 pointer-events-none">
@@ -256,26 +227,35 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
             </div>
           </div>
         </div>
-        <main className="flex-1 flex flex-col min-h-0 relative pt-4 pl-4">
-          <div className="bg-white shadow rounded-lg p-4 mb-4">
-            <div className="flex justify-between items-center mb-2">
-              <h2 className="text-xs font-medium text-gray-700">Template Selection</h2>
+        <main className="flex-1 flex flex-col min-h-0 relative pl-12 pt-10">
+          <div className="bg-white shadow rounded-lg p-4">
+            <div className="mb-1 flex justify-between items-center">
+              <h2 className="text-xs font-medium text-gray-700">Prompt Content</h2>
               <button 
-                onClick={() => handleExpand('template')}
-                className="text-xs text-blue-500 hover:text-blue-600"
+                onClick={() => setIsPromptExpanded(!isPromptExpanded)}
+                className="text-gray-500 hover:text-gray-700 focus:outline-none"
               >
-                {expandedSection === 'template' ? 'Collapse' : 'Expand'}
+                {isPromptExpanded ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                )}
               </button>
             </div>
-            <Sidebar 
-              templates={templates}
-              selectedTemplate={selectedTemplate}
-              setSelectedTemplate={setSelectedTemplate}
-              addTemplate={addTemplate}
-              editTemplate={editTemplate}
-              deleteTemplate={deleteTemplate}
-              expanded={expandedSection === 'template'}
-            />
+            {isPromptExpanded && (
+              <div>
+                <textarea
+                className="w-full p-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs h-[11rem]"
+                value={promptContent}
+                onChange={(e) => setPromptContent(e.target.value)}
+                placeholder="Enter prompt content here..."
+                />
+              </div>
+            )}
           </div>
           <ChatContainer 
             chatHistory={chatHistory}

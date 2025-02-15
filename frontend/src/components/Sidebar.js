@@ -66,8 +66,13 @@ const Sidebar = ({
               <Plus size={10} />
             </button>
           </div>
-          <div className={`bg-gray-50 rounded p-2 mt-2 text-xs ${expanded ? 'h-64' : 'h-16'} overflow-hidden`}>
-            {selectedTemplate ? selectedTemplate.content : "Select a template to view its contents"}
+          <div className="space-y-2">
+            <div>
+              <label className="flex justify-center text-[10px] font-light text-gray-700 mb-1">Template Content</label>
+              <div className={`w-full p-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs ${expanded ? 'h-[80px]' : 'h-16'} overflow-y-auto`}>
+                {selectedTemplate ? selectedTemplate.content : "Select a template to view its contents"}
+              </div>
+            </div>
           </div>
       {/* Template Edit Modal */}
       {isModalOpen && (
