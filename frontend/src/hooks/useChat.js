@@ -5,12 +5,8 @@ import { fetchDocuments, fetchAnalysis } from '../utils/api';
 
 const createMessageId = (type) => `${Date.now()}-${type}-${Math.random().toString(36).substr(2, 9)}`;
 
-const WELCOME_MESSAGE = "Hello! Go ahead and search clinical research material of interest.";
-
 const useChat = (user, selectedTemplate) => {
-  const [chatHistory, setChatHistory] = useState([
-    { id: 'welcome', text: WELCOME_MESSAGE, isUser: false },
-  ]);
+  const [chatHistory, setChatHistory] = useState([]);
   const [isLoadingDocs, setIsLoadingDocs] = useState(false);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   const [activeChat, setActiveChat] = useState(null);
@@ -18,11 +14,7 @@ const useChat = (user, selectedTemplate) => {
 
   const initializeNewChat = useCallback(() => {
     setActiveChat(null);
-    setChatHistory([{
-      id: 'welcome',
-      text: WELCOME_MESSAGE,
-      isUser: false
-    }]);
+    setChatHistory([]);
   }, []);
 
   const handleChatSelect = useCallback(async (chat) => {
@@ -31,15 +23,6 @@ const useChat = (user, selectedTemplate) => {
       
       const messages = [];
       
-      // Add welcome message if not already present
-      if (!chat.messages?.find(msg => msg.content === WELCOME_MESSAGE)) {
-        messages.push({ 
-          id: `welcome-${chat.id}`, 
-          text: WELCOME_MESSAGE, 
-          isUser: false,
-          timestamp: chat.createdAt
-        });
-      }
       
       // Load all messages in chronological order
       chat.messages?.forEach(msg => {
@@ -114,13 +97,7 @@ const useChat = (user, selectedTemplate) => {
         if (user) {
           if (!currentChatId) {
             // Only create new chat when user sends first message
-            const initialMessages = [{
-              content: WELCOME_MESSAGE,
-              role: 'assistant',
-              timestamp: new Date(),
-              type: 'message',
-              messageId: `welcome-${Date.now()}`
-            }];
+            const initialMessages = [];
             currentChatId = await createNewChat(user.uid, initialMessages);
             setActiveChat({ id: currentChatId, messages: initialMessages });
           }

@@ -115,7 +115,14 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
   const handleExtract = async () => {
     try {
       setIsProcessing(true);
-      const combinedNotes = `${caseNotes}\n\n${labResults}`;
+      // Combine case notes and lab results with clear separation
+      const combinedNotes = [
+        "Case Notes:",
+        caseNotes,
+        "\nLab Results:",
+        labResults
+      ].join('\n\n');
+
       const [disease, events] = await Promise.all([
         extractDisease(combinedNotes),
         extractEvents(combinedNotes, promptContent)
@@ -150,20 +157,22 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
         />
       </div>
 
-      <div className="flex flex-1 min-h-0">
+      <div className="flex flex-1 min-h-0 relative">
         {/* Expandable Sidebar */}
-        <ExpandableSidebar
-          user={user}
-          onChatSelect={handleChatSelect}
-          activeChat={activeChat}
-          initializeNewChat={initializeNewChat}
-        />
+        <div className="absolute z-10">
+          <ExpandableSidebar
+            user={user}
+            onChatSelect={handleChatSelect}
+            activeChat={activeChat}
+            initializeNewChat={initializeNewChat}
+          />
+        </div>
 
-        <div className="w-[50%] pl-12 pt-10">
+        <div className="w-[50%] pl-12 pt-10 z-0">
           <div className="space-y-4">
               <div className="bg-white shadow rounded-lg p-4">
                 <div className="flex justify-between items-center mb-1">
-                  <h2 className="text-xs font-medium text-gray-700">1. Case Notes</h2>
+                  <h2 className="text-xs font-medium text-gray-700">First, input your case notes and lab results</h2>
                   <button 
                     onClick={() => handleExpand('notes')}
                     className="text-xs text-blue-500 hover:text-blue-600"
@@ -173,7 +182,7 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
                 </div>
                 <div className="space-y-2">
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Case Notes</label>
+                    <label className="flex justify-center text-[10px] font-light text-gray-700 mb-1">Case Notes</label>
                     <textarea
                       className={`w-full p-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs ${
                         expandedSection === 'notes' ? 'h-32' : 'h-16'
@@ -184,7 +193,7 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Lab Results</label>
+                    <label className="flex justify-center text-[10px] font-light text-gray-700 mb-1">Lab Results</label>
                     <textarea
                       className={`w-full p-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs ${
                         expandedSection === 'notes' ? 'h-32' : 'h-16'
@@ -199,7 +208,7 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
 
             <div className="bg-white shadow rounded-lg p-4">
               <div className="flex justify-between items-center mb-2">
-                <h2 className="text-xs font-medium text-gray-700">2. Extract Events and Disease</h2>
+                <h2 className="text-xs font-medium text-gray-700">Next, press Extract to get disease and actionable events</h2>
                 <button 
                   onClick={handleExtract}
                   disabled={isProcessing}
@@ -213,49 +222,61 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
               <div className="h-32 overflow-hidden">
                 <div className="flex flex-col h-full space-y-2">
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Extracted disease</label>
-                    <textarea
-                      className="w-full p-1.5 bg-gray-50 rounded text-xs h-[36px] resize-none overflow-y-auto"
-                      value={extractedDisease || 'Disease will appear here after extraction...'}
-                      onChange={(e) => setExtractedDisease(e.target.value)}
-                    />
+                    <label className="flex justify-center text-[10px] font-light text-gray-700 mb-1">Extracted disease</label>
+                    <div className="relative">
+                      <textarea
+                        className="w-full p-1.5 bg-gray-50 rounded text-xs h-[36px] resize-none overflow-y-auto"
+                        value={extractedDisease}
+                        onChange={(e) => setExtractedDisease(e.target.value)}
+                      />
+                      {!extractedDisease && (
+                        <div className="absolute inset-0 p-1.5 pointer-events-none">
+                          <span className="italic text-gray-400 text-[10px] font-light">Disease will appear here after extraction...</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Extracted events</label>
-                    <textarea
-                      className="w-full p-1.5 bg-gray-50 rounded text-xs h-[36px] resize-none overflow-y-auto"
-                      value={extractedEvents.length > 0 ? extractedEvents.join(', ') : 'Events will appear here after extraction...'}
-                      onChange={(e) => setExtractedEvents(e.target.value.split(', '))}
-                    />
+                    <label className="flex justify-center text-[10px] font-light text-gray-700 mb-1">Extracted events</label>
+                    <div className="relative">
+                      <textarea
+                        className="w-full p-1.5 bg-gray-50 rounded text-xs h-[36px] resize-none overflow-y-auto"
+                        value={extractedEvents.length > 0 ? extractedEvents.join(', ') : ''}
+                        onChange={(e) => setExtractedEvents(e.target.value.split(', '))}
+                      />
+                      {extractedEvents.length === 0 && (
+                        <div className="absolute inset-0 p-1.5 pointer-events-none">
+                          <span className="italic text-gray-400 text-[10px] font-light">Events will appear here after extraction...</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-
-            <div className="bg-white shadow rounded-lg p-4">
-              <div className="flex justify-between items-center mb-2">
-                <h2 className="text-xs font-medium text-gray-700">3. Template Selection</h2>
-                <button 
-                  onClick={() => handleExpand('template')}
-                  className="text-xs text-blue-500 hover:text-blue-600"
-                >
-                  {expandedSection === 'template' ? 'Collapse' : 'Expand'}
-                </button>
-              </div>
-              <Sidebar 
-                templates={templates}
-                selectedTemplate={selectedTemplate}
-                setSelectedTemplate={setSelectedTemplate}
-                addTemplate={addTemplate}
-                editTemplate={editTemplate}
-                deleteTemplate={deleteTemplate}
-                expanded={expandedSection === 'template'}
-              />
-            </div>
-
           </div>
         </div>
         <main className="flex-1 flex flex-col min-h-0 relative pt-4 pl-4">
+          <div className="bg-white shadow rounded-lg p-4 mb-4">
+            <div className="flex justify-between items-center mb-2">
+              <h2 className="text-xs font-medium text-gray-700">Template Selection</h2>
+              <button 
+                onClick={() => handleExpand('template')}
+                className="text-xs text-blue-500 hover:text-blue-600"
+              >
+                {expandedSection === 'template' ? 'Collapse' : 'Expand'}
+              </button>
+            </div>
+            <Sidebar 
+              templates={templates}
+              selectedTemplate={selectedTemplate}
+              setSelectedTemplate={setSelectedTemplate}
+              addTemplate={addTemplate}
+              editTemplate={editTemplate}
+              deleteTemplate={deleteTemplate}
+              expanded={expandedSection === 'template'}
+            />
+          </div>
           <ChatContainer 
             chatHistory={chatHistory}
             isGeneratingSample={isGeneratingSample}
