@@ -267,3 +267,39 @@ export const deleteTemplate = async (templateId) => {
     throw new Error(`Failed to delete template: ${error.message}`);
   }
 };
+
+/**
+ * Generates a final analysis based on case notes, disease, events, and analyzed articles
+ * @param {string} caseNotes - The patient's case notes
+ * @param {string} disease - The extracted disease
+ * @param {Array} events - The extracted actionable events
+ * @param {Array} analyzedArticles - The analyzed articles with their metadata
+ * @returns {Promise<Object>} - A promise that resolves to the final analysis object
+ */
+export const generateFinalAnalysis = async (caseNotes, disease, events, analyzedArticles) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/capricorn-final-analysis`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        case_notes: caseNotes,
+        disease,
+        events,
+        analyzed_articles: analyzedArticles
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.analysis;
+  } catch (error) {
+    console.error('Error generating final analysis:', error);
+    throw new Error(`Failed to generate final analysis: ${error.message}`);
+  }
+};

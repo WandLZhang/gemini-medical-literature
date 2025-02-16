@@ -6,7 +6,7 @@ import ChatContainer from './components/Chat/ChatContainer';
 import ChatInput from './components/ChatInput';
 import { useAuth } from './hooks/useAuth';
 import useChat from './hooks/useChat';
-import { generateSampleCase, extractDisease, extractEvents, retrieveAndAnalyzeArticles } from './utils/api';
+import { generateSampleCase, extractDisease, extractEvents, retrieveAndAnalyzeArticles, generateFinalAnalysis } from './utils/api';
 
 const LoadingSpinner = () => (
   <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -234,12 +234,74 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
         extractedDisease,
         extractedEvents,
         promptContent,
-        (data) => {
+        async (data) => {
           if (data.type === 'metadata') {
             if (data.data.status === 'processing') {
               setCurrentProgress(`Analyzing ${data.data.total_articles} articles...`);
             } else if (data.data.status === 'complete') {
-              setCurrentProgress(`Analysis complete. Found ${articles.length} relevant articles.`);
+              setCurrentProgress(`Article analysis complete. Generating final analysis...`);
+              // Wait a moment for the last article to be added to the state
+              setTimeout(async () => {
+                try {
+                  // Get the combined case notes
+                  const combinedNotes = [
+                    "Case Notes:",
+                    caseNotes,
+                    "\nLab Results:",
+                    labResults
+                  ].join('\n\n');
+
+                  const finalAnalysis = await generateFinalAnalysis(
+                    combinedNotes,
+                    extractedDisease,
+                    extractedEvents,
+                    articles
+                  );
+                
+                // Create a formatted message for the chat
+                const message = {
+                  type: 'analysis',
+                  content: `
+# Case Summary
+${finalAnalysis.case_summary}
+
+# Actionable Events Analysis
+${finalAnalysis.actionable_events.map(event => `
+## ${event.event}
+- Type: ${event.type}
+- Explanation: ${event.explanation}
+- Targetable: ${event.targetable ? 'Yes' : 'No'}
+- Prognostic Value: ${event.prognostic_value}
+`).join('\n')}
+
+# Treatment Recommendations
+${finalAnalysis.treatment_recommendations.map(rec => `
+## For ${rec.actionable_event}
+- Treatment: ${rec.treatment}
+- Evidence: [PMID: ${rec.evidence.pmid}](${rec.evidence.link})
+- Evidence Summary: ${rec.evidence.summary}
+${rec.previous_use.was_used ? `- Previous Response: ${rec.previous_use.response}` : ''}
+${rec.warnings.length > 0 ? `- Warnings:\n${rec.warnings.map(w => `  * ${w}`).join('\n')}` : ''}
+`).join('\n')}
+
+${finalAnalysis.multi_target_opportunities.length > 0 ? `
+# Multi-Target Opportunities
+${finalAnalysis.multi_target_opportunities.map(opp => `
+## ${opp.treatment}
+- Targets: ${opp.targeted_events.join(', ')}
+- Evidence: [PMID: ${opp.evidence.pmid}](${opp.evidence.link})
+- Summary: ${opp.evidence.summary}
+`).join('\n')}` : ''}
+`,
+                  timestamp: new Date().toISOString()
+                };
+                
+                handleSendMessage(message);
+                setCurrentProgress('Final analysis complete.');
+              } catch (error) {
+                console.error('Error generating final analysis:', error);
+                setCurrentProgress('Error generating final analysis. Please try again.');
+              }
             }
           }
           else if (data.type === 'pmids') {
@@ -437,8 +499,11 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
                   />
                 </div>
                 {currentProgress && (
-                  <div className="text-xs text-gray-600 mt-2">
-                    {currentProgress}
+                  <div className="text-xs mt-2 flex items-center gap-2">
+                    <span className={`${currentProgress.includes('final analysis') ? 'text-blue-600 font-medium' : 'text-gray-600'}`}>
+                      {currentProgress}
+                    </span>
+                    {currentProgress.includes('final analysis') && <LoadingSpinner />}
                   </div>
                 )}
 
