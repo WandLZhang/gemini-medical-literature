@@ -82,9 +82,15 @@ const useChat = (user, selectedTemplate) => {
   }, [initializeNewChat]);
 
   const handleSendMessage = useCallback(async (e) => {
-    e.preventDefault();
-    if (message.trim() && !isLoadingDocs && !isLoadingAnalysis) {
-      const userMessage = message;
+    // Handle both event objects and direct message objects
+    if (e && e.preventDefault) {
+      e.preventDefault();
+    }
+    
+    // If e is a message object, use it directly
+    const userMessage = typeof e === 'object' && e.content ? e.content : message;
+    
+    if ((typeof e === 'object' && e.content) || (message.trim() && !isLoadingDocs && !isLoadingAnalysis)) {
       setMessage('');
   
       const newUserMessage = { 

@@ -21,29 +21,41 @@ export const retrieveAndAnalyzeArticles = async (disease, events, methodologyCon
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
+    let buffer = '';
     let pmids = null;
 
     while (true) {
       const { value, done } = await reader.read();
       if (done) break;
 
-      const chunk = decoder.decode(value);
-      const lines = chunk.split('\n').filter(line => line.trim());
+      // Add new chunk to buffer
+      buffer += decoder.decode(value, { stream: true });
 
-      for (const line of lines) {
+      // Process complete lines
+      let lineEnd = buffer.indexOf('\n');
+      while (lineEnd !== -1) {
+        const line = buffer.slice(0, lineEnd).trim();
+        buffer = buffer.slice(lineEnd + 1);
+
+        if (!line) continue;
+
         try {
           const data = JSON.parse(line);
           
-          // Forward all data (pmids, metadata, article_analysis, etc.)
-          onProgress(data);
-          
-          // Store PMIDs for reference if needed
-          if (data.type === 'pmids') {
-            pmids = data.data.pmids;
+          // Validate and process the data
+          if (data && typeof data === 'object' && data.type) {
+            onProgress(data);
+            
+            if (data.type === 'pmids' && data.data && Array.isArray(data.data.pmids)) {
+              pmids = data.data.pmids;
+            }
           }
-        } catch (e) {
-          console.error('Error parsing JSON:', e);
+        } catch (parseError) {
+          console.error('Error parsing line:', line);
+          console.error('Parse error:', parseError);
         }
+
+        lineEnd = buffer.indexOf('\n');
       }
     }
   } catch (error) {

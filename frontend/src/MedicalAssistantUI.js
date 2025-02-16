@@ -444,45 +444,141 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
 
                 {/* Display Analyzed Articles */}
                 {articles.length > 0 && (
-                  <div className="mt-4">
-                    <h3 className="text-sm font-medium text-gray-700 mb-2">Analyzed Articles</h3>
-                    <div className="space-y-4">
-                      {articles.map((article) => (
-                        <div key={article.pmid} className="border rounded p-2">
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                              <h4 className="text-xs font-medium">{article.title}</h4>
-                              <p className="text-xs text-gray-500 mt-1">
-                                PMID: {article.pmid} | {article.journal_title} ({article.year}) | Type: {article.type}
-                              </p>
-                              <p className="text-xs text-gray-600 mt-1">Cancer: {article.cancer}</p>
-                              {article.events.length > 0 && (
-                                <div className="mt-1">
-                                  <p className="text-xs text-gray-600">Events:</p>
-                                  <div className="flex flex-wrap gap-1 mt-1">
-                                    {article.events.map((event, idx) => (
-                                      <span
-                                        key={idx}
-                                        className={`text-[10px] px-1.5 py-0.5 rounded ${
-                                          event.matches_query
-                                            ? 'bg-green-100 text-green-800'
-                                            : 'bg-gray-100 text-gray-800'
-                                        }`}
-                                      >
-                                        {event.event}
-                                      </span>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                            <div className="text-xs font-medium text-blue-500">
-                              {article.points} points
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                  <div className="mt-4 overflow-x-scroll" style={{ maxWidth: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                    <table className="min-w-max bg-white border border-gray-300" style={{ minWidth: '150%' }}>
+                      <thead>
+                        <tr>
+                          <th className="px-4 py-2 text-sm border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">PMID</th>
+                          <th className="px-4 py-2 text-sm border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">Title</th>
+                          <th className="px-4 py-2 text-sm border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">Year</th>
+                          <th className="px-4 py-2 text-sm border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">Type of Cancer</th>
+                          <th className="px-4 py-2 text-sm border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">Paper Type</th>
+                          <th className="px-4 py-2 text-sm border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">Actionable Events</th>
+                          <th className="px-4 py-2 text-sm border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">Drugs Tested</th>
+                          <th className="px-4 py-2 text-sm border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">Drug Results</th>
+                          <th className="px-4 py-2 text-sm border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">Full Article</th>
+                          <th className="px-4 py-2 text-sm border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">Points</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[...articles].sort((a, b) => b.points - a.points).map((article, index) => {
+                          const pointsBreakdown = Object.entries(article.point_breakdown || {})
+                            .map(([k,v]) => `${k.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}: ${v > 0 ? '+' : ''}${v}`)
+                            .join(' | ');
+
+                          return (
+                            <tr key={index}>
+                              <td className="px-4 py-2 text-sm border-t text-gray-500">
+                                <a href={`https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                                  {article.pmid}
+                                </a>
+                              </td>
+                              <td className="px-4 py-2 text-sm border-t text-gray-500">{article.title}</td>
+                              <td className="px-4 py-2 text-sm border-t text-gray-500">{article.year}</td>
+                              <td className="px-4 py-2 text-sm border-t text-gray-500">{article.cancer}</td>
+                              <td className="px-4 py-2 text-sm border-t text-gray-500">{article.type}</td>
+                              <td className="px-4 py-2 text-sm border-t text-gray-500">
+                                {article.events.map((event, i) => (
+                                  <React.Fragment key={i}>
+                                    {i > 0 && ', '}
+                                    <span className={event.matches_query ? 'font-bold text-green-600' : ''}>
+                                      {event.event}
+                                    </span>
+                                  </React.Fragment>
+                                ))}
+                              </td>
+                              <td className="px-4 py-2 text-sm border-t text-gray-500">{article.drugs_tested ? 'Yes' : 'No'}</td>
+                              <td className="px-4 py-2 text-sm border-t text-gray-500">{article.drug_results?.join(', ') || 'None'}</td>
+                              <td className="px-4 py-2 text-sm border-t text-gray-500">
+                                <button
+                                  onClick={() => {
+                                    const width = 800;
+                                    const height = 600;
+                                    const left = (window.screen.width - width) / 2;
+                                    const top = (window.screen.height - height) / 2;
+                                    const newWindow = window.open('', '_blank', 
+                                      `width=${width},height=${height},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no`
+                                    );
+                                    newWindow.document.write(`
+                                      <!DOCTYPE html>
+                                      <html>
+                                        <head>
+                                          <title>Full Article</title>
+                                          <script src="https://cdn.tailwindcss.com"></script>
+                                        </head>
+                                        <body>
+                                          <div class="min-h-screen bg-gray-50 py-8 px-4">
+                                            <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6">
+                                              <button onclick="window.close()" class="mb-4 text-blue-500 hover:text-blue-700">← Back to Table</button>
+                                              <div class="prose max-w-none">
+                                                <p class="whitespace-pre-wrap text-gray-700 text-lg leading-relaxed">${article.content}</p>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </body>
+                                      </html>
+                                    `);
+                                    newWindow.document.close();
+                                  }}
+                                  className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                                >
+                                  View Article
+                                </button>
+                              </td>
+                              <td className="px-4 py-2 text-sm border-t text-gray-500">
+                                <button
+                                  onClick={() => {
+                                    const width = 800;
+                                    const height = 600;
+                                    const left = (window.screen.width - width) / 2;
+                                    const top = (window.screen.height - height) / 2;
+                                    const newWindow = window.open('', '_blank', 
+                                      `width=${width},height=${height},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no`
+                                    );
+                                    newWindow.document.write(`
+                                      <!DOCTYPE html>
+                                      <html>
+                                        <head>
+                                          <title>Points Details</title>
+                                          <script src="https://cdn.tailwindcss.com"></script>
+                                        </head>
+                                        <body>
+                                          <div class="min-h-screen bg-gray-50 py-8 px-4">
+                                            <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6">
+                                              <button onclick="window.close()" class="mb-4 text-blue-500 hover:text-blue-700">← Back to Table</button>
+                                              <div class="space-y-4">
+                                                <h2 class="text-2xl font-bold text-gray-800">Points Details</h2>
+                                                <div class="text-4xl font-bold text-blue-600">${Math.round(article.points)} Points</div>
+                                                <div class="space-y-2">
+                                                  ${pointsBreakdown.split(' | ').map(item => {
+                                                    const [label, value] = item.split(': ');
+                                                    return `
+                                                      <div class="flex justify-between items-center py-2 border-b">
+                                                        <span class="text-gray-600">${label}</span>
+                                                        <span class="font-semibold ${value.startsWith('+') ? 'text-green-600' : 'text-red-600'}">${value}</span>
+                                                      </div>
+                                                    `;
+                                                  }).join('')}
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </body>
+                                      </html>
+                                    `);
+                                    newWindow.document.close();
+                                  }}
+                                  className="flex items-center gap-1 text-gray-500 hover:text-gray-700"
+                                >
+                                  <span className="font-bold">{Math.round(article.points)}</span>
+                                  <span className="text-blue-500">ℹ️</span>
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </>
