@@ -6,7 +6,7 @@ import ChatContainer from './components/Chat/ChatContainer';
 import ChatInput from './components/ChatInput';
 import { useAuth } from './hooks/useAuth';
 import useChat from './hooks/useChat';
-import { generateSampleCase, extractDisease, extractEvents } from './utils/api';
+import { generateSampleCase, extractDisease, extractEvents, retrieveAndAnalyzeArticles } from './utils/api';
 
 const LoadingSpinner = () => (
   <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -23,7 +23,10 @@ const MedicalAssistantUI = ({ user }) => {
   const [extractedEvents, setExtractedEvents] = useState([]);
   const [isBox2Hovered, setIsBox2Hovered] = useState(false);
   const [isBox3Hovered, setIsBox3Hovered] = useState(false);
-  
+  const [isRetrieving, setIsRetrieving] = useState(false);
+  const [articles, setArticles] = useState([]);
+  const [currentProgress, setCurrentProgress] = useState('');
+  const [pmids, setPmids] = useState([]);
   const [isPromptExpanded, setIsPromptExpanded] = useState(true);
   const [extractionPrompt] = useState(`You are an expert pediatric oncologist and chair of the International Leukemia Tumor Board (iLTB). Your role is to analyze complex patient case notes, identify key actionable events that may guide treatment strategies, and formulate precise search queries for PubMed to retrieve relevant clinical research articles.
 
@@ -200,7 +203,6 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
         labResults
       ].join('\n\n');
 
-
       const [disease, events] = await Promise.all([
         extractDisease(combinedNotes),
         extractEvents(combinedNotes, extractionPrompt)
@@ -219,6 +221,65 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
       }
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const handleRetrieve = async () => {
+    if (!extractedDisease || !extractedEvents.length) return;
+    setIsRetrieving(true);
+    setArticles([]);
+    setCurrentProgress('');
+    try {
+      await retrieveAndAnalyzeArticles(
+        extractedDisease,
+        extractedEvents,
+        promptContent,
+        (data) => {
+          if (data.type === 'metadata') {
+            if (data.data.status === 'processing') {
+              setCurrentProgress(`Analyzing ${data.data.total_articles} articles...`);
+            } else if (data.data.status === 'complete') {
+              setCurrentProgress(`Analysis complete. Found ${articles.length} relevant articles.`);
+            }
+          }
+          else if (data.type === 'pmids') {
+            setPmids(data.data.pmids);
+            // Create PubMed links and save them to chat
+            const pubmedLinks = data.data.pmids.map(pmid => `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`);
+            const linksMessage = {
+              type: 'document',
+              content: pubmedLinks.join('\n'),
+              timestamp: new Date().toISOString()
+            };
+            handleSendMessage(linksMessage);
+            setCurrentProgress('Retrieved PMIDs, creating links...');
+          }
+          else if (data.type === 'article_analysis') {
+            const analysis = data.data.analysis.article_metadata;
+            setArticles(current => [...current, {
+              pmid: analysis.PMID,
+              title: analysis.title,
+              points: analysis.overall_points,
+              content: data.data.analysis.full_article_text,
+              journal_title: analysis.journal_title,
+              journal_sjr: analysis.journal_sjr,
+              year: analysis.year,
+              cancer: analysis.type_of_cancer,
+              type: analysis.paper_type,
+              events: analysis.actionable_events,
+              drugs_tested: analysis.drugs_tested,
+              drug_results: analysis.drug_results,
+              point_breakdown: analysis.point_breakdown
+            }]);
+            setCurrentProgress(`Processing article ${data.data.progress.article_number}`);
+          }
+        }
+      );
+    } catch (error) {
+      console.error('Error:', error);
+      setCurrentProgress('Error retrieving articles. Please try again.');
+    } finally {
+      setIsRetrieving(false);
     }
   };
 
@@ -249,31 +310,31 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
 
         <div className="w-[40%] pl-12 pt-10 z-0">
           <div className="space-y-4">
-              <div className="bg-white shadow rounded-lg p-4">
-                <div className="mb-1">
-                  <h2 className="text-xs font-medium text-gray-700">1 - Input your case notes and lab results</h2>
+            <div className="bg-white shadow rounded-lg p-4">
+              <div className="mb-1">
+                <h2 className="text-xs font-medium text-gray-700">1 - Input your case notes and lab results</h2>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <label className="text-[10px] font-light text-gray-700 w-16">Case Notes</label>
+                  <textarea
+                    className="flex-1 p-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs h-16"
+                    value={caseNotes}
+                    onChange={(e) => setCaseNotes(e.target.value)}
+                    placeholder="Enter case notes here..."
+                  />
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <label className="text-[10px] font-light text-gray-700 w-16">Case Notes</label>
-                    <textarea
-                      className="flex-1 p-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs h-16"
-                      value={caseNotes}
-                      onChange={(e) => setCaseNotes(e.target.value)}
-                      placeholder="Enter case notes here..."
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="text-[10px] font-light text-gray-700 w-16">Lab Results</label>
-                    <textarea
-                      className="flex-1 p-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs h-16"
-                      value={labResults}
-                      onChange={(e) => setLabResults(e.target.value)}
-                      placeholder="Enter lab results here..."
-                    />
-                  </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-[10px] font-light text-gray-700 w-16">Lab Results</label>
+                  <textarea
+                    className="flex-1 p-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs h-16"
+                    value={labResults}
+                    onChange={(e) => setLabResults(e.target.value)}
+                    placeholder="Enter lab results here..."
+                  />
                 </div>
               </div>
+            </div>
 
             <div 
               className={`bg-white shadow rounded-lg p-4 ${!extractedDisease && !isBox2Hovered ? 'opacity-25' : ''}`}
@@ -329,38 +390,102 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
             </div>
           </div>
         </div>
+
         <main className="flex-1 flex flex-col min-h-0 relative pl-12 pt-10">
           <div 
-            className={`bg-white shadow rounded-lg p-4 ${(!extractedDisease || !extractedEvents.length || !isBox2Hovered) ? 'opacity-25' : ''}`}
-            onMouseEnter={() => extractedDisease && extractedEvents.length && isBox2Hovered && setIsBox3Hovered(true)}
+            className={`bg-white shadow rounded-lg p-4 ${(!extractedDisease || !extractedEvents.length) ? 'opacity-25' : ''}`}
+            onMouseEnter={() => extractedDisease && extractedEvents.length && setIsBox3Hovered(true)}
             onMouseLeave={() => setIsBox3Hovered(false)}
           >
             <div className="mb-1 flex justify-between items-center">
               <h2 className="text-xs font-medium text-gray-700">3 - Press Retrieve to analyze relevant papers</h2>
-              <button 
-                onClick={() => setIsPromptExpanded(!isPromptExpanded)}
-                className="text-gray-500 hover:text-gray-700 focus:outline-none"
-              >
-                {isPromptExpanded ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                  </svg>
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                )}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleRetrieve}
+                  disabled={isRetrieving || !extractedDisease || !extractedEvents.length}
+                  className={`text-xs px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                    (isRetrieving || !extractedDisease || !extractedEvents.length) ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                >
+                  {isRetrieving ? <LoadingSpinner /> : 'Retrieve'}
+                </button>
+                <button 
+                  onClick={() => setIsPromptExpanded(!isPromptExpanded)}
+                  className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                >
+                  {isPromptExpanded ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
             {isPromptExpanded && (
-              <div>
-                <textarea
-                className="w-full p-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs h-[11rem]"
-                value={promptContent}
-                onChange={(e) => setPromptContent(e.target.value)}
-                placeholder="Enter prompt content here..."
-                />
-              </div>
+              <>
+                <div className="flex items-start gap-2 mb-2">
+                  <label className="text-[10px] font-light text-gray-700 w-20 pt-1.5">Analysis instructions</label>
+                  <textarea
+                    className="flex-1 p-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs h-[11rem]"
+                    value={promptContent}
+                    onChange={(e) => setPromptContent(e.target.value)}
+                    placeholder="Enter prompt content here..."
+                  />
+                </div>
+                {currentProgress && (
+                  <div className="text-xs text-gray-600 mt-2">
+                    {currentProgress}
+                  </div>
+                )}
+
+                {/* Display Analyzed Articles */}
+                {articles.length > 0 && (
+                  <div className="mt-4">
+                    <h3 className="text-sm font-medium text-gray-700 mb-2">Analyzed Articles</h3>
+                    <div className="space-y-4">
+                      {articles.map((article) => (
+                        <div key={article.pmid} className="border rounded p-2">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <h4 className="text-xs font-medium">{article.title}</h4>
+                              <p className="text-xs text-gray-500 mt-1">
+                                PMID: {article.pmid} | {article.journal_title} ({article.year}) | Type: {article.type}
+                              </p>
+                              <p className="text-xs text-gray-600 mt-1">Cancer: {article.cancer}</p>
+                              {article.events.length > 0 && (
+                                <div className="mt-1">
+                                  <p className="text-xs text-gray-600">Events:</p>
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {article.events.map((event, idx) => (
+                                      <span
+                                        key={idx}
+                                        className={`text-[10px] px-1.5 py-0.5 rounded ${
+                                          event.matches_query
+                                            ? 'bg-green-100 text-green-800'
+                                            : 'bg-gray-100 text-gray-800'
+                                        }`}
+                                      >
+                                        {event.event}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-xs font-medium text-blue-500">
+                              {article.points} points
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
           <ChatContainer 

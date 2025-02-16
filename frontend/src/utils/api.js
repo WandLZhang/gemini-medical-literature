@@ -1,5 +1,57 @@
 // src/utils/api.js
 
+export const retrieveAndAnalyzeArticles = async (disease, events, methodologyContent, onProgress) => {
+  try {
+    // Step 1: Get PMIDs and analysis from first cloud function
+    const response = await fetch(`${API_BASE_URL}/capricorn-retrieve-full-articles`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        events_text: events.join('\n'),
+        methodology_content: methodologyContent,
+        disease: disease
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let pmids = null;
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value);
+      const lines = chunk.split('\n').filter(line => line.trim());
+
+      for (const line of lines) {
+        try {
+          const data = JSON.parse(line);
+          
+          // Forward all data (pmids, metadata, article_analysis, etc.)
+          onProgress(data);
+          
+          // Store PMIDs for reference if needed
+          if (data.type === 'pmids') {
+            pmids = data.data.pmids;
+          }
+        } catch (e) {
+          console.error('Error parsing JSON:', e);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    throw error;
+  }
+};
+
 const API_BASE_URL = 'https://us-central1-gemini-med-lit-review.cloudfunctions.net';
 const GENERATE_CASE_URL = process.env.REACT_APP_GENERATE_CASE_URL;
 

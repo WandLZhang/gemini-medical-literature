@@ -23,7 +23,6 @@ const useChat = (user, selectedTemplate) => {
       
       const messages = [];
       
-      
       // Load all messages in chronological order
       chat.messages?.forEach(msg => {
         switch (msg.type) {
@@ -37,11 +36,16 @@ const useChat = (user, selectedTemplate) => {
             break;
             
           case 'documents':
+            const docs = JSON.parse(msg.content);
             messages.push({
               id: msg.messageId,
-              text: "I've retrieved some relevant documents. Analyzing them now...",
+              text: "I've retrieved relevant articles. Here are the abstracts and analysis:",
               isUser: false,
-              documents: JSON.parse(msg.content),
+              documents: {
+                abstracts: docs.abstracts || [],
+                articles: docs.articles || [],
+                pmids: docs.pmids || []
+              },
               timestamp: msg.timestamp
             });
             break;
@@ -49,7 +53,7 @@ const useChat = (user, selectedTemplate) => {
           case 'analysis':
             messages.push({
               id: msg.messageId,
-              text: "I've completed the analysis. You can view the results below.",
+              text: "Here's my analysis of the retrieved articles:",
               isUser: false,
               analysis: msg.content,
               timestamp: msg.timestamp
@@ -96,7 +100,6 @@ const useChat = (user, selectedTemplate) => {
           
         if (user) {
           if (!currentChatId) {
-            // Only create new chat when user sends first message
             const initialMessages = [];
             currentChatId = await createNewChat(user.uid, initialMessages);
             setActiveChat({ id: currentChatId, messages: initialMessages });
@@ -123,17 +126,22 @@ const useChat = (user, selectedTemplate) => {
           const docs = await fetchDocuments(userMessage);
           setIsLoadingDocs(false);
           
+          // Save both abstracts and analyzed articles as documents
           const docsMessage = { 
             id: createMessageId('assistant-docs'), 
-            text: "I've retrieved some relevant documents. Analyzing them now...", 
+            text: "I've retrieved relevant articles. Here are the abstracts and analysis:", 
             isUser: false,
-            documents: docs,
+            documents: {
+              abstracts: docs.abstracts || [],
+              articles: docs.articles || [],
+              pmids: docs.pmids || []
+            },
             timestamp: new Date()
           };
 
           if (user) {
             messagesForFirestore.push({
-              content: JSON.stringify(docs),
+              content: JSON.stringify(docsMessage.documents),
               role: 'assistant',
               timestamp: new Date(),
               type: 'documents',
@@ -153,7 +161,7 @@ const useChat = (user, selectedTemplate) => {
             
             const analysisMessage = { 
               id: createMessageId('analysis'), 
-              text: "I've completed the analysis. You can view the results below.", 
+              text: "Here's my analysis of the retrieved articles:", 
               isUser: false,
               analysis: analysisResult,
               timestamp: new Date()
@@ -208,7 +216,7 @@ const useChat = (user, selectedTemplate) => {
             text: "I'm sorry, there was an error retrieving documents. Please try again.",
             isUser: false,
             timestamp: new Date(),
-            error: error.message // Add the error message here
+            error: error.message
           };
           
           if (user) {
