@@ -112,62 +112,6 @@ export const extractEvents = async (text, promptContent) => {
 };
 
 /**
- * Fetches documents based on the given query and template
- * @param {string} query - The search query
- * @param {string} template - The template content
- * @returns {Promise<Array>} - A promise that resolves to an array of document objects
- */
-export const fetchDocuments = async (query, template) => {
-  try {
-    const response = await fetch(`${API_BASE_URL}?query=${encodeURIComponent(query)}&type=documents`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ query, template }),
-      credentials: 'include',
-    });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(JSON.stringify(errorData) || `HTTP error! status: ${response.status}`);
-    }
-    const data = await response.json();
-    return data.documents;
-  } catch (error) {
-    console.error('Error fetching documents:', error);
-    throw error; // Throw the original error object
-  }
-};
-
-/**
- * Fetches analysis based on the given query and template
- * @param {string} query - The search query
- * @param {string} template - The template content
- * @returns {Promise<string>} - A promise that resolves to the analysis result
- */
-export const fetchAnalysis = async (query, template) => {
-  try {
-    const response = await fetch(`${API_BASE_URL}?query=${encodeURIComponent(query)}&type=analysis`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ query, template }),
-      credentials: 'include',
-    });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-    }
-    const data = await response.json();
-    return data.analysis;
-  } catch (error) {
-    console.error('Error fetching analysis:', error);
-    throw new Error(`Failed to fetch analysis: ${error.message}`);
-  }
-};
-
-/**
  * Generates a sample medical case
  * @returns {Promise<string>} - A promise that resolves to a generated sample medical case
  */
@@ -278,6 +222,13 @@ export const deleteTemplate = async (templateId) => {
  */
 export const generateFinalAnalysis = async (caseNotes, disease, events, analyzedArticles) => {
   try {
+    console.log('Sending final analysis request with:', {
+      case_notes: caseNotes,
+      disease,
+      events,
+      analyzed_articles: analyzedArticles
+    });
+
     const response = await fetch(`${API_BASE_URL}/capricorn-final-analysis`, {
       method: 'POST',
       headers: {
@@ -293,6 +244,7 @@ export const generateFinalAnalysis = async (caseNotes, disease, events, analyzed
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      console.error('Final analysis error response:', errorData);
       throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
     }
 

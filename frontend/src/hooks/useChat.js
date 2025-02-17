@@ -1,7 +1,7 @@
 // src/hooks/useChat.js
 import { useState, useCallback } from 'react';
 import { createNewChat, addMessageToChat } from '../firebase';
-import { fetchDocuments, fetchAnalysis } from '../utils/api';
+import { retrieveAndAnalyzeArticles } from '../utils/api';
 
 const createMessageId = (type) => `${Date.now()}-${type}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -129,97 +129,67 @@ const useChat = (user, selectedTemplate) => {
 
         setIsLoadingDocs(true);
         try {
-          const docs = await fetchDocuments(userMessage);
+          await retrieveAndAnalyzeArticles(
+            userMessage,
+            [],  // events array
+            selectedTemplate?.content || "",
+            (data) => {
+              if (data.type === 'pmids') {
+                const docsMessage = {
+                  id: createMessageId('assistant-docs'),
+                  text: "I've found relevant articles and am analyzing them...",
+                  isUser: false,
+                  documents: {
+                    pmids: data.data.pmids || []
+                  },
+                  timestamp: new Date()
+                };
+
+                if (user) {
+                  messagesForFirestore.push({
+                    content: JSON.stringify(docsMessage.documents),
+                    role: 'assistant',
+                    timestamp: new Date(),
+                    type: 'documents',
+                    messageId: docsMessage.id
+                  });
+                }
+
+                setChatHistory(prev => [...prev, docsMessage]);
+              } else if (data.type === 'analysis') {
+                const analysisMessage = {
+                  id: createMessageId('analysis'),
+                  text: "Here's my analysis of the retrieved articles:",
+                  isUser: false,
+                  analysis: data.data.analysis,
+                  timestamp: new Date()
+                };
+
+                if (user) {
+                  messagesForFirestore.push({
+                    content: data.data.analysis,
+                    role: 'assistant',
+                    timestamp: new Date(),
+                    type: 'analysis',
+                    messageId: analysisMessage.id
+                  });
+                }
+
+                setChatHistory(prev => [...prev, analysisMessage]);
+              }
+
+              if (user) {
+                addMessageToChat(user.uid, currentChatId, messagesForFirestore).catch(console.error);
+              }
+            }
+          );
           setIsLoadingDocs(false);
-          
-          // Save both abstracts and analyzed articles as documents
-          const docsMessage = { 
-            id: createMessageId('assistant-docs'), 
-            text: "I've retrieved relevant articles. Here are the abstracts and analysis:", 
-            isUser: false,
-            documents: {
-              abstracts: docs.abstracts || [],
-              articles: docs.articles || [],
-              pmids: docs.pmids || []
-            },
-            timestamp: new Date()
-          };
-
-          if (user) {
-            messagesForFirestore.push({
-              content: JSON.stringify(docsMessage.documents),
-              role: 'assistant',
-              timestamp: new Date(),
-              type: 'documents',
-              messageId: docsMessage.id
-            });
-          }
-
-          setChatHistory(prev => [...prev, docsMessage]);
-          
-          if (user) {
-            await addMessageToChat(user.uid, currentChatId, messagesForFirestore);
-          }
-
-          setIsLoadingAnalysis(true);
-          try {
-            const analysisResult = await fetchAnalysis(userMessage, selectedTemplate?.content);
-            
-            const analysisMessage = { 
-              id: createMessageId('analysis'), 
-              text: "Here's my analysis of the retrieved articles:", 
-              isUser: false,
-              analysis: analysisResult,
-              timestamp: new Date()
-            };
-            
-            if (user) {
-              messagesForFirestore.push({
-                content: analysisResult,
-                role: 'assistant',
-                timestamp: new Date(),
-                type: 'analysis',
-                messageId: analysisMessage.id
-              });
-            }
-            
-            setChatHistory(prev => [...prev, analysisMessage]);
-            
-            if (user) {
-              await addMessageToChat(user.uid, currentChatId, messagesForFirestore);
-            }
-            
-          } catch (error) {
-            console.error('Error fetching analysis:', error);
-            const errorMessage = {
-              id: createMessageId('error'),
-              text: "I'm sorry, there was an error generating the analysis. Please try again.",
-              isUser: false,
-              timestamp: new Date()
-            };
-            
-            if (user) {
-              messagesForFirestore.push({
-                content: errorMessage.text,
-                role: 'assistant',
-                timestamp: new Date(),
-                type: 'error',
-                messageId: errorMessage.id
-              });
-            }
-            
-            setChatHistory(prev => [...prev, errorMessage]);
-            
-            if (user) {
-              await addMessageToChat(user.uid, currentChatId, messagesForFirestore);
-            }
-          }
           setIsLoadingAnalysis(false);
         } catch (error) {
-          console.error('Error fetching documents:', error);
+          console.error('Error processing request:', error);
           const errorMessage = {
             id: createMessageId('error'),
-            text: "I'm sorry, there was an error retrieving documents. Please try again.",
+            text: "I'm sorry, there was an error processing your request. Please try again.",
             isUser: false,
             timestamp: new Date(),
             error: error.message
@@ -236,6 +206,7 @@ const useChat = (user, selectedTemplate) => {
           }
           
           setIsLoadingDocs(false);
+          setIsLoadingAnalysis(false);
           setChatHistory(prev => [...prev, errorMessage]);
           
           if (user) {

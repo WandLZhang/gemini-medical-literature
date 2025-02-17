@@ -27,6 +27,7 @@ const MedicalAssistantUI = ({ user }) => {
   const [articles, setArticles] = useState([]);
   const [currentProgress, setCurrentProgress] = useState('');
   const [pmids, setPmids] = useState([]);
+  const [totalArticles, setTotalArticles] = useState(0);
   const [isPromptExpanded, setIsPromptExpanded] = useState(true);
   const [extractionPrompt] = useState(`You are an expert pediatric oncologist and chair of the International Leukemia Tumor Board (iLTB). Your role is to analyze complex patient case notes, identify key actionable events that may guide treatment strategies, and formulate precise search queries for PubMed to retrieve relevant clinical research articles.
 
@@ -229,7 +230,16 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
     setIsRetrieving(true);
     setArticles([]);
     setCurrentProgress('');
+    setTotalArticles(0);
     try {
+      // Combine case notes and lab results
+      const combinedNotes = [
+        "Case Notes:",
+        caseNotes,
+        "\nLab Results:",
+        labResults
+      ].join('\n\n');
+
       await retrieveAndAnalyzeArticles(
         extractedDisease,
         extractedEvents,
@@ -237,31 +247,24 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
         async (data) => {
           if (data.type === 'metadata') {
             if (data.data.status === 'processing') {
+              setTotalArticles(data.data.total_articles);
               setCurrentProgress(`Analyzing ${data.data.total_articles} articles...`);
             } else if (data.data.status === 'complete') {
               setCurrentProgress(`Article analysis complete. Generating final analysis...`);
               // Wait a moment for the last article to be added to the state
               setTimeout(async () => {
                 try {
-                  // Get the combined case notes
-                  const combinedNotes = [
-                    "Case Notes:",
-                    caseNotes,
-                    "\nLab Results:",
-                    labResults
-                  ].join('\n\n');
-
                   const finalAnalysis = await generateFinalAnalysis(
-                    combinedNotes,
+                    combinedNotes, // Use the already combined notes from above
                     extractedDisease,
                     extractedEvents,
                     articles
                   );
                 
-                // Create a formatted message for the chat
-                const message = {
-                  type: 'analysis',
-                  content: `
+                  // Create a formatted message for the chat
+                  const message = {
+                    type: 'analysis',
+                    content: `
 # Case Summary
 ${finalAnalysis.case_summary}
 
@@ -293,27 +296,20 @@ ${finalAnalysis.multi_target_opportunities.map(opp => `
 - Summary: ${opp.evidence.summary}
 `).join('\n')}` : ''}
 `,
-                  timestamp: new Date().toISOString()
-                };
-                
-                handleSendMessage(message);
-                setCurrentProgress('Final analysis complete.');
-              } catch (error) {
-                console.error('Error generating final analysis:', error);
-                setCurrentProgress('Error generating final analysis. Please try again.');
-              }
+                    timestamp: new Date().toISOString()
+                  };
+                  
+                  handleSendMessage(message);
+                  setCurrentProgress('Final analysis complete.');
+                } catch (error) {
+                  console.error('Error generating final analysis:', error);
+                  setCurrentProgress('Error generating final analysis. Please try again.');
+                }
+              }, 1000);
             }
           }
           else if (data.type === 'pmids') {
             setPmids(data.data.pmids);
-            // Create PubMed links and save them to chat
-            const pubmedLinks = data.data.pmids.map(pmid => `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`);
-            const linksMessage = {
-              type: 'document',
-              content: pubmedLinks.join('\n'),
-              timestamp: new Date().toISOString()
-            };
-            handleSendMessage(linksMessage);
             setCurrentProgress('Retrieved PMIDs, creating links...');
           }
           else if (data.type === 'article_analysis') {
@@ -333,7 +329,20 @@ ${finalAnalysis.multi_target_opportunities.map(opp => `
               drug_results: analysis.drug_results,
               point_breakdown: analysis.point_breakdown
             }]);
-            setCurrentProgress(`Processing article ${data.data.progress.article_number}`);
+              const articleNumber = data.data.progress?.article_number || 0;
+              const totalArticles = data.data.progress?.total_articles || 0;
+              console.log('Progress:', { articleNumber, totalArticles, data });
+              if (articleNumber > 0 && totalArticles > 0) {
+                const progress = (articleNumber / totalArticles) * 100;
+                setCurrentProgress(`Processed article ${articleNumber} out of ${totalArticles}`);
+                
+                // Update progress bar
+                const progressBar = document.getElementById('article-progress-bar');
+                if (progressBar) {
+                  progressBar.style.width = `${progress}%`;
+                }
+              }
+              
           }
         }
       );
@@ -498,14 +507,25 @@ ${finalAnalysis.multi_target_opportunities.map(opp => `
                     placeholder="Enter prompt content here..."
                   />
                 </div>
-                {currentProgress && (
-                  <div className="text-xs mt-2 flex items-center gap-2">
-                    <span className={`${currentProgress.includes('final analysis') ? 'text-blue-600 font-medium' : 'text-gray-600'}`}>
-                      {currentProgress}
-                    </span>
-                    {currentProgress.includes('final analysis') && <LoadingSpinner />}
-                  </div>
-                )}
+                    {currentProgress && (
+                      <div className="mt-2">
+                        <div className="text-xs flex items-center gap-2 mb-1">
+                          <span className={`${currentProgress.includes('final analysis') ? 'text-blue-600 font-medium' : 'text-gray-600'}`}>
+                            {currentProgress}
+                          </span>
+                          {currentProgress.includes('final analysis') && <LoadingSpinner />}
+                        </div>
+                        {currentProgress.includes('Processing article') && (
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div
+                              id="article-progress-bar"
+                              className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                              style={{ width: '0%' }}
+                            ></div>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                 {/* Display Analyzed Articles */}
                 {articles.length > 0 && (

@@ -3,6 +3,7 @@ from flask import jsonify, request
 import vertexai
 from google import genai
 from google.genai import types
+from google.cloud import bigquery
 import json
 import logging
 from datetime import datetime
@@ -11,20 +12,68 @@ from datetime import datetime
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Initialize Vertex AI
+# Initialize clients
 vertexai.init(project="gemini-med-lit-review")
-client = genai.Client(
+genai_client = genai.Client(
     vertexai=True,
     project="gemini-med-lit-review",
     location="us-central1",
 )
+bq_client = bigquery.Client(project="playground-439016")
 
-def create_final_analysis_prompt(case_notes, disease, events, analyzed_articles):
+def get_full_articles(analyzed_articles):
+    """Retrieve full article content from BigQuery using PMIDs."""
+    # Extract PMIDs from analyzed articles
+    pmids = [article.get('pmid') for article in analyzed_articles if article.get('pmid')]
+    pmids_str = ', '.join([f"'{pmid}'" for pmid in pmids])
+    
+    # Query to get full articles by joining pmid_embed_nonzero with pmid_metadata
+    query = f"""
+    SELECT 
+        metadata.PMID,
+        base.name as PMCID,  -- This is the PMCID
+        base.content
+    FROM `playground-439016.pmid_uscentral.pmid_embed_nonzero` base
+    JOIN `playground-439016.pmid_uscentral.pmid_metadata` metadata
+    ON base.name = metadata.AccessionID  -- Join on PMCID (AccessionID is PMCID)
+    WHERE metadata.PMID IN ({pmids_str})
+    """
+    
+    try:
+        query_job = bq_client.query(query)
+        results = list(query_job.result())
+        
+        if not results:
+            logger.error(f"No articles found for PMIDs: {pmids}")
+            return []
+            
+        # Create mapping of PMID to content
+        content_map = {row['PMID']: row['content'] for row in results}
+        
+        # Update analyzed articles with full content
+        articles_with_content = []
+        for article in analyzed_articles:
+            pmid = article.get('pmid')
+            if pmid in content_map:
+                # Preserve all metadata and add full content
+                article_with_content = article.copy()
+                article_with_content['content'] = content_map[pmid]
+                articles_with_content.append(article_with_content)
+            else:
+                logger.warning(f"No content found for PMID: {pmid}")
+                
+        return articles_with_content
+        
+    except Exception as e:
+        logger.error(f"Error retrieving articles: {str(e)}")
+        return []
+
+def create_final_analysis_prompt(case_notes, disease, events, articles):
     """Create the prompt for final analysis."""
     
     # Create a table of analyzed articles
     articles_table = []
-    for article in analyzed_articles:
+    for article in articles:
         # Format drug results as a comma-separated string
         drug_results = ', '.join(article.get('drug_results', [])) if article.get('drug_results') else 'None'
         
@@ -123,7 +172,7 @@ def analyze_with_gemini(prompt):
     contents = [types.Content(role="user", parts=[{"text": prompt}])]
     
     try:
-        response = client.models.generate_content(
+        response = genai_client.models.generate_content(
             model=model,
             contents=contents,
             config=generate_content_config,
@@ -168,7 +217,10 @@ def final_analysis(request):
 
     try:
         request_json = request.get_json()
+        logger.info(f"Received request body: {json.dumps(request_json, indent=2)}")
+        
         if not request_json:
+            logger.error("No JSON data received in request")
             return jsonify({'error': 'No JSON data received'}), 400, headers
 
         # Extract required fields
@@ -177,11 +229,37 @@ def final_analysis(request):
         events = request_json.get('events')
         analyzed_articles = request_json.get('analyzed_articles')
 
-        if not all([case_notes, disease, events, analyzed_articles]):
-            return jsonify({'error': 'Missing required fields'}), 400, headers
+        # Log each field's presence/absence
+        missing_fields = []
+        if not case_notes:
+            missing_fields.append('case_notes')
+        if not disease:
+            missing_fields.append('disease')
+        if not events:
+            missing_fields.append('events')
+        if not analyzed_articles:
+            missing_fields.append('analyzed_articles')
+
+        if missing_fields:
+            error_msg = f"Missing required fields: {', '.join(missing_fields)}"
+            logger.error(error_msg)
+            return jsonify({'error': error_msg}), 400, headers
+
+        # Log analyzed articles before BigQuery
+        logger.info(f"Analyzed articles before BigQuery: {json.dumps(analyzed_articles, indent=2)}")
+
+        # Get full articles from BigQuery while preserving metadata
+        articles_with_content = get_full_articles(analyzed_articles)
+        
+        # Log articles after BigQuery
+        logger.info(f"Articles after BigQuery retrieval: {json.dumps(articles_with_content, indent=2)}")
+        
+        if not articles_with_content:
+            logger.error("Failed to retrieve any articles from BigQuery")
+            return jsonify({'error': 'Failed to retrieve articles from BigQuery'}), 500, headers
 
         # Create prompt and analyze
-        prompt = create_final_analysis_prompt(case_notes, disease, events, analyzed_articles)
+        prompt = create_final_analysis_prompt(case_notes, disease, events, articles_with_content)
         analysis = analyze_with_gemini(prompt)
 
         if not analysis:
