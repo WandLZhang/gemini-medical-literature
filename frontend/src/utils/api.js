@@ -1,6 +1,6 @@
 // src/utils/api.js
 
-export const retrieveAndAnalyzeArticles = async (disease, events, methodologyContent, onProgress) => {
+export const retrieveAndAnalyzeArticles = async (disease, events, methodologyContent, onProgress, numArticles = 15) => {
   try {
     // Step 1: Get PMIDs and analysis from first cloud function
     const response = await fetch(`${API_BASE_URL}/capricorn-retrieve-full-articles`, {
@@ -11,7 +11,8 @@ export const retrieveAndAnalyzeArticles = async (disease, events, methodologyCon
       body: JSON.stringify({
         events_text: events.join('\n'),
         methodology_content: methodologyContent,
-        disease: disease
+        disease: disease,
+        num_articles: numArticles
       }),
     });
 

@@ -15,6 +15,8 @@ const MainPanel = ({
   promptContent,
   setPromptContent,
   currentProgress,
+  numArticles,
+  setNumArticles,
   articles,
   chatHistory,
   isGeneratingSample,
@@ -52,6 +54,8 @@ const MainPanel = ({
         promptContent={promptContent}
         setPromptContent={setPromptContent}
         currentProgress={currentProgress}
+        numArticles={numArticles}
+        setNumArticles={setNumArticles}
       />
       <ChatContainer 
         chatHistory={chatHistoryWithArticles}

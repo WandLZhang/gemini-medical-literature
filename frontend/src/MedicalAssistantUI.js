@@ -23,6 +23,7 @@ const MedicalAssistantUI = ({ user }) => {
   const [pmids, setPmids] = useState([]);
   const [totalArticles, setTotalArticles] = useState(0);
   const [isPromptExpanded, setIsPromptExpanded] = useState(true);
+  const [numArticles, setNumArticles] = useState(15);
   const [extractionPrompt] = useState(`You are an expert pediatric oncologist and chair of the International Leukemia Tumor Board (iLTB). Your role is to analyze complex patient case notes, identify key actionable events that may guide treatment strategies, and formulate precise search queries for PubMed to retrieve relevant clinical research articles.
 
 **Input:** Patient case notes, as provided by a clinician. This will include information on diagnosis, treatment history, and relevant diagnostic findings including genetics and flow cytometry results.
@@ -225,6 +226,11 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
     setArticles([]);
     setCurrentProgress('');
     setTotalArticles(0);
+
+    // Create a local variable to store processed articles
+    let processedArticles = [];
+    console.log('Starting article processing. Current processed articles:', processedArticles.length);
+
     try {
       // Combine case notes and lab results
       const combinedNotes = [
@@ -245,20 +251,21 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
               setCurrentProgress(`Analyzing ${data.data.total_articles} articles...`);
             } else if (data.data.status === 'complete') {
               setCurrentProgress(`Article analysis complete. Generating final analysis...`);
-              // Wait a moment for the last article to be added to the state
-              setTimeout(async () => {
-                try {
-                  const finalAnalysis = await generateFinalAnalysis(
-                    combinedNotes, // Use the already combined notes from above
-                    extractedDisease,
-                    extractedEvents,
-                    articles
-                  );
-                
-                  // Create a formatted message for the chat
-                  const message = {
-                    type: 'analysis',
-                    content: `
+              console.log('All articles processed. Total articles:', processedArticles.length);
+              
+              try {
+                console.log('Sending final analysis request with processed articles:', processedArticles.length);
+                const finalAnalysis = await generateFinalAnalysis(
+                  combinedNotes,
+                  extractedDisease,
+                  extractedEvents,
+                  processedArticles // Use the local array instead of the state
+                );
+              
+                // Create a formatted message for the chat
+                const message = {
+                  type: 'analysis',
+                  content: `
 # Case Summary
 ${finalAnalysis.case_summary}
 
@@ -290,16 +297,15 @@ ${finalAnalysis.multi_target_opportunities.map(opp => `
 - Summary: ${opp.evidence.summary}
 `).join('\n')}` : ''}
 `,
-                    timestamp: new Date().toISOString()
-                  };
-                  
-                  handleSendMessage(message);
-                  setCurrentProgress('Final analysis complete.');
-                } catch (error) {
-                  console.error('Error generating final analysis:', error);
-                  setCurrentProgress('Error generating final analysis. Please try again.');
-                }
-              }, 1000);
+                  timestamp: new Date().toISOString()
+                };
+                
+                handleSendMessage(message);
+                setCurrentProgress('Final analysis complete.');
+              } catch (error) {
+                console.error('Error generating final analysis:', error);
+                setCurrentProgress('Error generating final analysis. Please try again.');
+              }
             }
           }
           else if (data.type === 'pmids') {
@@ -308,7 +314,7 @@ ${finalAnalysis.multi_target_opportunities.map(opp => `
           }
           else if (data.type === 'article_analysis') {
             const analysis = data.data.analysis.article_metadata;
-            setArticles(current => [...current, {
+            const articleData = {
               pmid: analysis.PMID,
               title: analysis.title,
               points: analysis.overall_points,
@@ -322,23 +328,30 @@ ${finalAnalysis.multi_target_opportunities.map(opp => `
               drugs_tested: analysis.drugs_tested,
               drug_results: analysis.drug_results,
               point_breakdown: analysis.point_breakdown
-            }]);
-              const articleNumber = data.data.progress?.article_number || 0;
-              const totalArticles = data.data.progress?.total_articles || 0;
-              console.log('Progress:', { articleNumber, totalArticles, data });
-              if (articleNumber > 0 && totalArticles > 0) {
-                const progress = (articleNumber / totalArticles) * 100;
-                setCurrentProgress(`Processed article ${articleNumber} out of ${totalArticles}`);
-                
-                // Update progress bar
-                const progressBar = document.getElementById('article-progress-bar');
-                if (progressBar) {
-                  progressBar.style.width = `${progress}%`;
-                }
-              }
+            };
+            
+            // Add to both state and local variable
+            setArticles(current => [...current, articleData]);
+            processedArticles.push(articleData);
+            console.log('Added article to processed articles. Current count:', processedArticles.length);
+
+            const articleNumber = data.data.progress?.article_number || 0;
+            const totalArticles = data.data.progress?.total_articles || 0;
+            console.log('Progress:', { articleNumber, totalArticles, processedArticlesLength: processedArticles.length });
+            
+            if (articleNumber > 0 && totalArticles > 0) {
+              const progress = (articleNumber / totalArticles) * 100;
+              setCurrentProgress(`Processed article ${articleNumber} out of ${totalArticles}`);
               
+              // Update progress bar
+              const progressBar = document.getElementById('article-progress-bar');
+              if (progressBar) {
+                progressBar.style.width = `${progress}%`;
+              }
+            }
           }
-        }
+        },
+        numArticles // Pass numArticles to the API function
       );
     } catch (error) {
       console.error('Error:', error);
@@ -405,6 +418,8 @@ ${finalAnalysis.multi_target_opportunities.map(opp => `
           setMessage={setMessage}
           handleSendMessage={handleSendMessage}
           handleGenerateSampleCase={handleGenerateSampleCase}
+          numArticles={numArticles}
+          setNumArticles={setNumArticles}
         />
       </div>
       

@@ -24,7 +24,7 @@ bq_client = bigquery.Client(project="playground-439016")
 def get_full_articles(analyzed_articles):
     """Retrieve full article content from BigQuery using PMIDs."""
     # Extract PMIDs from articles
-    pmids = [article.get('PMID') for article in analyzed_articles if article.get('PMID')]
+    pmids = [article['pmid'] for article in analyzed_articles if 'pmid' in article]
     pmids_str = ', '.join([f"'{pmid}'" for pmid in pmids])
     
     # Query to get full articles by joining pmid_embed_nonzero with pmid_metadata
@@ -36,7 +36,7 @@ def get_full_articles(analyzed_articles):
     FROM `playground-439016.pmid_uscentral.pmid_embed_nonzero` base
     JOIN `playground-439016.pmid_uscentral.pmid_metadata` metadata
     ON base.name = metadata.AccessionID  -- Join on PMCID (AccessionID is PMCID)
-    WHERE metadata.PMID IN ({pmids_str})
+    WHERE UPPER(metadata.PMID) IN ({','.join([f"'{pmid.upper()}'" for pmid in pmids])})
     """
     
     try:
@@ -47,13 +47,13 @@ def get_full_articles(analyzed_articles):
             logger.error(f"No articles found for PMIDs: {pmids}")
             return []
             
-        # Create mapping of PMID to content and PMCID
-        content_map = {row['PMID']: {'content': row['content'], 'PMCID': row['PMCID']} for row in results}
+        # Create mapping of PMID to content and PMCID (normalize to lowercase pmid)
+        content_map = {row['PMID'].lower(): {'content': row['content'], 'PMCID': row['PMCID']} for row in results}
         
         # Update analyzed articles with full content
         articles_with_content = []
         for article in analyzed_articles:
-            pmid = article.get('PMID')
+            pmid = article['pmid']
             if pmid in content_map:
                 # Preserve all metadata and add full content
                 article_with_content = article.copy()
@@ -61,7 +61,7 @@ def get_full_articles(analyzed_articles):
                 article_with_content['PMCID'] = content_map[pmid]['PMCID']
                 articles_with_content.append(article_with_content)
             else:
-                logger.warning(f"No content found for PMID: {pmid}")
+                logger.warning(f"No content found for pmid: {pmid}")
                 
         return articles_with_content
         
@@ -85,7 +85,7 @@ def create_final_analysis_prompt(case_notes, disease, events, articles):
         ])
         
         articles_table.append(f"""
-PMID: {article.get('PMID', 'N/A')}
+PMID: {article.get('pmid', 'N/A')}
 Title: {article.get('title', 'N/A')}
 Journal: {article.get('journal_title', 'N/A')} (SJR: {article.get('journal_sjr', 0)})
 Year: {article.get('year', 'N/A')}
@@ -94,7 +94,7 @@ Cancer Type: {article.get('type_of_cancer', 'N/A')}
 Events: {events_str}
 Drug Results: {drug_results}
 Points: {article.get('overall_points', 0)}
-PMCID: {article.get('PMCID', 'N/A')}
+PMCID: {article.get('pmcid', 'N/A')}
 Full Text:
 {article.get('content', 'N/A')}
 {'='*80}

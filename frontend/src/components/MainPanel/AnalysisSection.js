@@ -12,7 +12,9 @@ const AnalysisSection = ({
   setIsPromptExpanded,
   promptContent,
   setPromptContent,
-  currentProgress
+  currentProgress,
+  numArticles,
+  setNumArticles
 }) => {
   // Track if we've already minimized for this analysis session
   const hasMinimized = React.useRef(false);
@@ -65,14 +67,27 @@ const AnalysisSection = ({
     </div>
     {isPromptExpanded && (
       <>
-        <div className="flex items-start gap-2 mb-2">
-          <label className="text-[10px] font-light text-gray-700 w-20 pt-1.5">Analysis instructions</label>
-          <textarea
-            className="flex-1 p-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs h-[11rem]"
-            value={promptContent}
-            onChange={(e) => setPromptContent(e.target.value)}
-            placeholder="Enter prompt content here..."
-          />
+        <div className="flex flex-col gap-2">
+          <div className="flex items-start gap-2">
+            <label className="text-[10px] font-light text-gray-700 w-20 pt-1.5">Analysis instructions</label>
+            <textarea
+              className="flex-1 p-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs h-[9rem]"
+              value={promptContent}
+              onChange={(e) => setPromptContent(e.target.value)}
+              placeholder="Enter prompt content here..."
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-[10px] font-light text-gray-700 w-20"># of articles</label>
+            <input
+              type="number"
+              min="1"
+              max="50"
+              className="w-20 p-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+              value={numArticles}
+              onChange={(e) => setNumArticles(Math.min(50, Math.max(1, parseInt(e.target.value) || 15)))}
+            />
+          </div>
         </div>
       </>
     )}

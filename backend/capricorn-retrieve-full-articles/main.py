@@ -362,7 +362,7 @@ def analyze_with_gemini(article_text, pmid, methodology_content=None, disease=No
         logger.error(f"Error analyzing article with Gemini: {str(e)}")
         return None
 
-def create_bq_query(events_text):
+def create_bq_query(events_text, num_articles=15):
     return f"""
     DECLARE query_text STRING;
     SET query_text = \"\"\"
@@ -386,7 +386,7 @@ def create_bq_query(events_text):
     TABLE `playground-439016.pmid_uscentral.pmid_embed_nonzero`,
     'ml_generate_embedding_result',
     (SELECT embedding_col FROM query_embedding),
-    top_k => 20
+    top_k => {num_articles}
     ) results
     JOIN `playground-439016.pmid_uscentral.pmid_embed_nonzero` base 
     ON results.base.name = base.name  -- Join on PMCID
@@ -395,11 +395,11 @@ def create_bq_query(events_text):
     ORDER BY distance ASC;
     """
 
-def stream_response(events_text, methodology_content=None, disease=None):
+def stream_response(events_text, methodology_content=None, disease=None, num_articles=15):
     try:
         # Execute BigQuery
         # Execute BigQuery and log results
-        query = create_bq_query(events_text)
+        query = create_bq_query(events_text, num_articles)
         query_job = bq_client.query(query)
         results = list(query_job.result())
         total_articles = len(results)
@@ -531,12 +531,13 @@ def retrieve_full_articles(request):
         if not events_text:
             return jsonify({'error': 'Missing events_text field'}), 400, headers
 
-        # Get methodology content and disease if provided
+        # Get methodology content, disease, and num_articles if provided
         methodology_content = request_json.get('methodology_content')
         disease = request_json.get('disease')
+        num_articles = request_json.get('num_articles', 15)  # Default to 15 if not provided
 
         return Response(
-            stream_response(events_text, methodology_content, disease),
+            stream_response(events_text, methodology_content, disease, num_articles),
             headers=headers,
             mimetype='text/event-stream'
         )
