@@ -11,9 +11,9 @@ const ChatMessage = ({ message }) => {
   const isDocument = message.type === 'document';
 
   return (
-    <div className={`flex ${message.isUser ? 'justify-end' : 'justify-start'} mb-4`}>
+    <div className={`flex ${message.isUser ? 'justify-end' : ''} mb-4`}>
       <div 
-        className={`${isDocument ? 'w-full' : 'max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl'} rounded-lg p-3 ${
+        className={`${isDocument || (!message.isUser && message.text?.includes('TYPE OF CANCER')) ? 'w-full' : 'max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl'} rounded-lg p-3 ${message.isUser ? 'ml-auto' : ''} ${
           isError 
             ? 'bg-red-50 border border-red-200 text-red-800'
             : message.isUser 
@@ -27,7 +27,7 @@ const ChatMessage = ({ message }) => {
             Assistant
           </div>
         )}
-        <div className="text-sm">
+        <div className="text-sm overflow-x-auto">
           {isDocument ? (
             <ArticleResults 
               currentProgress={message.currentProgress}
@@ -35,7 +35,9 @@ const ChatMessage = ({ message }) => {
             />
           ) : (
             <>
-              {message.text || ''}
+              <div className="overflow-x-auto">
+                {message.text || ''}
+              </div>
               {isError && !isErrorExpanded && (
                 <button 
                   onClick={() => setIsErrorExpanded(true)}
