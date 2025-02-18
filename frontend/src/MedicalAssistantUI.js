@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 // Components
 import ExpandableSidebar from './components/ExpandableSidebar';
@@ -183,7 +183,8 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
     setMessage,
     handleChatSelect,
     handleSendMessage,
-    initializeNewChat
+    initializeNewChat,
+    initializeActiveChat
   } = useChat(user);
 
   const handleGenerateSampleCase = async () => {
@@ -196,6 +197,21 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
     }
     setIsGeneratingSample(false);
   };
+
+  // Effect to handle loading case information when chat history changes
+  useEffect(() => {
+    if (chatHistory.length > 0) {
+      // Find the initial case message
+      const initialCaseMessage = chatHistory.find(msg => msg.initialCase);
+      if (initialCaseMessage?.initialCase) {
+        const { caseNotes: savedCaseNotes, labResults: savedLabResults, extractedDisease, extractedEvents } = initialCaseMessage.initialCase;
+        setCaseNotes(savedCaseNotes);
+        setLabResults(savedLabResults);
+        setExtractedDisease(extractedDisease);
+        setExtractedEvents(extractedEvents);
+      }
+    }
+  }, [chatHistory]);
 
   const handleExtract = async () => {
     try {
@@ -215,6 +231,15 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
       setExtractedDisease(disease);
       setExtractedEvents(events);
       setIsBox2Hovered(true); // Keep box 2 solid after extraction
+
+      // Initialize active chat with the extracted information
+      if (user) {
+        try {
+          await initializeActiveChat(caseNotes, labResults, disease, events);
+        } catch (error) {
+          console.error('Error initializing chat:', error);
+        }
+      }
     } catch (error) {
       console.error('Error:', error);
       if (error.message.includes('Failed to fetch')) {
@@ -262,7 +287,7 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
               setCurrentProgress(`Article analysis complete. Generating final analysis...`);
               console.log('All articles processed. Total articles:', processedArticles.length);
               
-              // First, send the articles as a document message
+              // First, send the document message
               const documentsContent = {
                 type: 'document',
                 content: {
@@ -270,7 +295,7 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
                   currentProgress: currentProgress
                 }
               };
-              handleSendMessage(documentsContent);
+              await handleSendMessage(documentsContent);
 
               try {
                 console.log('Sending final analysis request with processed articles:', processedArticles.length);
@@ -278,10 +303,10 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
                   combinedNotes,
                   extractedDisease,
                   extractedEvents,
-                  processedArticles // Use the local array instead of the state
+                  processedArticles
                 );
               
-                // Send the analysis as a message using the existing handleSendMessage function
+                // Send the analysis as a separate message
                 const analysisContent = {
                   type: 'analysis',
                   content: `
@@ -317,7 +342,8 @@ ${finalAnalysis.multi_target_opportunities.map(opp => `
 `).join('\n')}` : ''}`
                 };
                 
-                handleSendMessage(analysisContent);
+                // Send the analysis message
+                await handleSendMessage(analysisContent);
                 setCurrentProgress('Final analysis complete.');
               } catch (error) {
                 console.error('Error generating final analysis:', error);

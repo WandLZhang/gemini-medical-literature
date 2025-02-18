@@ -12,6 +12,57 @@ const useChat = (user, selectedTemplate) => {
   const [activeChat, setActiveChat] = useState(null);
   const [message, setMessage] = useState('');
 
+  const initializeActiveChat = useCallback(async (caseNotes, labResults, extractedDisease, extractedEvents) => {
+    if (!user) return;
+
+    try {
+      const timestamp = new Date();
+      const messageId = createMessageId('initial');
+      
+      // Create the initial message that contains all the case information
+      const initialMessage = {
+        content: JSON.stringify({
+          caseNotes,
+          labResults,
+          extractedDisease,
+          extractedEvents
+        }),
+        role: 'user',
+        timestamp,
+        type: 'initial_case',
+        messageId
+      };
+
+      // Create a new chat with the initial message
+      const chatId = await createNewChat(user.uid, [initialMessage]);
+      
+      // Set the active chat
+      setActiveChat({
+        id: chatId,
+        messages: [initialMessage]
+      });
+
+      // Update chat history
+      setChatHistory([{
+        id: messageId,
+        text: `Case initialized with disease: ${extractedDisease}`,
+        isUser: false,
+        timestamp,
+        initialCase: {
+          caseNotes,
+          labResults,
+          extractedDisease,
+          extractedEvents
+        }
+      }]);
+
+      return chatId;
+    } catch (error) {
+      console.error('Error initializing active chat:', error);
+      throw error;
+    }
+  }, [user]);
+
   const initializeNewChat = useCallback(() => {
     setActiveChat(null);
     setChatHistory([]);
@@ -26,6 +77,17 @@ const useChat = (user, selectedTemplate) => {
       // Load all messages in chronological order
       chat.messages?.forEach(msg => {
         switch (msg.type) {
+          case 'initial_case':
+            const initialCase = JSON.parse(msg.content);
+            messages.push({
+              id: msg.messageId,
+              text: `Case initialized with disease: ${initialCase.extractedDisease}`,
+              isUser: false,
+              timestamp: msg.timestamp,
+              initialCase
+            });
+            break;
+            
           case 'message':
             messages.push({
               id: msg.messageId,
@@ -77,100 +139,138 @@ const useChat = (user, selectedTemplate) => {
     }
   }, [initializeNewChat]);
 
-  const handleSendMessage = useCallback(async (e) => {
-    // Handle both event objects and direct message objects
-    if (e && e.preventDefault) {
-      e.preventDefault();
-    }
-    
-    // If e is a message object with type 'analysis' or 'document', handle it differently
-    if (typeof e === 'object' && (e.type === 'analysis' || e.type === 'document')) {
-      const messageId = createMessageId(e.type);
-      const timestamp = new Date();
-      
-      const message = e.type === 'analysis' ? {
-        id: messageId,
-        isUser: false,
-        analysis: e.content,
-        timestamp
-      } : {
-        id: messageId,
-        type: 'document',
-        isUser: false,
-        currentProgress: e.content.currentProgress,
-        articles: e.content.articles,
-        timestamp
-      };
-
-      try {
-        let currentChatId = activeChat?.id;
-        let messagesForFirestore = [...(activeChat?.messages || [])];
-
-        if (user) {
-          if (!currentChatId) {
-            const initialMessages = [];
-            currentChatId = await createNewChat(user.uid, initialMessages);
-            setActiveChat({ id: currentChatId, messages: initialMessages });
-          }
-
-          messagesForFirestore.push({
-            content: e.type === 'analysis' ? e.content : JSON.stringify(e.content),
-            role: 'assistant',
-            timestamp: timestamp,
-            type: e.type,
-            messageId: messageId
-          });
-
-          await addMessageToChat(user.uid, currentChatId, messagesForFirestore);
-        }
-
-        setChatHistory(prev => [...prev, message]);
-        return;
-      } catch (error) {
-        console.error('Error handling analysis message:', error);
-        return;
-      }
-    }
-
-    // Handle regular user messages
-    const userMessage = typeof e === 'object' && e.content ? e.content : message;
-    
-    if ((typeof e === 'object' && e.content) || (message.trim() && !isLoadingDocs && !isLoadingAnalysis)) {
-      setMessage('');
+const handleSendMessage = useCallback(async (e) => {
+  // Handle both event objects and direct message objects
+  if (e && e.preventDefault) {
+    e.preventDefault();
+  }
   
-      const newUserMessage = { 
-        id: createMessageId('user'), 
-        text: userMessage, 
-        isUser: true,
-        timestamp: new Date()
-      };
+  // If e is a message object with type 'analysis' or 'document', update the existing conversation
+  if (typeof e === 'object' && (e.type === 'analysis' || e.type === 'document')) {
+    try {
+      let currentChatId = activeChat?.id;
+      let messagesForFirestore = [...(activeChat?.messages || [])];
+
+      if (user && !currentChatId) {
+        const initialMessages = [];
+        currentChatId = await createNewChat(user.uid, initialMessages);
+        setActiveChat({ id: currentChatId, messages: initialMessages });
+      }
+
+      // For document type or analysis, update the existing chat history and Firestore
+      if (e.type === 'document' || e.type === 'analysis') {
+        const timestamp = new Date();
+        const messageId = createMessageId(e.type);
         
-      try {
-        let currentChatId = activeChat?.id;
-        let messagesForFirestore = [];
-          
+        // Create the message for chat history
+        const newMessage = e.type === 'document' ? {
+          id: messageId,
+          type: 'document',
+          isUser: false,
+          currentProgress: e.content.currentProgress,
+          articles: e.content.articles,
+          timestamp
+        } : {
+          id: messageId,
+          isUser: false,
+          analysis: e.content,
+          timestamp
+        };
+
+        // Create the message for Firestore
+        const firestoreMessage = {
+          content: e.type === 'document' ? JSON.stringify(e.content) : e.content,
+          role: 'assistant',
+          timestamp,
+          type: e.type,
+          messageId
+        };
+
+        // Update chat history
+        if (e.type === 'document') {
+          setChatHistory(prev => {
+            const lastDocumentIndex = prev.findIndex(msg => msg.type === 'document');
+            if (lastDocumentIndex !== -1) {
+              const updatedHistory = [...prev];
+              updatedHistory[lastDocumentIndex] = newMessage;
+              return updatedHistory;
+            }
+            return [...prev, newMessage];
+          });
+        } else {
+          setChatHistory(prev => [...prev, newMessage]);
+        }
+
+        // Update Firestore if user is logged in
         if (user) {
-          if (!currentChatId) {
-            const initialMessages = [];
-            currentChatId = await createNewChat(user.uid, initialMessages);
-            setActiveChat({ id: currentChatId, messages: initialMessages });
+          if (e.type === 'document') {
+            const existingDocIndex = messagesForFirestore.findIndex(msg => msg.type === 'document');
+            if (existingDocIndex !== -1) {
+              messagesForFirestore[existingDocIndex] = firestoreMessage;
+            } else {
+              messagesForFirestore.push(firestoreMessage);
+            }
+          } else {
+            messagesForFirestore.push(firestoreMessage);
           }
 
-          messagesForFirestore = [...(activeChat?.messages || [])];
-          messagesForFirestore.push({
-            content: userMessage,
-            role: 'user',
-            timestamp: new Date(),
-            type: 'message',
-            messageId: newUserMessage.id
-          });
-        }
-        
-        setChatHistory(prev => [...prev, newUserMessage]);
-        
-        if (user) {
+          // Set the messages array in activeChat to keep it in sync
+          setActiveChat(current => ({
+            ...current,
+            messages: messagesForFirestore
+          }));
+
+          // Update Firestore with the complete messages array
           await addMessageToChat(user.uid, currentChatId, messagesForFirestore);
         }
+      }
+
+      return;
+    } catch (error) {
+      console.error('Error handling message:', error);
+      return;
+    }
+  }
+
+  // Handle regular user messages
+  const userMessage = typeof e === 'object' && e.content ? e.content : message;
+  
+  if ((typeof e === 'object' && e.content) || (message.trim() && !isLoadingDocs && !isLoadingAnalysis)) {
+    setMessage('');
+
+    const newUserMessage = { 
+      id: createMessageId('user'), 
+      text: userMessage, 
+      isUser: true,
+      timestamp: new Date()
+    };
+      
+    try {
+      let currentChatId = activeChat?.id;
+      let messagesForFirestore = [];
+        
+      if (user) {
+        if (!currentChatId) {
+          const initialMessages = [];
+          currentChatId = await createNewChat(user.uid, initialMessages);
+          setActiveChat({ id: currentChatId, messages: initialMessages });
+        }
+
+        messagesForFirestore = [...(activeChat?.messages || [])];
+        messagesForFirestore.push({
+          content: userMessage,
+          role: 'user',
+          timestamp: new Date(),
+          type: 'message',
+          messageId: newUserMessage.id
+        });
+      }
+      
+      setChatHistory(prev => [...prev, newUserMessage]);
+      
+      if (user) {
+        await addMessageToChat(user.uid, currentChatId, messagesForFirestore);
+      }
 
         setIsLoadingDocs(true);
         try {
@@ -272,7 +372,8 @@ const useChat = (user, selectedTemplate) => {
     setMessage,
     handleChatSelect: user ? handleChatSelect : null,
     handleSendMessage,
-    initializeNewChat: user ? initializeNewChat : null
+    initializeNewChat: user ? initializeNewChat : null,
+    initializeActiveChat: user ? initializeActiveChat : null
   };
 };
 
