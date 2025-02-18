@@ -262,6 +262,16 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
               setCurrentProgress(`Article analysis complete. Generating final analysis...`);
               console.log('All articles processed. Total articles:', processedArticles.length);
               
+              // First, send the articles as a document message
+              const documentsContent = {
+                type: 'document',
+                content: {
+                  articles: processedArticles,
+                  currentProgress: currentProgress
+                }
+              };
+              handleSendMessage(documentsContent);
+
               try {
                 console.log('Sending final analysis request with processed articles:', processedArticles.length);
                 const finalAnalysis = await generateFinalAnalysis(

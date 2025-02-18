@@ -3,6 +3,8 @@ import React from 'react';
 import ChatMessage from '../ChatMessage';
 import DocumentList from '../DocumentList';
 import MarkdownRenderer from '../MarkdownRenderer';
+import ReactMarkdown from 'react-markdown';
+import ArticleResults from '../MainPanel/ArticleResults';
 
 const LoadingSpinner = ({ message }) => (
   <div className="flex justify-center items-center p-4">
@@ -24,21 +26,26 @@ const ChatContainer = ({
         <div className="space-y-4">
           {chatHistory.map((msg) => (
             <React.Fragment key={msg.id}>
-              {/* Only show ChatMessage if it's not an analysis message or if it has documents */}
-              {(!msg.analysis || msg.documents) && <ChatMessage message={msg} />}
+              {/* Show regular messages */}
+              {!msg.analysis && !msg.type && <ChatMessage message={msg} />}
               
-              {/* Show documents if this message has them */}
-              {msg.documents && (
+              {/* Show document type messages (article table) */}
+              {msg.type === 'document' && (
                 <div className="ml-4 mt-2">
-                  <DocumentList documents={msg.documents} />
+                  <ArticleResults 
+                    currentProgress={msg.currentProgress}
+                    articles={msg.articles}
+                  />
                 </div>
               )}
-              
-              {/* Show analysis in a styled container */}
+
+              {/* Show analysis messages */}
               {msg.analysis && (
                 <div className="ml-4 mt-2 bg-white rounded-lg shadow-md p-6">
                   <h2 className="text-2xl font-bold mb-4">Analysis Results</h2>
-                  <MarkdownRenderer content={msg.analysis} />
+                  <div className="prose prose-sm max-w-none prose-headings:text-gray-800 prose-headings:font-bold prose-h1:text-lg prose-h2:text-base prose-p:text-sm prose-p:text-gray-600 prose-li:text-sm prose-li:text-gray-600 prose-a:text-blue-600 hover:prose-a:text-blue-800 prose-headings:mb-2 prose-p:my-1 prose-ul:my-1 prose-li:my-0.5">
+                    <ReactMarkdown>{msg.analysis}</ReactMarkdown>
+                  </div>
                 </div>
               )}
             </React.Fragment>

@@ -35,17 +35,14 @@ const useChat = (user, selectedTemplate) => {
             });
             break;
             
-          case 'documents':
-            const docs = JSON.parse(msg.content);
+          case 'document':
+            const docContent = JSON.parse(msg.content);
             messages.push({
               id: msg.messageId,
-              text: "I've retrieved relevant articles. Here are the abstracts and analysis:",
+              type: 'document',
               isUser: false,
-              documents: {
-                abstracts: docs.abstracts || [],
-                articles: docs.articles || [],
-                pmids: docs.pmids || []
-              },
+              currentProgress: docContent.currentProgress,
+              articles: docContent.articles,
               timestamp: msg.timestamp
             });
             break;
@@ -86,13 +83,23 @@ const useChat = (user, selectedTemplate) => {
       e.preventDefault();
     }
     
-    // If e is a message object with type 'analysis', handle it differently
-    if (typeof e === 'object' && e.type === 'analysis') {
-      const analysisMessage = {
-        id: createMessageId('analysis'),
+    // If e is a message object with type 'analysis' or 'document', handle it differently
+    if (typeof e === 'object' && (e.type === 'analysis' || e.type === 'document')) {
+      const messageId = createMessageId(e.type);
+      const timestamp = new Date();
+      
+      const message = e.type === 'analysis' ? {
+        id: messageId,
         isUser: false,
         analysis: e.content,
-        timestamp: new Date()
+        timestamp
+      } : {
+        id: messageId,
+        type: 'document',
+        isUser: false,
+        currentProgress: e.content.currentProgress,
+        articles: e.content.articles,
+        timestamp
       };
 
       try {
@@ -107,17 +114,17 @@ const useChat = (user, selectedTemplate) => {
           }
 
           messagesForFirestore.push({
-            content: e.content,
+            content: e.type === 'analysis' ? e.content : JSON.stringify(e.content),
             role: 'assistant',
-            timestamp: new Date(),
-            type: 'analysis',
-            messageId: analysisMessage.id
+            timestamp: timestamp,
+            type: e.type,
+            messageId: messageId
           });
 
           await addMessageToChat(user.uid, currentChatId, messagesForFirestore);
         }
 
-        setChatHistory(prev => [...prev, analysisMessage]);
+        setChatHistory(prev => [...prev, message]);
         return;
       } catch (error) {
         console.error('Error handling analysis message:', error);
@@ -172,7 +179,26 @@ const useChat = (user, selectedTemplate) => {
             [],  // events array
             selectedTemplate?.content || "",
             (data) => {
-              if (data.type === 'pmids') {
+              if (data.type === 'analysis') {
+                const analysisMessage = {
+                  id: createMessageId('analysis'),
+                  isUser: false,
+                  analysis: data.data.analysis,
+                  timestamp: new Date()
+                };
+
+                if (user) {
+                  messagesForFirestore.push({
+                    content: data.data.analysis,
+                    role: 'assistant',
+                    timestamp: new Date(),
+                    type: 'analysis',
+                    messageId: analysisMessage.id
+                  });
+                }
+
+                setChatHistory(prev => [...prev, analysisMessage]);
+              } else if (data.type === 'pmids') {
                 const docsMessage = {
                   id: createMessageId('assistant-docs'),
                   text: "I've found relevant articles and am analyzing them...",
@@ -194,25 +220,6 @@ const useChat = (user, selectedTemplate) => {
                 }
 
                 setChatHistory(prev => [...prev, docsMessage]);
-              } else if (data.type === 'analysis') {
-                const analysisMessage = {
-                  id: createMessageId('analysis'),
-                  isUser: false,
-                  analysis: data.data.analysis,
-                  timestamp: new Date()
-                };
-
-                if (user) {
-                  messagesForFirestore.push({
-                    content: data.data.analysis,
-                    role: 'assistant',
-                    timestamp: new Date(),
-                    type: 'analysis',
-                    messageId: analysisMessage.id
-                  });
-                }
-
-                setChatHistory(prev => [...prev, analysisMessage]);
               }
 
               if (user) {
