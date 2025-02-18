@@ -23,8 +23,8 @@ bq_client = bigquery.Client(project="playground-439016")
 
 def get_full_articles(analyzed_articles):
     """Retrieve full article content from BigQuery using PMIDs."""
-    # Extract PMIDs from analyzed articles
-    pmids = [article.get('pmid') for article in analyzed_articles if article.get('pmid')]
+    # Extract PMIDs from articles
+    pmids = [article.get('PMID') for article in analyzed_articles if article.get('PMID')]
     pmids_str = ', '.join([f"'{pmid}'" for pmid in pmids])
     
     # Query to get full articles by joining pmid_embed_nonzero with pmid_metadata
@@ -47,17 +47,18 @@ def get_full_articles(analyzed_articles):
             logger.error(f"No articles found for PMIDs: {pmids}")
             return []
             
-        # Create mapping of PMID to content
-        content_map = {row['PMID']: row['content'] for row in results}
+        # Create mapping of PMID to content and PMCID
+        content_map = {row['PMID']: {'content': row['content'], 'PMCID': row['PMCID']} for row in results}
         
         # Update analyzed articles with full content
         articles_with_content = []
         for article in analyzed_articles:
-            pmid = article.get('pmid')
+            pmid = article.get('PMID')
             if pmid in content_map:
                 # Preserve all metadata and add full content
                 article_with_content = article.copy()
-                article_with_content['content'] = content_map[pmid]
+                article_with_content['content'] = content_map[pmid]['content']
+                article_with_content['PMCID'] = content_map[pmid]['PMCID']
                 articles_with_content.append(article_with_content)
             else:
                 logger.warning(f"No content found for PMID: {pmid}")
@@ -84,13 +85,19 @@ def create_final_analysis_prompt(case_notes, disease, events, articles):
         ])
         
         articles_table.append(f"""
-PMID: {article.get('pmid', 'N/A')}
+PMID: {article.get('PMID', 'N/A')}
 Title: {article.get('title', 'N/A')}
-Type: {article.get('type', 'N/A')}
+Journal: {article.get('journal_title', 'N/A')} (SJR: {article.get('journal_sjr', 0)})
+Year: {article.get('year', 'N/A')}
+Type: {article.get('paper_type', 'N/A')}
+Cancer Type: {article.get('type_of_cancer', 'N/A')}
 Events: {events_str}
 Drug Results: {drug_results}
-Points: {article.get('points', 0)}
-Full Text: {article.get('content', 'N/A')}
+Points: {article.get('overall_points', 0)}
+PMCID: {article.get('PMCID', 'N/A')}
+Full Text:
+{article.get('content', 'N/A')}
+{'='*80}
 """)
 
     prompt = f"""You are a pediatric hematologist sitting on a tumor board for patients with complex diseases. Your goal is to find the best treatment for every patient, considering their actionable events (genetic, immune-related, or other).

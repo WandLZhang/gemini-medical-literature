@@ -22,7 +22,6 @@ export const retrieveAndAnalyzeArticles = async (disease, events, methodologyCon
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
-    let pmids = null;
 
     while (true) {
       const { value, done } = await reader.read();
@@ -45,10 +44,6 @@ export const retrieveAndAnalyzeArticles = async (disease, events, methodologyCon
           // Validate and process the data
           if (data && typeof data === 'object' && data.type) {
             onProgress(data);
-            
-            if (data.type === 'pmids' && data.data && Array.isArray(data.data.pmids)) {
-              pmids = data.data.pmids;
-            }
           }
         } catch (parseError) {
           console.error('Error parsing line:', line);
