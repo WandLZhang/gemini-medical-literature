@@ -11,8 +11,25 @@ const AnalysisSection = ({
   isPromptExpanded,
   setIsPromptExpanded,
   promptContent,
-  setPromptContent
-}) => (
+  setPromptContent,
+  currentProgress
+}) => {
+  // Track if we've already minimized for this analysis session
+  const hasMinimized = React.useRef(false);
+
+  // Minimize the section only when first article is processed
+  React.useEffect(() => {
+    if (currentProgress?.includes("Processed article 1 out of") && !hasMinimized.current) {
+      setIsPromptExpanded(false);
+      hasMinimized.current = true;
+    }
+    // Reset the flag when retrieval is complete (no currentProgress)
+    if (!currentProgress) {
+      hasMinimized.current = false;
+    }
+  }, [currentProgress, setIsPromptExpanded]);
+
+  return (
   <div 
     className={`bg-white shadow rounded-lg p-4 mb-4 ${(!extractedDisease || !extractedEvents.length) ? 'opacity-25' : ''}`}
     onMouseEnter={() => extractedDisease && extractedEvents.length && setIsBox3Hovered(true)}
@@ -60,6 +77,7 @@ const AnalysisSection = ({
       </>
     )}
   </div>
-);
+  );
+};
 
 export default AnalysisSection;

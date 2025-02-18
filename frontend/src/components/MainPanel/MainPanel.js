@@ -50,6 +50,7 @@ const MainPanel = ({
         setIsPromptExpanded={setIsPromptExpanded}
         promptContent={promptContent}
         setPromptContent={setPromptContent}
+        currentProgress={currentProgress}
       />
       <ChatContainer 
         chatHistory={chatHistoryWithArticles}
