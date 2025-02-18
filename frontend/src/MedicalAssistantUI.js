@@ -358,7 +358,7 @@ ${finalAnalysis.multi_target_opportunities.map(opp => `
         setShowUserMenu={setShowUserMenu}
       />
 
-      <div className="flex flex-1 min-h-0 relative">
+      <div className="flex flex-1 min-h-0 relative w-full">
         <div className="absolute z-10">
           <ExpandableSidebar
             user={user}
@@ -381,6 +381,7 @@ ${finalAnalysis.multi_target_opportunities.map(opp => `
           handleExtract={handleExtract}
           isBox2Hovered={isBox2Hovered}
           setIsBox2Hovered={setIsBox2Hovered}
+          isLoading={!!currentProgress}
         />
 
         <MainPanel

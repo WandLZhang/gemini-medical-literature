@@ -6,7 +6,7 @@ const CaseInputSection = ({
   labResults,
   setLabResults
 }) => (
-  <div className="bg-white shadow rounded-lg p-4">
+  <div className="bg-white shadow-lg rounded-lg p-4">
     <div className="mb-1">
       <h2 className="text-xs font-medium text-gray-700">1 - Input your case notes and lab results</h2>
     </div>

@@ -12,7 +12,7 @@ const ExtractionSection = ({
   setIsBox2Hovered
 }) => (
   <div 
-    className={`bg-white shadow rounded-lg p-4 transition-opacity duration-500 ${!extractedDisease && !isBox2Hovered ? 'opacity-25' : ''}`}
+    className={`bg-white shadow-lg rounded-lg p-4 transition-opacity duration-500 ${!extractedDisease && !isBox2Hovered ? 'opacity-25' : ''}`}
     onMouseEnter={() => setIsBox2Hovered(true)}
     onMouseLeave={() => setIsBox2Hovered(false)}
   >
