@@ -184,7 +184,8 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
     handleChatSelect,
     handleSendMessage,
     initializeNewChat,
-    initializeActiveChat
+    initializeActiveChat,
+    hasDocumentMessages
   } = useChat(user);
 
   const handleGenerateSampleCase = async () => {
@@ -441,7 +442,7 @@ ${finalAnalysis.multi_target_opportunities.map(opp => `
           handleExtract={handleExtract}
           isBox2Hovered={isBox2Hovered}
           setIsBox2Hovered={setIsBox2Hovered}
-          isLoading={!!currentProgress}
+          isLoading={!!currentProgress || hasDocumentMessages}
         />
 
         <MainPanel
@@ -451,7 +452,7 @@ ${finalAnalysis.multi_target_opportunities.map(opp => `
           handleRetrieve={handleRetrieve}
           isBox3Hovered={isBox3Hovered}
           setIsBox3Hovered={setIsBox3Hovered}
-          isPromptExpanded={isPromptExpanded}
+          isPromptExpanded={!hasDocumentMessages}
           setIsPromptExpanded={setIsPromptExpanded}
           promptContent={promptContent}
           setPromptContent={setPromptContent}
@@ -467,6 +468,7 @@ ${finalAnalysis.multi_target_opportunities.map(opp => `
           handleGenerateSampleCase={handleGenerateSampleCase}
           numArticles={numArticles}
           setNumArticles={setNumArticles}
+          hasDocumentMessages={hasDocumentMessages}
         />
       </div>
       

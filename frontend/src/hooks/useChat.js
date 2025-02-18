@@ -13,6 +13,7 @@ const useChat = (user, selectedTemplate) => {
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   const [activeChat, setActiveChat] = useState(null);
   const [message, setMessage] = useState('');
+  const [hasDocumentMessages, setHasDocumentMessages] = useState(false);
 
   // Function to get latest messages from Firestore
   const getLatestMessages = async (userId, chatId) => {
@@ -88,6 +89,7 @@ const useChat = (user, selectedTemplate) => {
   const handleChatSelect = useCallback(async (chat) => {
     if (chat) {
       setActiveChat(chat);
+      setHasDocumentMessages(false);
       
       const messages = [];
       
@@ -124,6 +126,7 @@ const useChat = (user, selectedTemplate) => {
               articles: docContent.articles,
               timestamp: msg.timestamp
             });
+            setHasDocumentMessages(true);
             break;
             
           case 'analysis':
@@ -428,7 +431,8 @@ const handleSendMessage = useCallback(async (e) => {
     handleChatSelect: user ? handleChatSelect : null,
     handleSendMessage,
     initializeNewChat: user ? initializeNewChat : null,
-    initializeActiveChat: user ? initializeActiveChat : null
+    initializeActiveChat: user ? initializeActiveChat : null,
+    hasDocumentMessages
   };
 };
 

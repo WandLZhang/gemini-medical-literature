@@ -25,7 +25,8 @@ const MainPanel = ({
   message,
   setMessage,
   handleSendMessage,
-  handleGenerateSampleCase
+  handleGenerateSampleCase,
+  hasDocumentMessages
 }) => {
   // Create a document message for article results if we have progress or articles
   const chatHistoryWithArticles = [...chatHistory];
@@ -41,7 +42,7 @@ const MainPanel = ({
 
   return (
     <main className={`flex-1 flex flex-col min-h-0 pl-12 pt-10 transition-all duration-500 ease-in-out
-      ${currentProgress ? 'ml-24 w-[calc(100%-96px)]' : 'ml-[40%]'}`}>
+      ${hasDocumentMessages || currentProgress ? 'ml-24 w-[calc(100%-96px)]' : 'ml-[40%]'}`}>
       <AnalysisSection
         extractedDisease={extractedDisease}
         extractedEvents={extractedEvents}
