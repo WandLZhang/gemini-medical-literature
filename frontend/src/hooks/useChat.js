@@ -53,7 +53,6 @@ const useChat = (user, selectedTemplate) => {
           case 'analysis':
             messages.push({
               id: msg.messageId,
-              text: "Here's my analysis of the retrieved articles:",
               isUser: false,
               analysis: msg.content,
               timestamp: msg.timestamp
@@ -87,7 +86,46 @@ const useChat = (user, selectedTemplate) => {
       e.preventDefault();
     }
     
-    // If e is a message object, use it directly
+    // If e is a message object with type 'analysis', handle it differently
+    if (typeof e === 'object' && e.type === 'analysis') {
+      const analysisMessage = {
+        id: createMessageId('analysis'),
+        isUser: false,
+        analysis: e.content,
+        timestamp: new Date()
+      };
+
+      try {
+        let currentChatId = activeChat?.id;
+        let messagesForFirestore = [...(activeChat?.messages || [])];
+
+        if (user) {
+          if (!currentChatId) {
+            const initialMessages = [];
+            currentChatId = await createNewChat(user.uid, initialMessages);
+            setActiveChat({ id: currentChatId, messages: initialMessages });
+          }
+
+          messagesForFirestore.push({
+            content: e.content,
+            role: 'assistant',
+            timestamp: new Date(),
+            type: 'analysis',
+            messageId: analysisMessage.id
+          });
+
+          await addMessageToChat(user.uid, currentChatId, messagesForFirestore);
+        }
+
+        setChatHistory(prev => [...prev, analysisMessage]);
+        return;
+      } catch (error) {
+        console.error('Error handling analysis message:', error);
+        return;
+      }
+    }
+
+    // Handle regular user messages
     const userMessage = typeof e === 'object' && e.content ? e.content : message;
     
     if ((typeof e === 'object' && e.content) || (message.trim() && !isLoadingDocs && !isLoadingAnalysis)) {
@@ -159,7 +197,6 @@ const useChat = (user, selectedTemplate) => {
               } else if (data.type === 'analysis') {
                 const analysisMessage = {
                   id: createMessageId('analysis'),
-                  text: "Here's my analysis of the retrieved articles:",
                   isUser: false,
                   analysis: data.data.analysis,
                   timestamp: new Date()

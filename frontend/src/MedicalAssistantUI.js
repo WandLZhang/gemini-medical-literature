@@ -1,13 +1,22 @@
 import React, { useState } from 'react';
+
+// Components
 import ExpandableSidebar from './components/ExpandableSidebar';
-import { useAuth } from './hooks/useAuth';
-import useChat from './hooks/useChat';
-import { generateSampleCase, extractDisease, extractEvents, retrieveAndAnalyzeArticles, generateFinalAnalysis } from './utils/api';
 import TopBar from './components/TopBar';
 import LeftPanel from './components/LeftPanel/LeftPanel';
 import MainPanel from './components/MainPanel/MainPanel';
 import Footer from './components/Footer';
 import LoadingSpinner from './components/LoadingSpinner';
+
+// Hooks
+import { useAuth } from './hooks/useAuth';
+import useChat from './hooks/useChat';
+
+// API
+import { generateSampleCase, extractDisease, extractEvents, retrieveAndAnalyzeArticles, generateFinalAnalysis } from './utils/api';
+
+// Utilities
+const createMessageId = (type) => `${Date.now()}-${type}-${Math.random().toString(36).substr(2, 9)}`;
 
 const MedicalAssistantUI = ({ user }) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -262,8 +271,8 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
                   processedArticles // Use the local array instead of the state
                 );
               
-                // Create a formatted message for the chat
-                const message = {
+                // Send the analysis as a message using the existing handleSendMessage function
+                const analysisContent = {
                   type: 'analysis',
                   content: `
 # Case Summary
@@ -295,12 +304,10 @@ ${finalAnalysis.multi_target_opportunities.map(opp => `
 - Targets: ${opp.targeted_events.join(', ')}
 - Evidence: [PMID: ${opp.evidence.pmid}](${opp.evidence.link})
 - Summary: ${opp.evidence.summary}
-`).join('\n')}` : ''}
-`,
-                  timestamp: new Date().toISOString()
+`).join('\n')}` : ''}`
                 };
                 
-                handleSendMessage(message);
+                handleSendMessage(analysisContent);
                 setCurrentProgress('Final analysis complete.');
               } catch (error) {
                 console.error('Error generating final analysis:', error);
