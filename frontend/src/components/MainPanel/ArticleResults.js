@@ -31,16 +31,16 @@ const ArticleResults = ({ currentProgress, articles }) => {
           <table className="min-w-max bg-white border border-gray-300" style={{ minWidth: '120%' }}>
             <thead>
               <tr>
-                <th className="px-2 py-1 text-xs border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">PMID</th>
-                <th className="px-2 py-1 text-xs border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">Title</th>
-                <th className="px-2 py-1 text-xs border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">Year</th>
-                <th className="px-2 py-1 text-xs border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">Type of Cancer</th>
-                <th className="px-2 py-1 text-xs border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">Paper Type</th>
-                <th className="px-2 py-1 text-xs border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">Actionable Events</th>
-                <th className="px-2 py-1 text-xs border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">Drugs Tested</th>
-                <th className="px-2 py-1 text-xs border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">Drug Results</th>
-                <th className="px-2 py-1 text-xs border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">Full Article</th>
-                <th className="px-2 py-1 text-xs border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">Points</th>
+                <th className="px-4 py-2 text-xs border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">PMID</th>
+                <th className="px-4 py-2 text-xs border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">Title</th>
+                <th className="px-4 py-2 text-xs border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">Year</th>
+                <th className="px-4 py-2 text-xs border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">Type of Cancer</th>
+                <th className="px-4 py-2 text-xs border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">Paper Type</th>
+                <th className="px-4 py-2 text-xs border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">Actionable Events</th>
+                <th className="px-4 py-2 text-xs border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">Drugs Tested</th>
+                <th className="px-4 py-2 text-xs border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">Drug Results</th>
+                <th className="px-4 py-2 text-xs border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">Full Article</th>
+                <th className="px-4 py-2 text-xs border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">Points</th>
               </tr>
             </thead>
             <tbody>
@@ -51,16 +51,16 @@ const ArticleResults = ({ currentProgress, articles }) => {
 
                 return (
                   <tr key={index}>
-                    <td className="px-2 py-1 text-xs border-t text-gray-500 max-h-20 overflow-y-auto">
+                    <td className="px-4 py-2 text-xs border-t text-gray-500 max-h-20 overflow-y-auto">
                       <a href={`https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
                         {article.pmid}
                       </a>
                     </td>
-                    <td className="px-2 py-1 text-xs border-t text-gray-500 max-h-20 overflow-y-auto">{article.title}</td>
-                    <td className="px-2 py-1 text-xs border-t text-gray-500">{article.year}</td>
-                    <td className="px-2 py-1 text-xs border-t text-gray-500 max-h-20 overflow-y-auto">{article.cancer}</td>
-                    <td className="px-2 py-1 text-xs border-t text-gray-500">{article.type}</td>
-                    <td className="px-2 py-1 text-xs border-t text-gray-500 max-h-20 overflow-y-auto">
+                    <td className="px-4 py-2 text-xs border-t text-gray-500" style={{ maxHeight: '80px', overflowY: 'auto', display: 'block', minWidth: '200px', padding: '8px 16px' }}>{article.title}</td>
+                    <td className="px-4 py-2 text-xs border-t text-gray-500">{article.year}</td>
+                    <td className="px-4 py-2 text-xs border-t text-gray-500" style={{ maxHeight: '80px', overflowY: 'auto', display: 'block', minWidth: '150px', padding: '8px 16px' }}>{article.cancer}</td>
+                    <td className="px-4 py-2 text-xs border-t text-gray-500">{article.type}</td>
+                    <td className="px-4 py-2 text-xs border-t text-gray-500" style={{ maxHeight: '80px', overflowY: 'auto', display: 'block', minWidth: '200px', padding: '8px 16px' }}>
                       {article.events.map((event, i) => (
                         <React.Fragment key={i}>
                           {i > 0 && ', '}
@@ -70,9 +70,9 @@ const ArticleResults = ({ currentProgress, articles }) => {
                         </React.Fragment>
                       ))}
                     </td>
-                    <td className="px-2 py-1 text-xs border-t text-gray-500">{article.drugs_tested ? 'Yes' : 'No'}</td>
-                    <td className="px-2 py-1 text-xs border-t text-gray-500 max-h-20 overflow-y-auto">{article.drug_results?.join(', ') || 'None'}</td>
-                    <td className="px-2 py-1 text-xs border-t text-gray-500">
+                    <td className="px-4 py-2 text-xs border-t text-gray-500">{article.drugs_tested ? 'Yes' : 'No'}</td>
+                    <td className="px-4 py-2 text-xs border-t text-gray-500" style={{ maxHeight: '80px', overflowY: 'auto', display: 'block', minWidth: '250px', padding: '8px 16px' }}>{article.drug_results?.join(', ') || 'None'}</td>
+                    <td className="px-4 py-2 text-xs border-t text-gray-500">
                       <button
                         onClick={() => {
                           const width = 800;
@@ -108,7 +108,7 @@ const ArticleResults = ({ currentProgress, articles }) => {
                         View Article
                       </button>
                     </td>
-                    <td className="px-2 py-1 text-xs border-t text-gray-500">
+                    <td className="px-4 py-2 text-xs border-t text-gray-500">
                       <button
                         onClick={() => {
                           const width = 800;
