@@ -1,6 +1,11 @@
 import React from 'react';
 
 const ArticleResults = ({ currentProgress, articles }) => {
+  // Only render if we have articles or a progress message
+  if (!articles?.length && !currentProgress) {
+    return null;
+  }
+
   return (
     <div>
       {currentProgress && (

@@ -295,10 +295,12 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
                   currentProgress: currentProgress
                 }
               };
+              console.log('Sending document message to handleSendMessage:', JSON.stringify(documentsContent, null, 2));
               await handleSendMessage(documentsContent);
+              console.log('Document message sent successfully');
 
               try {
-                console.log('Sending final analysis request with processed articles:', processedArticles.length);
+                console.log('Starting final analysis with processed articles:', processedArticles.length);
                 const finalAnalysis = await generateFinalAnalysis(
                   combinedNotes,
                   extractedDisease,
@@ -343,7 +345,9 @@ ${finalAnalysis.multi_target_opportunities.map(opp => `
                 };
                 
                 // Send the analysis message
+                console.log('Sending analysis message to handleSendMessage:', JSON.stringify(analysisContent, null, 2));
                 await handleSendMessage(analysisContent);
+                console.log('Analysis message sent successfully');
                 setCurrentProgress('Final analysis complete.');
               } catch (error) {
                 console.error('Error generating final analysis:', error);

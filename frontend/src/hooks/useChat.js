@@ -2,6 +2,8 @@
 import { useState, useCallback } from 'react';
 import { createNewChat, addMessageToChat } from '../firebase';
 import { retrieveAndAnalyzeArticles } from '../utils/api';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 const createMessageId = (type) => `${Date.now()}-${type}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -11,6 +13,21 @@ const useChat = (user, selectedTemplate) => {
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   const [activeChat, setActiveChat] = useState(null);
   const [message, setMessage] = useState('');
+
+  // Function to get latest messages from Firestore
+  const getLatestMessages = async (userId, chatId) => {
+    try {
+      const chatRef = doc(db, `chats/${userId}/conversations/${chatId}`);
+      const chatDoc = await getDoc(chatRef);
+      if (chatDoc.exists()) {
+        return chatDoc.data().messages || [];
+      }
+      return [];
+    } catch (error) {
+      console.error('Error getting latest messages:', error);
+      return [];
+    }
+  };
 
   const initializeActiveChat = useCallback(async (caseNotes, labResults, extractedDisease, extractedEvents) => {
     if (!user) return;
@@ -159,6 +176,12 @@ const handleSendMessage = useCallback(async (e) => {
 
       // For document type or analysis, update the existing chat history and Firestore
       if (e.type === 'document' || e.type === 'analysis') {
+        console.log(`${e.type} message handling - Start`);
+        
+        // Get latest messages from Firestore
+        const latestMessages = await getLatestMessages(user.uid, currentChatId);
+        console.log('Current messages in Firestore:', JSON.stringify(latestMessages, null, 2));
+        
         const timestamp = new Date();
         const messageId = createMessageId(e.type);
         
@@ -186,42 +209,30 @@ const handleSendMessage = useCallback(async (e) => {
           messageId
         };
 
-        // Update chat history
-        if (e.type === 'document') {
-          setChatHistory(prev => {
-            const lastDocumentIndex = prev.findIndex(msg => msg.type === 'document');
-            if (lastDocumentIndex !== -1) {
-              const updatedHistory = [...prev];
-              updatedHistory[lastDocumentIndex] = newMessage;
-              return updatedHistory;
-            }
-            return [...prev, newMessage];
-          });
-        } else {
-          setChatHistory(prev => [...prev, newMessage]);
-        }
+        console.log(`${e.type} message to add:`, JSON.stringify(firestoreMessage, null, 2));
+
+        // Always add new messages to chat history
+        setChatHistory(prev => [...prev, newMessage]);
 
         // Update Firestore if user is logged in
         if (user) {
-          if (e.type === 'document') {
-            const existingDocIndex = messagesForFirestore.findIndex(msg => msg.type === 'document');
-            if (existingDocIndex !== -1) {
-              messagesForFirestore[existingDocIndex] = firestoreMessage;
-            } else {
-              messagesForFirestore.push(firestoreMessage);
-            }
-          } else {
-            messagesForFirestore.push(firestoreMessage);
-          }
-
-          // Set the messages array in activeChat to keep it in sync
-          setActiveChat(current => ({
-            ...current,
-            messages: messagesForFirestore
-          }));
+          console.log(`${e.type} - Before push:`, JSON.stringify(latestMessages, null, 2));
+          
+          // Add new message to latest messages
+          latestMessages.push(firestoreMessage);
+          
+          console.log(`${e.type} - After push:`, JSON.stringify(latestMessages, null, 2));
 
           // Update Firestore with the complete messages array
-          await addMessageToChat(user.uid, currentChatId, messagesForFirestore);
+          await addMessageToChat(user.uid, currentChatId, latestMessages);
+          
+          console.log(`${e.type} - After Firestore update:`, JSON.stringify(latestMessages, null, 2));
+
+          // Update activeChat state with the latest messages
+          setActiveChat(current => ({
+            ...current,
+            messages: latestMessages
+          }));
         }
       }
 
@@ -274,56 +285,100 @@ const handleSendMessage = useCallback(async (e) => {
 
         setIsLoadingDocs(true);
         try {
+          // Log current state before starting callbacks
+          console.log('Current activeChat state before callbacks:', JSON.stringify(activeChat, null, 2));
+          
           await retrieveAndAnalyzeArticles(
             userMessage,
             [],  // events array
             selectedTemplate?.content || "",
-            (data) => {
+            async (data) => {
               if (data.type === 'analysis') {
+                const timestamp = new Date();
+                const messageId = createMessageId('analysis');
+                
                 const analysisMessage = {
-                  id: createMessageId('analysis'),
+                  id: messageId,
                   isUser: false,
                   analysis: data.data.analysis,
-                  timestamp: new Date()
+                  timestamp
                 };
 
                 if (user) {
-                  messagesForFirestore.push({
+                  const firestoreMessage = {
                     content: data.data.analysis,
                     role: 'assistant',
-                    timestamp: new Date(),
+                    timestamp,
                     type: 'analysis',
-                    messageId: analysisMessage.id
-                  });
+                    messageId
+                  };
+                  
+                  // Get latest messages from Firestore
+                  const latestMessages = await getLatestMessages(user.uid, currentChatId);
+                  console.log('Analysis - Latest messages from Firestore:', JSON.stringify(latestMessages, null, 2));
+                  
+                  // Add new message to latest messages
+                  latestMessages.push(firestoreMessage);
+                  
+                  console.log('Analysis - After push:', JSON.stringify(latestMessages, null, 2));
+                  
+                  // Update Firestore with the updated message array
+                  await addMessageToChat(user.uid, currentChatId, latestMessages);
+                  
+                  console.log('Analysis - After Firestore update:', JSON.stringify(latestMessages, null, 2));
+                  
+                  // Update activeChat state with the latest messages
+                  setActiveChat(current => ({
+                    ...current,
+                    messages: latestMessages
+                  }));
                 }
 
                 setChatHistory(prev => [...prev, analysisMessage]);
               } else if (data.type === 'pmids') {
+                const timestamp = new Date();
+                const messageId = createMessageId('document');
+                
                 const docsMessage = {
-                  id: createMessageId('assistant-docs'),
-                  text: "I've found relevant articles and am analyzing them...",
+                  id: messageId,
+                  type: 'document',
                   isUser: false,
-                  documents: {
-                    pmids: data.data.pmids || []
-                  },
-                  timestamp: new Date()
+                  currentProgress: "I've found relevant articles and am analyzing them...",
+                  articles: [],
+                  timestamp
                 };
 
                 if (user) {
-                  messagesForFirestore.push({
-                    content: JSON.stringify(docsMessage.documents),
+                  const firestoreMessage = {
+                    content: JSON.stringify(docsMessage),
                     role: 'assistant',
-                    timestamp: new Date(),
-                    type: 'documents',
-                    messageId: docsMessage.id
-                  });
+                    timestamp,
+                    type: 'document',
+                    messageId
+                  };
+                  
+                  // Get latest messages from Firestore
+                  const latestMessages = await getLatestMessages(user.uid, currentChatId);
+                  console.log('Document - Latest messages from Firestore:', JSON.stringify(latestMessages, null, 2));
+                  
+                  // Add new message to latest messages
+                  latestMessages.push(firestoreMessage);
+                  
+                  console.log('Document - After push:', JSON.stringify(latestMessages, null, 2));
+                  
+                  // Update Firestore with the updated message array
+                  await addMessageToChat(user.uid, currentChatId, latestMessages);
+                  
+                  console.log('Document - After Firestore update:', JSON.stringify(latestMessages, null, 2));
+                  
+                  // Update activeChat state with the latest messages
+                  setActiveChat(current => ({
+                    ...current,
+                    messages: latestMessages
+                  }));
                 }
 
                 setChatHistory(prev => [...prev, docsMessage]);
-              }
-
-              if (user) {
-                addMessageToChat(user.uid, currentChatId, messagesForFirestore).catch(console.error);
               }
             }
           );
