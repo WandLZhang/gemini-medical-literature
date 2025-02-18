@@ -24,7 +24,8 @@ const ChatContainer = ({
         <div className="space-y-4">
           {chatHistory.map((msg) => (
             <React.Fragment key={msg.id}>
-              <ChatMessage message={msg} />
+              {/* Only show ChatMessage if it's not an analysis message or if it has documents */}
+              {(!msg.analysis || msg.documents) && <ChatMessage message={msg} />}
               
               {/* Show documents if this message has them */}
               {msg.documents && (
@@ -33,7 +34,7 @@ const ChatContainer = ({
                 </div>
               )}
               
-              {/* Show analysis if this message has it */}
+              {/* Show analysis in a styled container */}
               {msg.analysis && (
                 <div className="ml-4 mt-2 bg-white rounded-lg shadow-md p-6">
                   <h2 className="text-2xl font-bold mb-4">Analysis Results</h2>
