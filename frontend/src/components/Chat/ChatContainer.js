@@ -58,16 +58,18 @@ const ChatContainer = ({
                         <div className="text-xs flex items-center gap-2 mb-1">
                           <span className="text-gray-600">{currentProgress}</span>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
-                          <div
-                            className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${(() => {
-                              const match = currentProgress?.match(/Processing article (\d+) of (\d+)/);
-                              if (!match) return 0;
-                              const [_, current, total] = match;
-                              return (parseInt(current) / parseInt(total)) * 100;
-                            })()}%` }}
-                          ></div>
+                        <div style={{ maxWidth: '400px' }}>
+                          <div className="bg-gray-200 rounded-full h-2 mb-4 overflow-hidden">
+                            <div
+                              className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                              style={{ width: `${(() => {
+                                const match = currentProgress?.match(/Processed article (\d+) out of (\d+)/);
+                                if (!match) return 0;
+                                const [_, current, total] = match;
+                                return (parseInt(current) / parseInt(total)) * 100;
+                              })()}%` }}
+                            ></div>
+                          </div>
                         </div>
                         {/* Show incremental table updates */}
                         <ArticleResults 

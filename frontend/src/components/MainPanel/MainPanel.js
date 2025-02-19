@@ -2,6 +2,7 @@ import React from 'react';
 import AnalysisSection from './AnalysisSection';
 import ChatContainer from '../Chat/ChatContainer';
 import ChatInput from '../ChatInput';
+import ArticleResults from './ArticleResults';
 
 const MainPanel = ({
   extractedDisease,

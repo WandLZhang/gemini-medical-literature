@@ -405,12 +405,6 @@ ${finalAnalysis.multi_target_opportunities.map(opp => `
             if (articleNumber > 0 && totalArticles > 0) {
               const progress = (articleNumber / totalArticles) * 100;
               setCurrentProgress(`Processed article ${articleNumber} out of ${totalArticles}`);
-              
-              // Update progress bar
-              const progressBar = document.getElementById('article-progress-bar');
-              if (progressBar) {
-                progressBar.style.width = `${progress}%`;
-              }
             }
           }
         },
