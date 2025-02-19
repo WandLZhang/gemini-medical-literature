@@ -6,12 +6,15 @@ import MarkdownRenderer from '../MarkdownRenderer';
 import ReactMarkdown from 'react-markdown';
 import ArticleResults from '../MainPanel/ArticleResults';
 
-const LoadingSpinner = ({ message }) => (
-  <div className="flex justify-center items-center p-4">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-    <span className="ml-2">{message}</span>
-  </div>
-);
+const LoadingSpinner = ({ message }) => {
+  console.log('LOADING_DEBUG: LoadingSpinner rendered with message:', message);
+  return (
+    <div className="flex justify-center items-center p-4">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      <span className="ml-2">{message}</span>
+    </div>
+  );
+};
 
 const ChatContainer = ({ 
   chatHistory, 
@@ -19,6 +22,7 @@ const ChatContainer = ({
   isLoadingDocs, 
   isLoadingAnalysis 
 }) => {
+  console.log('LOADING_DEBUG: ChatContainer render, isLoadingAnalysis:', isLoadingAnalysis);
   console.log('ChatContainer rendering with chatHistory:', 
     chatHistory.map(msg => ({
       id: msg.id,
@@ -63,9 +67,6 @@ const ChatContainer = ({
                 {/* Show analysis messages */}
                 {msg.analysis && (
                   <div className="ml-4 mt-2">
-                    <div className="text-lg font-semibold text-gray-700 mb-4">
-                      Final analysis complete.
-                    </div>
                     <div className="bg-white rounded-lg shadow-md p-6">
                       <h2 className="text-2xl font-bold mb-4">Analysis Results</h2>
                       <div className="prose prose-sm max-w-none prose-headings:text-gray-800 prose-headings:font-bold prose-h1:text-lg prose-h2:text-base prose-p:text-sm prose-p:text-gray-600 prose-li:text-sm prose-li:text-gray-600 prose-a:text-blue-600 hover:prose-a:text-blue-800 prose-headings:mb-2 prose-p:my-1 prose-ul:my-1 prose-li:my-0.5">
@@ -89,7 +90,9 @@ const ChatContainer = ({
         )}
 
         {isLoadingAnalysis && (
-          <LoadingSpinner message="Analyzing documents..." />
+          <div className="ml-4 mt-2">
+            <LoadingSpinner message="Preparing final analysis..." />
+          </div>
         )}
       </div>
     </div>

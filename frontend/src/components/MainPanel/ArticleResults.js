@@ -8,25 +8,18 @@ const ArticleResults = ({ currentProgress, articles }) => {
 
   return (
     <div>
-      {currentProgress && (
+      {currentProgress && currentProgress.includes('Processing article') && (
         <div className="mt-2">
           <div className="text-xs flex items-center gap-2 mb-1">
-            <span className={`${currentProgress.includes('final analysis') ? 'text-blue-600 font-medium' : 'text-gray-600'}`}>
-              {currentProgress}
-            </span>
-            {currentProgress.includes('final analysis') && (
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-            )}
+            <span className="text-gray-600">{currentProgress}</span>
           </div>
-          {currentProgress.includes('Processing article') && (
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div
-                id="article-progress-bar"
-                className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                style={{ width: '0%' }}
-              ></div>
-            </div>
-          )}
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              id="article-progress-bar"
+              className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+              style={{ width: '0%' }}
+            ></div>
+          </div>
         </div>
       )}
 

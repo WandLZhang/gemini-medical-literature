@@ -181,6 +181,13 @@ const handleSendMessage = useCallback(async (e) => {
       if (e.type === 'document' || e.type === 'analysis') {
         console.log(`${e.type} message handling - Start`);
         
+        // Handle analysis loading state
+        if (e.type === 'analysis' && e.content?.isLoading) {
+          console.log('LOADING_DEBUG: Setting isLoadingAnalysis to true from loading message');
+          setIsLoadingAnalysis(true);
+          return;
+        }
+        
         // Get latest messages from Firestore
         const latestMessages = await getLatestMessages(user.uid, currentChatId);
         console.log('Current messages in Firestore:', JSON.stringify(latestMessages, null, 2));
@@ -202,6 +209,12 @@ const handleSendMessage = useCallback(async (e) => {
           analysis: e.content,
           timestamp
         };
+
+        // If this is a real analysis message (not a loading state), set loading to false
+        if (e.type === 'analysis' && !e.content?.isLoading) {
+          console.log('LOADING_DEBUG: Setting isLoadingAnalysis to false after receiving analysis');
+          setIsLoadingAnalysis(false);
+        }
 
         // Create the message for Firestore
         const firestoreMessage = {
@@ -310,6 +323,7 @@ const handleSendMessage = useCallback(async (e) => {
           // Log current state before starting callbacks
           console.log('Current activeChat state before callbacks:', JSON.stringify(activeChat, null, 2));
           
+          console.log('LOADING_DEBUG: Calling API now...');
           await retrieveAndAnalyzeArticles(
             userMessage,
             [],  // events array
@@ -356,8 +370,15 @@ const handleSendMessage = useCallback(async (e) => {
                   }));
                 }
 
-                setChatHistory(prev => [...prev, analysisMessage]);
+                setChatHistory(prev => {
+                  const updated = [...prev, analysisMessage];
+                  console.log('LOADING_DEBUG: Setting isLoadingAnalysis to false after analysis message added');
+                  setIsLoadingAnalysis(false);
+                  return updated;
+                });
               } else if (data.type === 'pmids') {
+                console.log('LOADING_DEBUG: Setting isLoadingAnalysis to true for final analysis');
+                setIsLoadingAnalysis(true);
                 const timestamp = new Date();
                 const messageId = createMessageId('document');
                 
@@ -424,7 +445,6 @@ const handleSendMessage = useCallback(async (e) => {
             }
           );
           setIsLoadingDocs(false);
-          setIsLoadingAnalysis(false);
         } catch (error) {
           console.error('Error processing request:', error);
           const errorMessage = {
@@ -446,6 +466,7 @@ const handleSendMessage = useCallback(async (e) => {
           }
           
           setIsLoadingDocs(false);
+          console.log('LOADING_DEBUG: Setting isLoadingAnalysis to false in error handler');
           setIsLoadingAnalysis(false);
           setChatHistory(prev => [...prev, errorMessage]);
           

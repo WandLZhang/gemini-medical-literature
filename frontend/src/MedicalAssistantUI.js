@@ -258,6 +258,7 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
   const handleRetrieve = async () => {
     if (!extractedDisease || !extractedEvents.length) return;
     setIsRetrieving(true);
+    setIsPromptExpanded(false);
     setArticles([]);
     setCurrentProgress('');
     setTotalArticles(0);
@@ -302,6 +303,15 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
 
               try {
                 console.log('Starting final analysis with processed articles:', processedArticles.length);
+                // Send the analysis loading state message
+                const loadingContent = {
+                  type: 'analysis',
+                  content: {
+                    isLoading: true
+                  }
+                };
+                await handleSendMessage(loadingContent);
+
                 const finalAnalysis = await generateFinalAnalysis(
                   combinedNotes,
                   extractedDisease,
@@ -452,7 +462,7 @@ ${finalAnalysis.multi_target_opportunities.map(opp => `
           handleRetrieve={handleRetrieve}
           isBox3Hovered={isBox3Hovered}
           setIsBox3Hovered={setIsBox3Hovered}
-          isPromptExpanded={!hasDocumentMessages}
+          isPromptExpanded={isPromptExpanded}
           setIsPromptExpanded={setIsPromptExpanded}
           promptContent={promptContent}
           setPromptContent={setPromptContent}

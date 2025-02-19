@@ -218,7 +218,7 @@ export const deleteTemplate = async (templateId) => {
  */
 export const generateFinalAnalysis = async (caseNotes, disease, events, analyzedArticles) => {
   try {
-    console.log('Sending final analysis request with:', {
+    console.log('LOADING_DEBUG: Starting final analysis request with:', {
       case_notes: caseNotes,
       disease,
       events,
@@ -245,6 +245,7 @@ export const generateFinalAnalysis = async (caseNotes, disease, events, analyzed
     }
 
     const data = await response.json();
+    console.log('LOADING_DEBUG: Final analysis response received');
     return data.analysis;
   } catch (error) {
     console.error('Error generating final analysis:', error);

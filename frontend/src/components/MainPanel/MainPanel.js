@@ -28,6 +28,11 @@ const MainPanel = ({
   handleGenerateSampleCase,
   hasDocumentMessages
 }) => {
+  React.useEffect(() => {
+    console.log('LOADING_DEBUG: MainPanel isLoadingAnalysis changed to:', isLoadingAnalysis);
+  }, [isLoadingAnalysis]);
+
+  console.log('LOADING_DEBUG: MainPanel render, isLoadingAnalysis:', isLoadingAnalysis);
 
   return (
     <main className={`flex-1 flex flex-col min-h-0 pl-12 pt-10 transition-all duration-500 ease-in-out
@@ -46,6 +51,7 @@ const MainPanel = ({
         currentProgress={currentProgress}
         numArticles={numArticles}
         setNumArticles={setNumArticles}
+        hasDocumentMessages={hasDocumentMessages}
       />
       <ChatContainer 
         chatHistory={chatHistory}

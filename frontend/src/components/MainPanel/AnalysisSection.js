@@ -14,22 +14,15 @@ const AnalysisSection = ({
   setPromptContent,
   currentProgress,
   numArticles,
-  setNumArticles
+  setNumArticles,
+  hasDocumentMessages
 }) => {
-  // Track if we've already minimized for this analysis session
-  const hasMinimized = React.useRef(false);
-
-  // Minimize the section only when first article is processed
+  // Minimize the section when box widens or first article arrives
   React.useEffect(() => {
-    if (currentProgress?.includes("Processed article 1 out of") && !hasMinimized.current) {
+    if (isRetrieving || hasDocumentMessages || currentProgress) {
       setIsPromptExpanded(false);
-      hasMinimized.current = true;
     }
-    // Reset the flag when retrieval is complete (no currentProgress)
-    if (!currentProgress) {
-      hasMinimized.current = false;
-    }
-  }, [currentProgress, setIsPromptExpanded]);
+  }, [isRetrieving, hasDocumentMessages, currentProgress, setIsPromptExpanded]);
 
   return (
   <div 
