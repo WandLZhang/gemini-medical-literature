@@ -19,6 +19,14 @@ const ChatContainer = ({
   isLoadingDocs, 
   isLoadingAnalysis 
 }) => {
+  console.log('ChatContainer rendering with chatHistory:', 
+    chatHistory.map(msg => ({
+      id: msg.id,
+      type: msg.type,
+      hasAnalysis: !!msg.analysis,
+      timestamp: msg.timestamp
+    }))
+  );
   return (
     <div className="flex-1 overflow-y-auto space-y-4">
       <div className="max-w-[95%] space-y-6 px-4">
@@ -37,6 +45,13 @@ const ChatContainer = ({
                 
                 {/* Show document type messages (article table) */}
                 {msg.type === 'document' && (
+                  console.log('Rendering ArticleResults with:', {
+                    id: msg.id,
+                    type: msg.type,
+                    hasArticles: !!msg.articles?.length,
+                    currentProgress: msg.currentProgress,
+                    timestamp: msg.timestamp
+                  }),
                   <div className="ml-4 mt-2">
                     <ArticleResults 
                       currentProgress={msg.currentProgress}

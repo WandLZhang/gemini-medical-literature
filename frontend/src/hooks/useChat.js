@@ -215,7 +215,26 @@ const handleSendMessage = useCallback(async (e) => {
         console.log(`${e.type} message to add:`, JSON.stringify(firestoreMessage, null, 2));
 
         // Always add new messages to chat history
-        setChatHistory(prev => [...prev, newMessage]);
+        setChatHistory(prev => {
+          console.log('useChat - chatHistory before adding new message:', 
+            prev.map(msg => ({
+              id: msg.id,
+              type: msg.type,
+              hasAnalysis: !!msg.analysis,
+              timestamp: msg.timestamp
+            }))
+          );
+          const updated = [...prev, newMessage];
+          console.log('useChat - chatHistory after adding new message:', 
+            updated.map(msg => ({
+              id: msg.id,
+              type: msg.type,
+              hasAnalysis: !!msg.analysis,
+              timestamp: msg.timestamp
+            }))
+          );
+          return updated;
+        });
 
         // Update Firestore if user is logged in
         if (user) {
@@ -381,7 +400,26 @@ const handleSendMessage = useCallback(async (e) => {
                   }));
                 }
 
-                setChatHistory(prev => [...prev, docsMessage]);
+                setChatHistory(prev => {
+                  console.log('useChat - chatHistory before adding document message:', 
+                    prev.map(msg => ({
+                      id: msg.id,
+                      type: msg.type,
+                      hasAnalysis: !!msg.analysis,
+                      timestamp: msg.timestamp
+                    }))
+                  );
+                  const updated = [...prev, docsMessage];
+                  console.log('useChat - chatHistory after adding document message:', 
+                    updated.map(msg => ({
+                      id: msg.id,
+                      type: msg.type,
+                      hasAnalysis: !!msg.analysis,
+                      timestamp: msg.timestamp
+                    }))
+                  );
+                  return updated;
+                });
               }
             }
           );

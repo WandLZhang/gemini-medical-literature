@@ -28,17 +28,6 @@ const MainPanel = ({
   handleGenerateSampleCase,
   hasDocumentMessages
 }) => {
-  // Create a document message for article results if we have progress or articles
-  const chatHistoryWithArticles = [...chatHistory];
-  if (currentProgress || articles.length > 0) {
-    chatHistoryWithArticles.push({
-      id: 'article-results',
-      type: 'document',
-      isUser: false,
-      currentProgress,
-      articles
-    });
-  }
 
   return (
     <main className={`flex-1 flex flex-col min-h-0 pl-12 pt-10 transition-all duration-500 ease-in-out
@@ -59,7 +48,7 @@ const MainPanel = ({
         setNumArticles={setNumArticles}
       />
       <ChatContainer 
-        chatHistory={chatHistoryWithArticles}
+        chatHistory={chatHistory}
         isGeneratingSample={isGeneratingSample}
         isLoadingDocs={isLoadingDocs}
         isLoadingAnalysis={isLoadingAnalysis}
