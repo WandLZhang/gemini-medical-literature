@@ -5,7 +5,13 @@ const CaseInputSection = ({
   setCaseNotes,
   labResults,
   setLabResults
-}) => (
+}) => {
+  const handleClear = () => {
+    setCaseNotes('');
+    setLabResults('');
+  };
+
+  return (
   <div className="bg-white shadow-lg rounded-lg p-4">
     <div className="mb-1">
       <h2 className="text-xs font-medium text-gray-700">1 - Input your case notes and lab results</h2>
@@ -30,7 +36,16 @@ const CaseInputSection = ({
         />
       </div>
     </div>
+    <div className="flex justify-end mt-1">
+      <button
+        onClick={handleClear}
+        className="text-blue-500 italic text-[10px] hover:text-blue-700"
+      >
+        Clear
+      </button>
+    </div>
   </div>
-);
+  );
+};
 
 export default CaseInputSection;

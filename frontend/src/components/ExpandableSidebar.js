@@ -145,7 +145,7 @@ const ExpandableSidebar = ({ user, onChatSelect, activeChat, initializeNewChat }
         };
         setChats(prevChats => [newChat, ...prevChats]);
         onChatSelect(newChat);
-        setIsExpanded(true); // Ensure sidebar is expanded when creating new chat
+        setIsExpanded(false); // Minimize sidebar after creating new chat
       } catch (error) {
         console.error('Error creating new chat:', error);
       }
@@ -160,7 +160,7 @@ const ExpandableSidebar = ({ user, onChatSelect, activeChat, initializeNewChat }
         className="absolute right-0 top-4 translate-x-full bg-gray-800 p-2 rounded-r-lg shadow-lg hover:bg-gray-700 transition-colors text-white"
         aria-label={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
       >
-        {isExpanded ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+        {isExpanded ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
       </button>
 
       {/* Sidebar content */}
@@ -185,7 +185,10 @@ const ExpandableSidebar = ({ user, onChatSelect, activeChat, initializeNewChat }
                       key={chat.id}
                       chat={chat}
                       isActive={activeChat?.id === chat.id}
-                      onClick={() => onChatSelect(chat)}
+                      onClick={() => {
+                        onChatSelect(chat);
+                        setIsExpanded(false);
+                      }}
                       onRename={handleRenameChat}
                       onDelete={handleDeleteChat}
                     />

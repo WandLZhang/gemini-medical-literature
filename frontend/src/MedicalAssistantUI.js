@@ -212,6 +212,10 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
         setExtractedDisease(extractedDisease);
         setExtractedEvents(extractedEvents);
       }
+    } else {
+      // Clear extraction content when there's no chat history
+      setExtractedDisease('');
+      setExtractedEvents([]);
     }
   }, [chatHistory]);
 
