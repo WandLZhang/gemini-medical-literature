@@ -100,10 +100,10 @@ const ChatContainer = ({
                 {/* Show analysis messages */}
                 {msg.analysis && (
                   <div className="ml-4 mt-2">
-                    <div className="bg-white rounded-lg shadow-md p-6">
-                      <h2 className="text-2xl font-bold mb-4">Analysis Results</h2>
-                      <div className="prose prose-sm max-w-none prose-headings:text-gray-800 prose-headings:font-bold prose-h1:text-lg prose-h2:text-base prose-p:text-sm prose-p:text-gray-600 prose-li:text-sm prose-li:text-gray-600 prose-a:text-blue-600 hover:prose-a:text-blue-800 prose-headings:mb-2 prose-p:my-1 prose-ul:my-1 prose-li:my-0.5">
-                        <ReactMarkdown>{msg.analysis}</ReactMarkdown>
+                    <div className="bg-white rounded-lg shadow-md p-8">
+                      <h2 className="text-2xl font-bold mb-6 text-gray-900">Analysis Results</h2>
+                      <div className="space-y-8">
+                        <MarkdownRenderer content={msg.analysis} />
                       </div>
                     </div>
                   </div>

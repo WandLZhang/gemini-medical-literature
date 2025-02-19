@@ -4,8 +4,8 @@ import remarkGfm from 'remark-gfm';
 import { Maximize2, Minimize2 } from 'lucide-react';
 
 const CustomTable = ({ children }) => (
-  <div className="overflow-x-auto max-w-full">
-    <table className="min-w-full bg-white border border-gray-300">
+  <div className="overflow-x-auto max-w-full my-6">
+    <table className="min-w-full bg-white border border-gray-300 rounded-lg shadow-sm table-fixed">
       {children}
     </table>
   </div>
@@ -13,15 +13,43 @@ const CustomTable = ({ children }) => (
 
 const CustomTableCell = ({ children, isHeader }) => {
   const content = React.Children.map(children, child => {
-    if (typeof child === 'string' && child.startsWith('https://')) {
-      return <a href={child} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">[Link]</a>;
+    if (typeof child === 'string') {
+      // Handle PMID links
+      if (child.includes('[PMID:')) {
+        const pmidMatch = child.match(/\[PMID:\s*(\d+)\]/);
+        if (pmidMatch) {
+          const pmid = pmidMatch[1];
+          return (
+            <a 
+              href={`https://pubmed.ncbi.nlm.nih.gov/${pmid}/`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 font-medium"
+            >
+              PMID: {pmid}
+            </a>
+          );
+        }
+      }
+      // Handle bullet points
+      if (child.includes('* ')) {
+        return (
+          <ul className="list-disc pl-4 space-y-1">
+            {child.split('* ').filter(Boolean).map((item, i) => (
+              <li key={i} className="text-gray-700">{item.trim()}</li>
+            ))}
+          </ul>
+        );
+      }
     }
     return child;
   });
 
   const Tag = isHeader ? 'th' : 'td';
-  const baseClasses = "px-4 py-2 text-sm border-t";
-  const headerClasses = isHeader ? "font-semibold text-gray-600 uppercase tracking-wider bg-gray-100" : "text-gray-500";
+  const baseClasses = "px-6 py-4 text-sm border-t whitespace-pre-wrap";
+  const headerClasses = isHeader 
+    ? "font-semibold text-gray-700 uppercase tracking-wider bg-gray-50" 
+    : "text-gray-600 align-top";
 
   return (
     <Tag className={`${baseClasses} ${headerClasses}`}>
@@ -47,16 +75,34 @@ const MarkdownRenderer = ({ content }) => {
         remarkPlugins={[remarkGfm]}
         components={{
           table: CustomTable,
-          thead: ({ children }) => <thead>{children}</thead>,
+          thead: ({ children }) => <thead className="bg-gray-50 border-b border-gray-300">{children}</thead>,
+          tbody: ({ children }) => <tbody className="divide-y divide-gray-200">{children}</tbody>,
           th: ({ children }) => <CustomTableCell isHeader={true}>{children}</CustomTableCell>,
           td: ({ children }) => <CustomTableCell isHeader={false}>{children}</CustomTableCell>,
-          h1: ({ node, ...props }) => <h1 className="text-3xl font-bold mt-8 mb-4" {...props} />,
-          h2: ({ node, ...props }) => <h2 className="text-2xl font-bold mt-6 mb-3" {...props} />,
-          h3: ({ node, ...props }) => <h3 className="text-xl font-semibold mt-4 mb-2" {...props} />,
-          p: ({ node, ...props }) => <p className="mb-4" {...props} />,
-          ul: ({ node, ...props }) => <ul className="list-disc pl-5 mb-4" {...props} />,
-          ol: ({ node, ...props }) => <ol className="list-decimal pl-5 mb-4" {...props} />,
-          a: ({ node, ...props }) => <a className="text-blue-500 hover:underline" {...props} />,
+          h1: ({ node, ...props }) => <h1 className="text-2xl font-bold text-gray-900 mt-6 mb-4" {...props} />,
+          h2: ({ node, ...props }) => <h2 className="text-xl font-semibold text-gray-800 mt-5 mb-3" {...props} />,
+          h3: ({ node, ...props }) => <h3 className="text-lg font-medium text-gray-800 mt-4 mb-2" {...props} />,
+          p: ({ node, ...props }) => <p className="text-gray-600 leading-relaxed mb-4" {...props} />,
+          ul: ({ node, ...props }) => <ul className="list-disc pl-5 mb-4 text-gray-600" {...props} />,
+          ol: ({ node, ...props }) => <ol className="list-decimal pl-5 mb-4 text-gray-600" {...props} />,
+          a: ({ node, ...props }) => (
+            <a 
+              className="text-blue-600 hover:text-blue-800 font-medium" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              {...props} 
+            />
+          ),
+          strong: ({ node, ...props }) => <strong className="font-semibold text-gray-900" {...props} />,
+          em: ({ node, ...props }) => <em className="text-gray-800" {...props} />,
+          blockquote: ({ node, ...props }) => (
+            <blockquote className="border-l-4 border-gray-200 pl-4 py-2 my-4 text-gray-600 italic" {...props} />
+          ),
+          code: ({ node, inline, ...props }) => (
+            inline 
+              ? <code className="px-1 py-0.5 bg-gray-100 rounded text-sm font-mono text-gray-800" {...props} />
+              : <code className="block bg-gray-50 p-4 rounded-lg text-sm font-mono text-gray-800 overflow-x-auto" {...props} />
+          ),
         }}
       />
     </div>

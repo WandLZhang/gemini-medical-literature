@@ -324,37 +324,7 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
                 // Send the analysis as a separate message
                 const analysisContent = {
                   type: 'analysis',
-                  content: `
-# Case Summary
-${finalAnalysis.case_summary}
-
-# Actionable Events Analysis
-${finalAnalysis.actionable_events.map(event => `
-## ${event.event}
-- Type: ${event.type}
-- Explanation: ${event.explanation}
-- Targetable: ${event.targetable ? 'Yes' : 'No'}
-- Prognostic Value: ${event.prognostic_value}
-`).join('\n')}
-
-# Treatment Recommendations
-${finalAnalysis.treatment_recommendations.map(rec => `
-## For ${rec.actionable_event}
-- Treatment: ${rec.treatment}
-- Evidence: [PMID: ${rec.evidence.pmid}](${rec.evidence.link})
-- Evidence Summary: ${rec.evidence.summary}
-${rec.previous_use.was_used ? `- Previous Response: ${rec.previous_use.response}` : ''}
-${rec.warnings.length > 0 ? `- Warnings:\n${rec.warnings.map(w => `  * ${w}`).join('\n')}` : ''}
-`).join('\n')}
-
-${finalAnalysis.multi_target_opportunities.length > 0 ? `
-# Multi-Target Opportunities
-${finalAnalysis.multi_target_opportunities.map(opp => `
-## ${opp.treatment}
-- Targets: ${opp.targeted_events.join(', ')}
-- Evidence: [PMID: ${opp.evidence.pmid}](${opp.evidence.link})
-- Summary: ${opp.evidence.summary}
-`).join('\n')}` : ''}`
+                  content: finalAnalysis.markdown_content
                 };
                 
                 // Send the analysis message

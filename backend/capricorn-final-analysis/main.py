@@ -113,51 +113,46 @@ ANALYZED ARTICLES:
 {'\n'.join(articles_table)}
 {'='*80}
 
-Based on the clinical input, actionable events, and the analyzed articles above, please provide a comprehensive analysis in the following JSON format:
+Based on the clinical input, actionable events, and the analyzed articles above, please provide a comprehensive analysis in markdown format with the following sections:
 
-{{
-    "case_summary": "Brief summary of the case",
-    "actionable_events": [
-        {{
-            "event": "Name of the event",
-            "explanation": "Short explanation of the event's relevance to the disease",
-            "type": "genetic|immune|other",
-            "targetable": true/false,
-            "prognostic_value": "Description of prognostic significance if any"
-        }}
-    ],
-    "treatment_recommendations": [
-        {{
-            "actionable_event": "Event being targeted",
-            "treatment": "Suggested treatment",
-            "evidence": {{
-                "pmid": "PMID of the source",
-                "link": "https://pubmed.ncbi.nlm.nih.gov/PMID/",
-                "summary": "Brief summary of the evidence"
-            }},
-            "previous_use": {{
-                "was_used": true/false,
-                "response": "Description of previous response if applicable"
-            }},
-            "warnings": [
-                "Any warnings about sensitivities, adverse events, or allergies"
-            ]
-        }}
-    ],
-    "multi_target_opportunities": [
-        {{
-            "treatment": "Treatment name",
-            "targeted_events": ["event1", "event2"],
-            "evidence": {{
-                "pmid": "PMID of the source",
-                "link": "https://pubmed.ncbi.nlm.nih.gov/PMID/",
-                "summary": "Summary of evidence for multi-targeting"
-            }}
-        }}
-    ]
-}}
+## Case Analysis: {disease}
 
-IMPORTANT: Return ONLY the raw JSON object. Do not include any explanatory text, markdown formatting, or code blocks."""
+### 1. Case Summary
+A brief paragraph summarizing the case.
+
+### 2. Actionable Events Analysis
+| Event | Type | Explanation | Targetable | Prognostic Value |
+|-------|------|-------------|------------|------------------|
+[Fill with event details, one row per event]
+
+### 3. Treatment Recommendations
+| Event | Treatment | Evidence (PMID) | Evidence Summary | Previous Response | Warnings |
+|-------|-----------|----------------|------------------|-------------------|-----------|
+[Fill with treatment details, one row per recommendation]
+
+### 4. Multi-Target Opportunities
+| Treatment Combination | Targeted Events | Evidence (PMID) | Summary |
+|---------------------|-----------------|----------------|----------|
+[Fill with combination details, one row per opportunity]
+
+IMPORTANT FORMATTING NOTES:
+1. Use proper markdown table syntax with | separators and aligned headers
+2. Format PMID links as [PMID: 12345](https://pubmed.ncbi.nlm.nih.gov/12345/)
+3. For multiple items in a cell, use bullet points:
+   * First item
+   * Second item
+4. Keep content concise but informative
+5. Ensure table cells are properly aligned
+6. Use proper markdown headers (##, ###) for sections
+
+IMPORTANT NOTES:
+- Include any warnings about sensitivities, adverse events, or allergies in the Warnings column
+- If a treatment was previously used, include the response details in the Previous Response column
+- Keep explanations and summaries concise but informative
+- Ensure all PMIDs are formatted as clickable links
+- Use bullet points in cells where multiple items need to be listed
+
+IMPORTANT: Return the analysis in markdown format with the specified table structure. Do not include any JSON formatting."""
 
     return prompt
 
@@ -185,20 +180,8 @@ def analyze_with_gemini(prompt):
             config=generate_content_config,
         )
         
-        # Clean up response text
-        text = response.text.strip()
-        
-        # Try to find JSON object
-        if '```json' in text:
-            text = text.split('```json')[1].split('```')[0].strip()
-        elif '{' in text and '}' in text:
-            start = text.find('{')
-            end = text.rfind('}') + 1
-            text = text[start:end]
-        
-        # Parse JSON
-        analysis = json.loads(text)
-        return analysis
+        # Return the markdown text directly
+        return {"markdown_content": response.text.strip()}
         
     except Exception as e:
         logger.error(f"Error in analyze_with_gemini: {str(e)}")
