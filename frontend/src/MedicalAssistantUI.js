@@ -31,6 +31,7 @@ const MedicalAssistantUI = ({ user }) => {
   const [currentProgress, setCurrentProgress] = useState('');
   const [pmids, setPmids] = useState([]);
   const [totalArticles, setTotalArticles] = useState(0);
+  const [currentArticleData, setCurrentArticleData] = useState(null);
   const [isPromptExpanded, setIsPromptExpanded] = useState(true);
   const [numArticles, setNumArticles] = useState(15);
   const [extractionPrompt] = useState(`You are an expert pediatric oncologist and chair of the International Leukemia Tumor Board (iLTB). Your role is to analyze complex patient case notes, identify key actionable events that may guide treatment strategies, and formulate precise search queries for PubMed to retrieve relevant clinical research articles.
@@ -262,6 +263,7 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
     setArticles([]);
     setCurrentProgress('');
     setTotalArticles(0);
+    setCurrentArticleData(null);
 
     // Create a local variable to store processed articles
     let processedArticles = [];
@@ -388,6 +390,9 @@ ${finalAnalysis.multi_target_opportunities.map(opp => `
               point_breakdown: analysis.point_breakdown
             };
             
+            // Set current article being processed
+            setCurrentArticleData(articleData);
+            
             // Add to both state and local variable
             setArticles(current => [...current, articleData]);
             processedArticles.push(articleData);
@@ -416,6 +421,7 @@ ${finalAnalysis.multi_target_opportunities.map(opp => `
       setCurrentProgress('Error retrieving articles. Please try again.');
     } finally {
       setIsRetrieving(false);
+      setCurrentArticleData(null);
     }
   };
 
@@ -468,6 +474,7 @@ ${finalAnalysis.multi_target_opportunities.map(opp => `
           setPromptContent={setPromptContent}
           currentProgress={currentProgress}
           articles={articles}
+          currentArticleData={currentArticleData}
           chatHistory={chatHistory}
           isGeneratingSample={isGeneratingSample}
           isLoadingDocs={isLoadingDocs}

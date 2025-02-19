@@ -18,6 +18,7 @@ const MainPanel = ({
   numArticles,
   setNumArticles,
   articles,
+  currentArticleData,
   chatHistory,
   isGeneratingSample,
   isLoadingDocs,
@@ -37,35 +38,42 @@ const MainPanel = ({
   return (
     <main className={`flex-1 flex flex-col min-h-0 pl-12 pt-10 transition-all duration-500 ease-in-out
       ${hasDocumentMessages || currentProgress ? 'ml-24 w-[calc(100%-96px)]' : 'ml-[40%]'}`}>
-      <AnalysisSection
-        extractedDisease={extractedDisease}
-        extractedEvents={extractedEvents}
-        isRetrieving={isRetrieving}
-        handleRetrieve={handleRetrieve}
-        isBox3Hovered={isBox3Hovered}
-        setIsBox3Hovered={setIsBox3Hovered}
-        isPromptExpanded={isPromptExpanded}
-        setIsPromptExpanded={setIsPromptExpanded}
-        promptContent={promptContent}
-        setPromptContent={setPromptContent}
-        currentProgress={currentProgress}
-        numArticles={numArticles}
-        setNumArticles={setNumArticles}
-        hasDocumentMessages={hasDocumentMessages}
-      />
-      <ChatContainer 
-        chatHistory={chatHistory}
-        isGeneratingSample={isGeneratingSample}
-        isLoadingDocs={isLoadingDocs}
-        isLoadingAnalysis={isLoadingAnalysis}
-      />
-      <ChatInput 
-        message={message}
-        setMessage={setMessage}
-        handleSendMessage={handleSendMessage}
-        handleGenerateSampleCase={handleGenerateSampleCase}
-        isLoading={isLoadingDocs || isLoadingAnalysis || isGeneratingSample}
-      />
+      <div className="flex flex-col gap-4 min-h-0 overflow-auto">
+        <div className="flex-shrink-0">
+          <AnalysisSection
+          extractedDisease={extractedDisease}
+          extractedEvents={extractedEvents}
+          isRetrieving={isRetrieving}
+          handleRetrieve={handleRetrieve}
+          isBox3Hovered={isBox3Hovered}
+          setIsBox3Hovered={setIsBox3Hovered}
+          isPromptExpanded={isPromptExpanded}
+          setIsPromptExpanded={setIsPromptExpanded}
+          promptContent={promptContent}
+          setPromptContent={setPromptContent}
+          currentProgress={currentProgress}
+          numArticles={numArticles}
+          setNumArticles={setNumArticles}
+          hasDocumentMessages={hasDocumentMessages}
+        />
+          <ChatContainer 
+            chatHistory={chatHistory}
+            isGeneratingSample={isGeneratingSample}
+            isLoadingDocs={isLoadingDocs}
+            isLoadingAnalysis={isLoadingAnalysis}
+            currentProgress={currentProgress}
+            currentArticleData={currentArticleData}
+            articles={articles}
+          />
+          <ChatInput 
+          message={message}
+          setMessage={setMessage}
+          handleSendMessage={handleSendMessage}
+          handleGenerateSampleCase={handleGenerateSampleCase}
+          isLoading={isLoadingDocs || isLoadingAnalysis || isGeneratingSample}
+          />
+        </div>
+      </div>
     </main>
   );
 };

@@ -20,7 +20,10 @@ const ChatContainer = ({
   chatHistory, 
   isGeneratingSample, 
   isLoadingDocs, 
-  isLoadingAnalysis 
+  isLoadingAnalysis,
+  currentProgress,
+  currentArticleData,
+  articles
 }) => {
   console.log('LOADING_DEBUG: ChatContainer render, isLoadingAnalysis:', isLoadingAnalysis);
   console.log('ChatContainer rendering with chatHistory:', 
@@ -45,7 +48,35 @@ const ChatContainer = ({
             return (
               <React.Fragment key={msg.id}>
                 {/* Show regular messages */}
-                {!msg.analysis && !msg.type && <ChatMessage message={msg} />}
+                {!msg.analysis && !msg.type && (
+                  <>
+                    <ChatMessage message={msg} />
+                    {/* Show progress and incremental updates after case initialization */}
+                    {msg.initialCase?.extractedDisease && currentProgress && !chatHistory.find(m => m.type === 'document') && (
+                      <div className="ml-4 mt-2">
+                        <div className="text-sm text-gray-600 mb-2">Currently analyzing:</div>
+                        <div className="text-xs flex items-center gap-2 mb-1">
+                          <span className="text-gray-600">{currentProgress}</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+                          <div
+                            className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${(() => {
+                              const match = currentProgress?.match(/Processing article (\d+) of (\d+)/);
+                              if (!match) return 0;
+                              const [_, current, total] = match;
+                              return (parseInt(current) / parseInt(total)) * 100;
+                            })()}%` }}
+                          ></div>
+                        </div>
+                        {/* Show incremental table updates */}
+                        <ArticleResults 
+                          articles={articles}
+                        />
+                      </div>
+                    )}
+                  </>
+                )}
                 
                 {/* Show document type messages (article table) */}
                 {msg.type === 'document' && (

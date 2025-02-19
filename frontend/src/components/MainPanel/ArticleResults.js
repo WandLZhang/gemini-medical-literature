@@ -1,30 +1,13 @@
 import React from 'react';
 
-const ArticleResults = ({ currentProgress, articles }) => {
-  // Only render if we have articles or a progress message
-  if (!articles?.length && !currentProgress) {
+const ArticleResults = ({ articles }) => {
+  if (!articles?.length) {
     return null;
   }
 
   return (
     <div>
-      {currentProgress && currentProgress.includes('Processing article') && (
-        <div className="mt-2">
-          <div className="text-xs flex items-center gap-2 mb-1">
-            <span className="text-gray-600">{currentProgress}</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              id="article-progress-bar"
-              className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-              style={{ width: '0%' }}
-            ></div>
-          </div>
-        </div>
-      )}
-
       {/* Display Analyzed Articles */}
-      {articles.length > 0 && (
         <div className="mt-4 overflow-x-scroll" style={{ maxWidth: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
           <table className="min-w-max bg-white border border-gray-300" style={{ minWidth: '120%' }}>
             <thead>
@@ -161,7 +144,6 @@ const ArticleResults = ({ currentProgress, articles }) => {
             </tbody>
           </table>
         </div>
-      )}
     </div>
   );
 };
