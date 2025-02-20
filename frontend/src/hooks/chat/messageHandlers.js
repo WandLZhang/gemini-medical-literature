@@ -1,5 +1,5 @@
 import { createNewChat, addMessageToChat } from '../../firebase';
-import { retrieveAndAnalyzeArticles, streamChat } from '../../utils/api';
+import { retrieveAndAnalyzeArticles, streamChat, redactSensitiveInfo } from '../../utils/api';
 import { getLatestMessages } from './utils';
 
 export const createMessageId = (type) => `${Date.now()}-${type}-${Math.random().toString(36).substr(2, 9)}`;
@@ -114,6 +114,14 @@ const handleUserMessage = async ({
   setIsLoadingAnalysis,
   selectedTemplate
 }) => {
+  // Redact sensitive information from user message
+  let redactedMessage;
+  try {
+    redactedMessage = await redactSensitiveInfo(userMessage);
+  } catch (error) {
+    console.error('Error redacting message:', error);
+    redactedMessage = userMessage; // Fallback to original message if redaction fails
+  }
   try {
     let currentChatId = activeChat?.id;
     let messagesForFirestore = [];
@@ -127,7 +135,7 @@ const handleUserMessage = async ({
 
       messagesForFirestore = [...(activeChat?.messages || [])];
       const newUserMessage = {
-        content: userMessage,
+        content: redactedMessage, // Store redacted version
         role: 'user',
         timestamp: new Date(),
         type: 'message',
@@ -138,7 +146,7 @@ const handleUserMessage = async ({
 
     const newMessage = { 
       id: createMessageId('user'),
-      text: userMessage,
+      text: redactedMessage, // Display redacted version
       isUser: true,
       timestamp: new Date()
     };
@@ -160,11 +168,11 @@ const handleUserMessage = async ({
     setChatHistory(prev => [...prev, assistantMessage]);
 
     // If this is a document analysis request, proceed with article analysis
-    if (userMessage.toLowerCase().includes('analyze') || userMessage.toLowerCase().includes('research')) {
+    if (redactedMessage.toLowerCase().includes('analyze') || redactedMessage.toLowerCase().includes('research')) {
       setIsLoadingDocs(true);
       try {
         await retrieveAndAnalyzeArticles(
-          userMessage,
+          redactedMessage,
           [],  // events array
           selectedTemplate?.content || "",
           async (data) => {
