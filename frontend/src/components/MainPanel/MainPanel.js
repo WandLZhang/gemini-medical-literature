@@ -37,12 +37,20 @@ const MainPanel = ({
   console.log('LOADING_DEBUG: MainPanel render, isLoadingAnalysis:', isLoadingAnalysis);
   
   const finalAnalysisRef = useRef(null);
+  const messageEndRef = useRef(null);
 
   useEffect(() => {
     if (!isLoadingAnalysis && finalAnalysisRef.current) {
       finalAnalysisRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }, [isLoadingAnalysis]);
+
+  // Scroll to bottom when new messages are added
+  useEffect(() => {
+    if (messageEndRef.current) {
+      messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatHistory]);
 
   return (
     <main className={`flex-1 flex flex-col min-h-0 pl-12 pt-10 pb-0 transition-all duration-500 ease-in-out relative
@@ -73,6 +81,7 @@ const MainPanel = ({
             currentArticleData={currentArticleData}
             articles={articles}
             finalAnalysisRef={finalAnalysisRef}
+            messageEndRef={messageEndRef}
           />
       </div>
       {/* Only show ChatInput after analysis is complete */}

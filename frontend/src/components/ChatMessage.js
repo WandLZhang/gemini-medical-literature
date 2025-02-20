@@ -19,8 +19,8 @@ const ChatMessage = ({ message }) => {
           isError 
             ? 'bg-red-50 border border-red-200 text-red-800'
             : message.isUser 
-              ? 'bg-blue-500 text-white' 
-              : 'bg-gray-100 text-gray-800'
+              ? 'bg-primary-600 text-white' 
+              : 'bg-surface-100 text-surface-800'
         }`}
       >
         {message.isUser ? null : (

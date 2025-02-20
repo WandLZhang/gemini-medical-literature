@@ -11,16 +11,23 @@ const ChatInput = ({ message, setMessage, handleSendMessage, isLoading }) => {
     }
   }, [message]);
 
-  const handleTextareaKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
+const handleTextareaKeyDown = (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    if (message.trim()) {
       handleSendMessage(e);
     }
-  };
+  }
+};
 
   return (
     <div className="px-4 pt-1 pb-2 bg-gray-50">
-      <form onSubmit={handleSendMessage} className="flex items-center gap-2 relative max-w-[70%] mx-auto">
+      <form onSubmit={(e) => {
+        e.preventDefault();
+        if (message.trim()) {
+          handleSendMessage(e);
+        }
+      }} className="flex items-center gap-2 relative max-w-[70%] mx-auto">
         <textarea
           ref={textareaRef}
           value={message}

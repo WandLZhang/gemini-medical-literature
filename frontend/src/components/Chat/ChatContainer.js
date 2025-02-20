@@ -24,7 +24,8 @@ const ChatContainer = ({
   currentProgress,
   currentArticleData,
   articles,
-  finalAnalysisRef
+  finalAnalysisRef,
+  messageEndRef
 }) => {
   console.log('LOADING_DEBUG: ChatContainer render, isLoadingAnalysis:', isLoadingAnalysis);
   console.log('ChatContainer rendering with chatHistory:', 
@@ -129,6 +130,8 @@ const ChatContainer = ({
           </div>
         )}
       </div>
+      {/* Invisible element that serves as scroll target */}
+      <div ref={messageEndRef} />
     </div>
   );
 };
