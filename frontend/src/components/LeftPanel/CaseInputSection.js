@@ -45,7 +45,7 @@ const CaseInputSection = ({
   };
 
   return (
-  <div className="bg-white shadow-lg rounded-lg p-4">
+  <div className="bg-surface-50 shadow-lg rounded-lg p-4">
     <div className="mb-1">
       <h2 className="text-xs font-medium text-gray-700">1 - Input your case notes and lab results</h2>
     </div>
@@ -53,7 +53,7 @@ const CaseInputSection = ({
       <div className="flex items-center gap-2">
         <label className="text-[10px] font-light text-gray-700 w-16">Case Notes</label>
         <textarea
-          className="flex-1 p-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs h-16"
+          className="flex-1 p-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-xs h-16"
           value={caseNotes}
           onChange={handleCaseNotesChange}
           placeholder="Enter case notes here..."
@@ -62,7 +62,7 @@ const CaseInputSection = ({
       <div className="flex items-center gap-2">
         <label className="text-[10px] font-light text-gray-700 w-16">Lab Results</label>
         <textarea
-          className="flex-1 p-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs h-16"
+          className="flex-1 p-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-xs h-16"
           value={labResults}
           onChange={handleLabResultsChange}
           placeholder="Enter lab results here..."
@@ -75,7 +75,7 @@ const CaseInputSection = ({
       )}
       <button
         onClick={handleClear}
-        className="text-blue-500 italic text-[10px] hover:text-blue-700"
+        className="text-primary-600 italic text-[10px] hover:text-primary-700"
       >
         Clear
       </button>

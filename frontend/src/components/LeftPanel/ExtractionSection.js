@@ -12,7 +12,7 @@ const ExtractionSection = ({
   setIsBox2Hovered
 }) => (
   <div 
-    className={`bg-white shadow-lg rounded-lg p-4 transition-opacity duration-500 ${!extractedDisease && !isBox2Hovered ? 'opacity-25' : ''}`}
+    className={`bg-surface-50 shadow-lg rounded-lg p-4 transition-opacity duration-500 ${!extractedDisease && !isBox2Hovered ? 'opacity-25' : ''}`}
     onMouseEnter={() => setIsBox2Hovered(true)}
     onMouseLeave={() => setIsBox2Hovered(false)}
   >
@@ -21,7 +21,7 @@ const ExtractionSection = ({
       <button 
         onClick={handleExtract}
         disabled={isProcessing}
-        className={`text-xs px-3 py-1 bg-gray-400 text-white rounded hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 w-[60px] flex items-center justify-center ${
+        className={`text-xs px-3 py-1 bg-primary-600 text-white rounded hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 w-[60px] flex items-center justify-center ${
           isProcessing ? 'opacity-50 cursor-not-allowed' : ''
         }`}
       >

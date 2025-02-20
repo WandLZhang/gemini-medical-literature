@@ -19,29 +19,27 @@ const ChatInput = ({ message, setMessage, handleSendMessage, isLoading }) => {
   };
 
   return (
-    <div className="bg-white border-t border-gray-200 p-4">
-      <form onSubmit={handleSendMessage} className="flex items-center space-x-2">
-        <div className="flex-grow relative flex items-center">
-          <textarea
-            ref={textareaRef}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={handleTextareaKeyDown}
-            placeholder="Type your message here..."
-            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none min-h-[40px] max-h-[200px] overflow-y-auto"
-            disabled={isLoading}
-            rows={1}
-          />
-        </div>
-        <div className="flex items-center h-full">
-          <button
-            type="submit"
-            className="p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200"
-            disabled={isLoading || !message.trim()}
-          >
-            <Send size={20} />
-          </button>
-        </div>
+    <div className="p-4">
+      <form onSubmit={handleSendMessage} className="flex items-center gap-2 relative">
+        <textarea
+          ref={textareaRef}
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={handleTextareaKeyDown}
+          placeholder="Ask questions here..."
+          className="w-full py-3 px-4 bg-white/70 rounded-full focus:outline-none resize-none min-h-[48px] max-h-[200px] overflow-y-auto pr-14"
+          disabled={isLoading}
+          rows={1}
+        />
+        <button
+          type="submit"
+          className="absolute right-1 p-2.5 bg-gray-100 text-black rounded-full hover:bg-gray-200 focus:outline-none transition-colors duration-200 flex items-center justify-center"
+          disabled={isLoading || !message.trim()}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
       </form>
     </div>
   );

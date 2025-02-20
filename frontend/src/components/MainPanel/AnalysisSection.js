@@ -26,7 +26,7 @@ const AnalysisSection = ({
 
   return (
   <div 
-    className={`bg-white shadow rounded-lg p-4 mb-4 ${(!extractedDisease || !extractedEvents.length) ? 'opacity-25' : ''}`}
+    className={`bg-surface-50 shadow-lg rounded-lg p-4 mb-4 ${(!extractedDisease || !extractedEvents.length) ? 'opacity-25' : ''}`}
     onMouseEnter={() => extractedDisease && extractedEvents.length && setIsBox3Hovered(true)}
     onMouseLeave={() => setIsBox3Hovered(false)}
   >
@@ -36,7 +36,7 @@ const AnalysisSection = ({
         <button
           onClick={handleRetrieve}
           disabled={isRetrieving || !extractedDisease || !extractedEvents.length}
-          className={`text-xs px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+          className={`text-xs px-3 py-1 bg-primary-600 text-white rounded hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
             (isRetrieving || !extractedDisease || !extractedEvents.length) ? 'opacity-50 cursor-not-allowed' : ''
           }`}
         >
@@ -64,7 +64,7 @@ const AnalysisSection = ({
           <div className="flex items-start gap-2">
             <label className="text-[10px] font-light text-gray-700 w-20 pt-1.5">Analysis instructions</label>
             <textarea
-              className="flex-1 p-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs h-[9rem]"
+              className="flex-1 p-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-xs h-[9rem]"
               value={promptContent}
               onChange={(e) => setPromptContent(e.target.value)}
               placeholder="Enter prompt content here..."
@@ -76,7 +76,7 @@ const AnalysisSection = ({
               type="number"
               min="1"
               max="50"
-              className="w-20 p-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+              className="w-20 p-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-xs"
               value={numArticles}
               onChange={(e) => setNumArticles(Math.min(50, Math.max(1, parseInt(e.target.value) || 15)))}
             />
