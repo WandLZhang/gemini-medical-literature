@@ -95,7 +95,9 @@ Your task is to read the provided full article and extract key information, and 
 As an expert oncologist:
 1. Evaluate if the article's disease focus matches the patient's disease. Set disease_match to true if the article's cancer type is relevant to the patient's condition.
 2. Analyze treatment outcomes. Set treatment_shown to true if the article demonstrates positive treatment results.
-3. For each actionable event you find in the article, determine if it matches any of the patient's actionable events. Set matches_query to true for exact or close matches.
+3. For each actionable event you find in the article, determine if it matches any of the patient's actionable events. For genetic mutations, create two separate events:
+   - When you find a general mutation mention (e.g., if the article mentions just "NRAS" when patient has "NRAS (p.Gln61Lys)"), create an event with the general form and set matches_query=true
+   - When you find an exact mutation match (e.g., if the article mentions "NRAS (p.Gln61Lys)" like it appears in the patient's events), create another event with the exact mutation and set matches_query=true
 
 The scoring system will assess the following (not necessarily exhaustive and inferred):
 *   **Disease Match:** Articles that cover the exact disease in question receive significant points. As an expert oncologist, carefully evaluate if the article's disease focus matches the patient's disease.

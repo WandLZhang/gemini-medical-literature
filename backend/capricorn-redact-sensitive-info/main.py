@@ -14,7 +14,6 @@ dlp_client = dlp_v2.DlpServiceClient()
 def get_info_types():
     """Get list of info types to redact, excluding age, gender, medical terms, and document types."""
     all_types = [
-        # Names and IDs
         {"name": "FINANCIAL_ID"},
         {"name": "FRANCE_DRIVERS_LICENSE_NUMBER"},
         {"name": "MEXICO_CURP_NUMBER"},
