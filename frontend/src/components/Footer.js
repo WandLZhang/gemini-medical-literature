@@ -19,7 +19,7 @@ const Footer = () => (
         className="h-4 w-auto"
       />
       <span className="text-xs text-gray-300">
-        Built by <a href="mailto:willis.zhng@gmail.com" className="text-gray-300 hover:text-white">Willis Zhang</a> and <a href="mailto:stonejiang@google.com" className="text-gray-300 hover:text-white">Stone Jiang</a>
+        Built by <a href="mailto:williszhang@google.com" className="text-gray-300 hover:text-white">Willis Zhang</a> and <a href="mailto:stonejiang@google.com" className="text-gray-300 hover:text-white">Stone Jiang</a>
       </span>
     </div>
   </div>

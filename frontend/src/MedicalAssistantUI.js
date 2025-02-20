@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 // Components
+import DisclaimerModal from './components/DisclaimerModal';
 import ExpandableSidebar from './components/ExpandableSidebar';
 import TopBar from './components/TopBar';
 import LeftPanel from './components/LeftPanel/LeftPanel';
@@ -19,6 +20,7 @@ import { generateSampleCase, extractDisease, extractEvents, retrieveAndAnalyzeAr
 const createMessageId = (type) => `${Date.now()}-${type}-${Math.random().toString(36).substr(2, 9)}`;
 
 const MedicalAssistantUI = ({ user }) => {
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isGeneratingSample, setIsGeneratingSample] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -200,6 +202,19 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
       console.error('Error generating sample case:', error);
     }
     setIsGeneratingSample(false);
+  };
+
+  // Effect to show disclaimer on initial load
+  useEffect(() => {
+    const hasSeenDisclaimer = localStorage.getItem('hasSeenDisclaimer');
+    if (!hasSeenDisclaimer) {
+      setShowDisclaimer(true);
+    }
+  }, []);
+
+  const handleCloseDisclaimer = () => {
+    localStorage.setItem('hasSeenDisclaimer', 'true');
+    setShowDisclaimer(false);
   };
 
   // Effect to handle loading case information when chat history changes
@@ -398,6 +413,7 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
+      <DisclaimerModal isOpen={showDisclaimer} onClose={handleCloseDisclaimer} />
       <TopBar 
         user={user}
         handleLogin={handleLogin}

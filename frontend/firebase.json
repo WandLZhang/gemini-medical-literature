@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "site": "gemini-med-lit-review",
+    "site": "capricorn-medical-research",
     "public": "build",
     "ignore": [
       "firebase.json",

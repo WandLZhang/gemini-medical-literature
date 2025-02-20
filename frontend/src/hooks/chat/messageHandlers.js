@@ -182,12 +182,15 @@ const handleUserMessage = async ({
     } else {
       // Stream the response
       console.log('CHAT_HANDLER_DEBUG: Starting to stream response');
+      let accumulatedText = '';
+      
       await streamChat(
         userMessage,
         user.uid,
         currentChatId,
         (chunk) => {
           console.log('CHAT_HANDLER_DEBUG: Received chunk:', chunk);
+          accumulatedText += chunk;
           setChatHistory(prev => {
             const newHistory = [...prev];
             const assistantMessageIndex = newHistory.findIndex(msg => msg.id === assistantMessageId);
@@ -195,7 +198,7 @@ const handleUserMessage = async ({
               console.log('CHAT_HANDLER_DEBUG: Current message state:', newHistory[assistantMessageIndex]);
               newHistory[assistantMessageIndex] = {
                 ...newHistory[assistantMessageIndex],
-                text: (newHistory[assistantMessageIndex].text || '') + chunk
+                text: accumulatedText
               };
               console.log('CHAT_HANDLER_DEBUG: Updated message state:', newHistory[assistantMessageIndex]);
             } else {
@@ -207,35 +210,17 @@ const handleUserMessage = async ({
       );
       console.log('CHAT_HANDLER_DEBUG: Finished streaming response');
 
-      // After streaming is complete, update Firestore
-      if (user) {
-        console.log('CHAT_HANDLER_DEBUG: Preparing to update Firestore');
-        
-        // Get the final message state from chat history
-        await new Promise(resolve => {
-          setChatHistory(prev => {
-            const finalMessage = prev.find(msg => msg.id === assistantMessageId);
-            if (finalMessage) {
-              console.log('CHAT_HANDLER_DEBUG: Found final message in history:', finalMessage);
-              const finalAssistantMessage = {
-                content: finalMessage.text,
-                role: 'assistant',
-                timestamp: new Date(),
-                type: 'message',
-                messageId: assistantMessageId
-              };
-              console.log('CHAT_HANDLER_DEBUG: Final Firestore message:', finalAssistantMessage);
-              messagesForFirestore.push(finalAssistantMessage);
-            } else {
-              console.log('CHAT_HANDLER_DEBUG: Could not find final message in history');
-            }
-            resolve();
-            return prev;
-          });
-        });
-
+      // Update Firestore with the complete message
+      if (user && accumulatedText) {
+        const finalAssistantMessage = {
+          content: accumulatedText,
+          role: 'assistant',
+          timestamp: new Date(),
+          type: 'message',
+          messageId: assistantMessageId
+        };
+        messagesForFirestore.push(finalAssistantMessage);
         await addMessageToChat(user.uid, currentChatId, messagesForFirestore);
-        console.log('CHAT_HANDLER_DEBUG: Updated Firestore successfully');
       }
     }
   } catch (error) {
