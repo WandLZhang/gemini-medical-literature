@@ -23,7 +23,8 @@ const ChatContainer = ({
   isLoadingAnalysis,
   currentProgress,
   currentArticleData,
-  articles
+  articles,
+  finalAnalysisRef
 }) => {
   console.log('LOADING_DEBUG: ChatContainer render, isLoadingAnalysis:', isLoadingAnalysis);
   console.log('ChatContainer rendering with chatHistory:', 
@@ -100,7 +101,7 @@ const ChatContainer = ({
                 {/* Show analysis messages */}
                 {msg.analysis && (
                   <div className="ml-4 mt-2">
-                    <div className="bg-white rounded-lg shadow-md p-8">
+                    <div ref={finalAnalysisRef} className="bg-white rounded-lg shadow-md p-8">
                       <h2 className="text-2xl font-bold mb-6 text-gray-900">Analysis Results</h2>
                       <div className="space-y-8">
                         <MarkdownRenderer content={msg.analysis} />

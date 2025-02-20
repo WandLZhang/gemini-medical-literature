@@ -153,7 +153,7 @@ const ExpandableSidebar = ({ user, onChatSelect, activeChat, initializeNewChat }
   };
 
   return (
-    <div className={`fixed top-16 left-0 h-[calc(100vh-4rem)] bg-gray-800 shadow-lg transition-all duration-300 ease-in-out flex ${isExpanded ? 'w-64' : 'w-12'}`}>
+    <div className={`fixed top-16 left-0 h-[calc(100vh-4rem)] bg-gray-800 shadow-lg transition-all duration-300 ease-in-out flex z-20 ${isExpanded ? 'w-64' : 'w-12'}`}>
       {/* Toggle button */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import AnalysisSection from './AnalysisSection';
 import ChatContainer from '../Chat/ChatContainer';
 import ChatInput from '../ChatInput';
@@ -35,12 +35,19 @@ const MainPanel = ({
   }, [isLoadingAnalysis]);
 
   console.log('LOADING_DEBUG: MainPanel render, isLoadingAnalysis:', isLoadingAnalysis);
+  
+  const finalAnalysisRef = useRef(null);
+
+  useEffect(() => {
+    if (!isLoadingAnalysis && finalAnalysisRef.current) {
+      finalAnalysisRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [isLoadingAnalysis]);
 
   return (
-    <main className={`flex-1 flex flex-col min-h-0 pl-12 pt-10 transition-all duration-500 ease-in-out
+    <main className={`flex-1 flex flex-col min-h-0 pl-12 pt-10 pb-0 transition-all duration-500 ease-in-out relative
       ${hasDocumentMessages || currentProgress ? 'ml-24 w-[calc(100%-96px)]' : 'ml-[40%]'}`}>
-      <div className="flex flex-col gap-4 min-h-0 overflow-auto">
-        <div className="flex-shrink-0">
+      <div className="flex flex-col min-h-0 overflow-auto">
           <AnalysisSection
           extractedDisease={extractedDisease}
           extractedEvents={extractedEvents}
@@ -65,16 +72,22 @@ const MainPanel = ({
             currentProgress={currentProgress}
             currentArticleData={currentArticleData}
             articles={articles}
+            finalAnalysisRef={finalAnalysisRef}
           />
+      </div>
+      {/* Only show ChatInput after analysis is complete */}
+      {chatHistory.some(msg => msg.analysis) && (
+        <div className="sticky bottom-0 w-full">
+              <div className="absolute inset-x-0 bg-gradient-to-t from-gray-50 via-gray-50/50 to-transparent h-8 -top-8 pointer-events-none" />
           <ChatInput 
-          message={message}
-          setMessage={setMessage}
-          handleSendMessage={handleSendMessage}
-          handleGenerateSampleCase={handleGenerateSampleCase}
-          isLoading={isLoadingDocs || isLoadingAnalysis || isGeneratingSample}
+            message={message}
+            setMessage={setMessage}
+            handleSendMessage={handleSendMessage}
+            handleGenerateSampleCase={handleGenerateSampleCase}
+            isLoading={isLoadingDocs || isLoadingAnalysis || isGeneratingSample}
           />
         </div>
-      </div>
+      )}
     </main>
   );
 };
