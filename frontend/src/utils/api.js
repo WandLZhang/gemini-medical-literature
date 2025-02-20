@@ -63,6 +63,34 @@ export const retrieveAndAnalyzeArticles = async (disease, events, methodologyCon
 const API_BASE_URL = 'https://us-central1-gemini-med-lit-review.cloudfunctions.net';
 const GENERATE_CASE_URL = process.env.REACT_APP_GENERATE_CASE_URL;
 
+/**
+ * Redacts sensitive information from text while preserving medical terms, age, and gender
+ * @param {string} text - The text to redact
+ * @returns {Promise<string>} - A promise that resolves to the redacted text
+ */
+export const redactSensitiveInfo = async (text) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/capricorn-redact-sensitive-info`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ text }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.redactedText;
+  } catch (error) {
+    console.error('Error redacting sensitive information:', error);
+    throw new Error(`Failed to redact sensitive information: ${error.message}`);
+  }
+};
+
 export const extractDisease = async (text) => {
   try {
     const response = await fetch(`${API_BASE_URL}/pubmed-search-tester-extract-disease`, {
