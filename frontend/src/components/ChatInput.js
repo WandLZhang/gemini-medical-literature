@@ -21,7 +21,7 @@ const handleTextareaKeyDown = (e) => {
 };
 
   return (
-    <div className="px-4 pt-1 pb-2 bg-gray-50">
+    <div className="px-4 pt-1 pb-2 bg-surface-50">
       <form onSubmit={(e) => {
         e.preventDefault();
         if (message.trim()) {
@@ -34,13 +34,13 @@ const handleTextareaKeyDown = (e) => {
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleTextareaKeyDown}
           placeholder="Ask questions here..."
-          className="w-full py-2.5 px-4 bg-white rounded-full focus:outline-none resize-none min-h-[44px] max-h-[200px] overflow-y-auto pr-12 text-sm text-gray-600 placeholder-gray-400 border border-gray-200"
+          className="w-full py-2.5 px-4 bg-white rounded-full focus:outline-none focus:ring-2 focus:ring-primary-300 resize-none min-h-[44px] max-h-[200px] overflow-y-auto pr-12 text-sm text-surface-600 placeholder-surface-400 border border-surface-200"
           disabled={isLoading}
           rows={1}
         />
         <button
           type="submit"
-          className="absolute right-2 p-2 bg-white text-black rounded-full hover:bg-gray-100 focus:outline-none transition-colors duration-200 flex items-center justify-center"
+          className="absolute right-2 p-2 bg-primary-600 text-white rounded-full hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-300 transition-colors duration-200 flex items-center justify-center disabled:bg-surface-200 disabled:text-surface-400"
           disabled={isLoading || !message.trim()}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
