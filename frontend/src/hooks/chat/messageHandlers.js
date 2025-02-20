@@ -16,7 +16,8 @@ export const handleSendMessage = ({
   setIsLoadingDocs,
   isLoadingAnalysis,
   setIsLoadingAnalysis,
-  selectedTemplate
+  selectedTemplate,
+  userId
 }) => {
   // Handle both event objects and direct message objects
   if (e && e.preventDefault) {
@@ -31,7 +32,8 @@ export const handleSendMessage = ({
       activeChat,
       setActiveChat,
       setChatHistory,
-      setIsLoadingAnalysis
+      setIsLoadingAnalysis,
+      userId
     });
   }
 
@@ -48,7 +50,8 @@ export const handleSendMessage = ({
       setChatHistory,
       setIsLoadingDocs,
       setIsLoadingAnalysis,
-      selectedTemplate
+      selectedTemplate,
+      userId
     });
   }
 };
@@ -59,15 +62,16 @@ const handleAnalysisOrDocumentMessage = async ({
   activeChat,
   setActiveChat,
   setChatHistory,
-  setIsLoadingAnalysis
+  setIsLoadingAnalysis,
+  userId
 }) => {
   try {
     let currentChatId = activeChat?.id;
     let messagesForFirestore = [...(activeChat?.messages || [])];
 
-    if (user && !currentChatId) {
+    if (!currentChatId) {
       const initialMessages = [];
-      currentChatId = await createNewChat(user.uid, initialMessages);
+      currentChatId = await createNewChat(user?.uid || userId, initialMessages);
       setActiveChat({ id: currentChatId, messages: initialMessages });
     }
 
@@ -77,7 +81,7 @@ const handleAnalysisOrDocumentMessage = async ({
         return;
       }
       
-      const latestMessages = await getLatestMessages(user.uid, currentChatId);
+      const latestMessages = await getLatestMessages(user?.uid || userId, currentChatId);
       const timestamp = new Date();
       const messageId = createMessageId(e.type);
       
@@ -90,14 +94,12 @@ const handleAnalysisOrDocumentMessage = async ({
 
       setChatHistory(prev => [...prev, newMessage]);
 
-      if (user) {
-        latestMessages.push(firestoreMessage);
-        await addMessageToChat(user.uid, currentChatId, latestMessages);
-        setActiveChat(current => ({
-          ...current,
-          messages: latestMessages
-        }));
-      }
+      latestMessages.push(firestoreMessage);
+      await addMessageToChat(user?.uid || userId, currentChatId, latestMessages);
+      setActiveChat(current => ({
+        ...current,
+        messages: latestMessages
+      }));
     }
   } catch (error) {
     console.error('Error handling message:', error);
@@ -112,7 +114,8 @@ const handleUserMessage = async ({
   setChatHistory,
   setIsLoadingDocs,
   setIsLoadingAnalysis,
-  selectedTemplate
+  selectedTemplate,
+  userId
 }) => {
   // Redact sensitive information from user message
   let redactedMessage;
@@ -126,23 +129,21 @@ const handleUserMessage = async ({
     let currentChatId = activeChat?.id;
     let messagesForFirestore = [];
     
-    if (user) {
-      if (!currentChatId) {
-        const initialMessages = [];
-        currentChatId = await createNewChat(user.uid, initialMessages);
-        setActiveChat({ id: currentChatId, messages: initialMessages });
-      }
-
-      messagesForFirestore = [...(activeChat?.messages || [])];
-      const newUserMessage = {
-        content: redactedMessage, // Store redacted version
-        role: 'user',
-        timestamp: new Date(),
-        type: 'message',
-        messageId: createMessageId('user')
-      };
-      messagesForFirestore.push(newUserMessage);
+    if (!currentChatId) {
+      const initialMessages = [];
+      currentChatId = await createNewChat(user?.uid || userId, initialMessages);
+      setActiveChat({ id: currentChatId, messages: initialMessages });
     }
+
+    messagesForFirestore = [...(activeChat?.messages || [])];
+    const newUserMessage = {
+      content: redactedMessage, // Store redacted version
+      role: 'user',
+      timestamp: new Date(),
+      type: 'message',
+      messageId: createMessageId('user')
+    };
+    messagesForFirestore.push(newUserMessage);
 
     const newMessage = { 
       id: createMessageId('user'),
@@ -152,9 +153,7 @@ const handleUserMessage = async ({
     };
     setChatHistory(prev => [...prev, newMessage]);
 
-    if (user) {
-      await addMessageToChat(user.uid, currentChatId, messagesForFirestore);
-    }
+    await addMessageToChat(user?.uid || userId, currentChatId, messagesForFirestore);
 
     // Create assistant message placeholder for streaming
     const assistantMessageId = createMessageId('assistant');
@@ -177,14 +176,14 @@ const handleUserMessage = async ({
           selectedTemplate?.content || "",
           async (data) => {
             if (data.type === 'analysis') {
-              await handleAnalysisData(data, user, currentChatId, setChatHistory, setActiveChat, setIsLoadingAnalysis);
+              await handleAnalysisData(data, user, currentChatId, setChatHistory, setActiveChat, setIsLoadingAnalysis, userId);
             } else if (data.type === 'pmids') {
-              await handlePmidsData(data, user, currentChatId, setChatHistory, setActiveChat, setIsLoadingAnalysis);
+              await handlePmidsData(data, user, currentChatId, setChatHistory, setActiveChat, setIsLoadingAnalysis, userId);
             }
           }
         );
       } catch (error) {
-        await handleAnalysisError(error, user, currentChatId, setChatHistory, setIsLoadingDocs, setIsLoadingAnalysis, messagesForFirestore);
+        await handleAnalysisError(error, user, currentChatId, setChatHistory, setIsLoadingDocs, setIsLoadingAnalysis, messagesForFirestore, userId);
       }
       setIsLoadingDocs(false);
     } else {
@@ -194,7 +193,7 @@ const handleUserMessage = async ({
       
       await streamChat(
         userMessage,
-        user.uid,
+        user?.uid || userId,
         currentChatId,
         (chunk) => {
           console.log('CHAT_HANDLER_DEBUG: Received chunk:', chunk);
@@ -219,7 +218,7 @@ const handleUserMessage = async ({
       console.log('CHAT_HANDLER_DEBUG: Finished streaming response');
 
       // Update Firestore with the complete message
-      if (user && accumulatedText) {
+      if (accumulatedText) {
         const finalAssistantMessage = {
           content: accumulatedText,
           role: 'assistant',
@@ -228,7 +227,7 @@ const handleUserMessage = async ({
           messageId: assistantMessageId
         };
         messagesForFirestore.push(finalAssistantMessage);
-        await addMessageToChat(user.uid, currentChatId, messagesForFirestore);
+        await addMessageToChat(user?.uid || userId, currentChatId, messagesForFirestore);
       }
     }
   } catch (error) {
@@ -263,7 +262,7 @@ const createFirestoreMessage = (e, messageId, timestamp) => ({
   messageId
 });
 
-const handleAnalysisData = async (data, user, currentChatId, setChatHistory, setActiveChat, setIsLoadingAnalysis) => {
+const handleAnalysisData = async (data, user, currentChatId, setChatHistory, setActiveChat, setIsLoadingAnalysis, userId) => {
   const timestamp = new Date();
   const messageId = createMessageId('analysis');
   
@@ -274,24 +273,22 @@ const handleAnalysisData = async (data, user, currentChatId, setChatHistory, set
     timestamp
   };
 
-  if (user) {
-    const firestoreMessage = {
-      content: data.data.analysis,
-      role: 'assistant',
-      timestamp,
-      type: 'analysis',
-      messageId
-    };
-    
-    const latestMessages = await getLatestMessages(user.uid, currentChatId);
-    latestMessages.push(firestoreMessage);
-    await addMessageToChat(user.uid, currentChatId, latestMessages);
-    
-    setActiveChat(current => ({
-      ...current,
-      messages: latestMessages
-    }));
-  }
+  const firestoreMessage = {
+    content: data.data.analysis,
+    role: 'assistant',
+    timestamp,
+    type: 'analysis',
+    messageId
+  };
+  
+  const latestMessages = await getLatestMessages(user?.uid || userId, currentChatId);
+  latestMessages.push(firestoreMessage);
+  await addMessageToChat(user?.uid || userId, currentChatId, latestMessages);
+  
+  setActiveChat(current => ({
+    ...current,
+    messages: latestMessages
+  }));
 
   setChatHistory(prev => {
     const updated = [...prev, analysisMessage];
@@ -300,7 +297,7 @@ const handleAnalysisData = async (data, user, currentChatId, setChatHistory, set
   });
 };
 
-const handlePmidsData = async (data, user, currentChatId, setChatHistory, setActiveChat, setIsLoadingAnalysis) => {
+const handlePmidsData = async (data, user, currentChatId, setChatHistory, setActiveChat, setIsLoadingAnalysis, userId) => {
   setIsLoadingAnalysis(true);
   const timestamp = new Date();
   const messageId = createMessageId('document');
@@ -314,24 +311,22 @@ const handlePmidsData = async (data, user, currentChatId, setChatHistory, setAct
     timestamp
   };
 
-  if (user) {
-    const firestoreMessage = {
-      content: JSON.stringify(docsMessage),
-      role: 'assistant',
-      timestamp,
-      type: 'document',
-      messageId
-    };
-    
-    const latestMessages = await getLatestMessages(user.uid, currentChatId);
-    latestMessages.push(firestoreMessage);
-    await addMessageToChat(user.uid, currentChatId, latestMessages);
-    
-    setActiveChat(current => ({
-      ...current,
-      messages: latestMessages
-    }));
-  }
+  const firestoreMessage = {
+    content: JSON.stringify(docsMessage),
+    role: 'assistant',
+    timestamp,
+    type: 'document',
+    messageId
+  };
+  
+  const latestMessages = await getLatestMessages(user?.uid || userId, currentChatId);
+  latestMessages.push(firestoreMessage);
+  await addMessageToChat(user?.uid || userId, currentChatId, latestMessages);
+  
+  setActiveChat(current => ({
+    ...current,
+    messages: latestMessages
+  }));
 
   setChatHistory(prev => {
     const updated = [...prev, docsMessage];
@@ -339,7 +334,7 @@ const handlePmidsData = async (data, user, currentChatId, setChatHistory, setAct
   });
 };
 
-const handleAnalysisError = async (error, user, currentChatId, setChatHistory, setIsLoadingDocs, setIsLoadingAnalysis, messagesForFirestore) => {
+const handleAnalysisError = async (error, user, currentChatId, setChatHistory, setIsLoadingDocs, setIsLoadingAnalysis, messagesForFirestore, userId) => {
   console.error('Error processing request:', error);
   const errorMessage = {
     id: createMessageId('error'),
@@ -349,21 +344,17 @@ const handleAnalysisError = async (error, user, currentChatId, setChatHistory, s
     error: error.message
   };
   
-  if (user) {
-    messagesForFirestore.push({
-      content: errorMessage.text,
-      role: 'assistant',
-      timestamp: new Date(),
-      type: 'error',
-      messageId: errorMessage.id
-    });
-  }
+  messagesForFirestore.push({
+    content: errorMessage.text,
+    role: 'assistant',
+    timestamp: new Date(),
+    type: 'error',
+    messageId: errorMessage.id
+  });
   
   setIsLoadingDocs(false);
   setIsLoadingAnalysis(false);
   setChatHistory(prev => [...prev, errorMessage]);
   
-  if (user) {
-    await addMessageToChat(user.uid, currentChatId, messagesForFirestore);
-  }
+  await addMessageToChat(user?.uid || userId, currentChatId, messagesForFirestore);
 };

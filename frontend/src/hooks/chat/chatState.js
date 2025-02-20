@@ -9,14 +9,27 @@ export const initializeActiveChat = async ({
   extractedDisease,
   extractedEvents,
   setActiveChat,
-  setChatHistory
+  setChatHistory,
+  userId
 }) => {
-  if (!user) return;
+  console.log('[CHAT_DEBUG] Initializing active chat:', {
+    hasUser: !!user,
+    userId: user?.uid || userId,
+    hasExtractedDisease: !!extractedDisease,
+    hasExtractedEvents: !!extractedEvents
+  });
 
   try {
     const timestamp = new Date();
     const messageId = createMessageId('initial');
     
+    console.log('[CHAT_DEBUG] Creating initial message with:', {
+      timestamp: new Date(),
+      messageId,
+      extractedDisease,
+      numEvents: extractedEvents?.length
+    });
+
     // Create the initial message that contains all the case information
     const initialMessage = {
       content: JSON.stringify({
@@ -32,14 +45,17 @@ export const initializeActiveChat = async ({
     };
 
     // Create a new chat with the initial message
-    const chatId = await createNewChat(user.uid, [initialMessage]);
+    console.log('[CHAT_DEBUG] Creating new chat in Firestore');
+    const chatId = await createNewChat(user?.uid || userId, [initialMessage]);
     
+    console.log('[CHAT_DEBUG] Setting active chat with ID:', chatId);
     // Set the active chat
     setActiveChat({
       id: chatId,
       messages: [initialMessage]
     });
 
+    console.log('[CHAT_DEBUG] Setting chat history with initialization message');
     // Update chat history
     setChatHistory([{
       id: messageId,
@@ -54,9 +70,10 @@ export const initializeActiveChat = async ({
       }
     }]);
 
+    console.log('[CHAT_DEBUG] Active chat initialization complete');
     return chatId;
   } catch (error) {
-    console.error('Error initializing active chat:', error);
+    console.error('[CHAT_DEBUG] Error initializing active chat:', error);
     throw error;
   }
 };

@@ -27,15 +27,31 @@ const ChatContainer = ({
   finalAnalysisRef,
   messageEndRef
 }) => {
-  console.log('LOADING_DEBUG: ChatContainer render, isLoadingAnalysis:', isLoadingAnalysis);
-  console.log('ChatContainer rendering with chatHistory:', 
-    chatHistory.map(msg => ({
-      id: msg.id,
-      type: msg.type,
-      hasAnalysis: !!msg.analysis,
-      timestamp: msg.timestamp
-    }))
-  );
+  // Add detailed logging for chat initialization debugging
+  console.log('[CHAT_DEBUG] ChatContainer render with chatHistory length:', chatHistory.length);
+  console.log('[CHAT_DEBUG] Full chatHistory details:', chatHistory.map(msg => ({
+    id: msg.id,
+    type: msg.type,
+    hasAnalysis: !!msg.analysis,
+    hasInitialCase: !!msg.initialCase,
+    extractedDisease: msg.initialCase?.extractedDisease,
+    text: msg.text,
+    timestamp: msg.timestamp
+  })));
+
+  // Add useEffect for tracking chatHistory changes
+  React.useEffect(() => {
+    console.log('[CHAT_DEBUG] chatHistory changed:', {
+      length: chatHistory.length,
+      hasInitMessage: chatHistory.some(msg => msg.initialCase),
+      messages: chatHistory.map(msg => ({
+        id: msg.id,
+        type: msg.type,
+        text: msg.text,
+        hasInitialCase: !!msg.initialCase
+      }))
+    });
+  }, [chatHistory]);
   return (
     <div className="flex-1 overflow-y-auto space-y-4">
       <div className="max-w-[95%] space-y-6 px-4">
@@ -50,6 +66,15 @@ const ChatContainer = ({
             return (
               <React.Fragment key={msg.id}>
                 {/* Show regular messages and streamed messages */}
+                {/* Add logging for message rendering conditions */}
+                {console.log('[CHAT_DEBUG] Evaluating message:', {
+                  id: msg.id,
+                  hasAnalysis: !!msg.analysis,
+                  hasType: !!msg.type,
+                  hasText: msg.text !== undefined,
+                  hasInitialCase: !!msg.initialCase,
+                  extractedDisease: msg.initialCase?.extractedDisease
+                })}
                 {((!msg.analysis && !msg.type) || (msg.text !== undefined)) && (
                   <>
                     <ChatMessage message={msg} />
@@ -84,7 +109,7 @@ const ChatContainer = ({
                 
                 {/* Show document type messages (article table) */}
                 {msg.type === 'document' && (
-                  console.log('Rendering ArticleResults with:', {
+                  console.log('[CHAT_DEBUG] Rendering ArticleResults with:', {
                     id: msg.id,
                     type: msg.type,
                     hasArticles: !!msg.articles?.length,

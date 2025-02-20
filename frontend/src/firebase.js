@@ -1,6 +1,6 @@
 // src/firebase.js
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth, signInAnonymously } from 'firebase/auth';
 import { 
   getFirestore, 
   collection, 
@@ -97,6 +97,17 @@ export const deleteChat = async (userId, chatId) => {
   } catch (error) {
     console.error('Error deleting chat:', error);
     throw error;
+  }
+};
+
+// Anonymous authentication
+export const signInAnonymousUser = async () => {
+  try {
+    const userCredential = await signInAnonymously(auth);
+    return userCredential.user;
+  } catch (error) {
+    console.error("Error signing in anonymously:", error);
+    return null;
   }
 };
 

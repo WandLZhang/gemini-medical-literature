@@ -8,24 +8,30 @@ import ReactMarkdown from 'react-markdown';
 const ChatMessage = ({ message }) => {
   const [isErrorExpanded, setIsErrorExpanded] = useState(false);
 
-  console.log('CHAT_MESSAGE_DEBUG: Received message:', {
+  console.log('[CHAT_DEBUG] ChatMessage received:', {
     id: message.id,
     text: message.text,
     isUser: message.isUser,
     type: message.type,
-    analysis: message.analysis,
+    analysis: !!message.analysis,
+    hasInitialCase: !!message.initialCase,
+    extractedDisease: message.initialCase?.extractedDisease,
     timestamp: message.timestamp
   });
+
+  // Add specific logging for initialization messages
+  if (message.initialCase) {
+    console.log('[CHAT_DEBUG] Initialization message details:', {
+      disease: message.initialCase.extractedDisease,
+      hasEvents: !!message.initialCase.extractedEvents?.length,
+      eventCount: message.initialCase.extractedEvents?.length,
+      displayText: message.text
+    });
+  }
 
   const isError = message.text && message.text.includes("I'm sorry, there was an error");
   const isDocument = message.type === 'document';
 
-  console.log('CHAT_MESSAGE_DEBUG: Message:', {
-    id: message.id,
-    text: message.text,
-    isUser: message.isUser,
-    type: message.type
-  });
 
   return (
     <div className={`flex ${message.isUser ? 'justify-end' : ''} mb-4`}>

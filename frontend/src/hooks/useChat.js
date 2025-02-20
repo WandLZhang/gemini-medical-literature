@@ -1,8 +1,11 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { handleSendMessage } from './chat/messageHandlers';
 import { initializeActiveChat, initializeNewChat, handleChatSelect } from './chat/chatState';
+import { deleteChat } from '../firebase';
 
 const useChat = (user, selectedTemplate) => {
+  // Use authenticated user ID (regular or anonymous)
+  const userId = user?.uid;
   const [chatHistory, setChatHistory] = useState([]);
   const [isLoadingDocs, setIsLoadingDocs] = useState(false);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
@@ -11,9 +14,17 @@ const useChat = (user, selectedTemplate) => {
   const [hasDocumentMessages, setHasDocumentMessages] = useState(false);
 
   const handleInitializeActiveChat = useCallback(async (caseNotes, labResults, extractedDisease, extractedEvents) => {
-    if (!user) return;
+    // If there's an active temporary chat, delete it first
+    if (!user && activeChat) {
+      try {
+        await deleteChat(userId, activeChat.id);
+      } catch (error) {
+        console.error('Error deleting temporary chat:', error);
+      }
+    }
+
     return initializeActiveChat({
-      user,
+      user: { uid: userId },
       caseNotes,
       labResults,
       extractedDisease,
@@ -21,7 +32,7 @@ const useChat = (user, selectedTemplate) => {
       setActiveChat,
       setChatHistory
     });
-  }, [user]);
+  }, [user, userId, activeChat]);
 
   const handleInitializeNewChat = useCallback(() => {
     initializeNewChat({
@@ -45,7 +56,7 @@ const useChat = (user, selectedTemplate) => {
       e,
       message,
       setMessage,
-      user,
+      user: { uid: userId },
       activeChat,
       setActiveChat,
       setChatHistory,
@@ -53,7 +64,8 @@ const useChat = (user, selectedTemplate) => {
       setIsLoadingDocs,
       isLoadingAnalysis,
       setIsLoadingAnalysis,
-      selectedTemplate
+      selectedTemplate,
+      userId
     });
   }, [message, isLoadingDocs, isLoadingAnalysis, activeChat, user, selectedTemplate]);
 
@@ -64,10 +76,10 @@ const useChat = (user, selectedTemplate) => {
     activeChat,
     message,
     setMessage,
-    handleChatSelect: user ? handleChatSelection : null,
+    handleChatSelect: handleChatSelection,
     handleSendMessage: handleMessageSend,
-    initializeNewChat: user ? handleInitializeNewChat : null,
-    initializeActiveChat: user ? handleInitializeActiveChat : null,
+    initializeNewChat: handleInitializeNewChat,
+    initializeActiveChat: handleInitializeActiveChat,
     hasDocumentMessages
   };
 };

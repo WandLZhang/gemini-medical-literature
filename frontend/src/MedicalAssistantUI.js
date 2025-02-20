@@ -19,7 +19,7 @@ import { generateSampleCase, extractDisease, extractEvents, retrieveAndAnalyzeAr
 // Utilities
 const createMessageId = (type) => `${Date.now()}-${type}-${Math.random().toString(36).substr(2, 9)}`;
 
-const MedicalAssistantUI = ({ user }) => {
+const MedicalAssistantUI = () => {
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isGeneratingSample, setIsGeneratingSample] = useState(false);
@@ -177,7 +177,7 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
 						 							
   WES and RNAseq of the current relapse sample is pending.`);
 
-  const { handleLogin, handleLogout } = useAuth(setShowUserMenu);
+  const { user, loading, handleLogin, handleLogout, isAuthenticated } = useAuth(setShowUserMenu);
   
   const {
     chatHistory,
@@ -238,8 +238,14 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
   }, [chatHistory]);
 
   const handleExtract = async () => {
+    console.log('[CHAT_DEBUG] Starting extraction process');
     try {
       setIsProcessing(true);
+      console.log('[CHAT_DEBUG] User state:', {
+        isAuthenticated: !!user,
+        userId: user?.uid,
+        isAnonymous: user?.isAnonymous
+      });
       // Combine case notes and lab results with clear separation
       const combinedNotes = [
         "Case Notes:",
@@ -248,24 +254,26 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
         labResults
       ].join('\n\n');
 
+      console.log('[CHAT_DEBUG] Extracting disease and events from notes');
       const [disease, events] = await Promise.all([
         extractDisease(combinedNotes),
         extractEvents(combinedNotes, extractionPrompt)
       ]);
+      console.log('[CHAT_DEBUG] Extraction results:', { disease, events });
       setExtractedDisease(disease);
       setExtractedEvents(events);
       setIsBox2Hovered(true); // Keep box 2 solid after extraction
 
       // Initialize active chat with the extracted information
-      if (user) {
-        try {
-          await initializeActiveChat(caseNotes, labResults, disease, events);
-        } catch (error) {
-          console.error('Error initializing chat:', error);
-        }
+      try {
+        console.log('[CHAT_DEBUG] Initializing active chat with extracted data');
+        await initializeActiveChat(caseNotes, labResults, disease, events);
+        console.log('[CHAT_DEBUG] Chat initialization successful');
+      } catch (error) {
+        console.error('[CHAT_DEBUG] Error initializing chat:', error);
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('[CHAT_DEBUG] Extraction error:', error);
       if (error.message.includes('Failed to fetch')) {
         setExtractedDisease('Network error. Please check your connection and try again.');
         setExtractedEvents(['Network error. Please check your connection and try again.']);
@@ -411,6 +419,14 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-50">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-screen bg-gray-50">
       <DisclaimerModal isOpen={showDisclaimer} onClose={handleCloseDisclaimer} />
@@ -420,6 +436,7 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
         handleLogout={handleLogout}
         showUserMenu={showUserMenu}
         setShowUserMenu={setShowUserMenu}
+        isAuthenticated={isAuthenticated}
       />
 
       <div className="flex flex-1 min-h-0 relative w-full">

@@ -1,8 +1,8 @@
 // src/components/Header/UserMenu.js
 import React from 'react';
 
-const UserMenu = ({ user, handleLogin, handleLogout, showUserMenu, setShowUserMenu }) => {
-  if (!user) {
+const UserMenu = ({ user, handleLogin, handleLogout, showUserMenu, setShowUserMenu, isAuthenticated }) => {
+  if (!isAuthenticated()) {
     return (
       <button
         onClick={handleLogin}
