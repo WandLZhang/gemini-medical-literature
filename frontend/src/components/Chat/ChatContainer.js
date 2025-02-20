@@ -49,8 +49,8 @@ const ChatContainer = ({
             
             return (
               <React.Fragment key={msg.id}>
-                {/* Show regular messages */}
-                {!msg.analysis && !msg.type && (
+                {/* Show regular messages and streamed messages */}
+                {((!msg.analysis && !msg.type) || (msg.text !== undefined)) && (
                   <>
                     <ChatMessage message={msg} />
                     {/* Show progress and incremental updates after case initialization */}

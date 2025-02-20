@@ -61,6 +61,57 @@ export const retrieveAndAnalyzeArticles = async (disease, events, methodologyCon
 };
 
 const API_BASE_URL = 'https://us-central1-gemini-med-lit-review.cloudfunctions.net';
+
+export const streamChat = async (message, userId, chatId, onChunk) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/capricorn-chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message,
+        userId,
+        chatId
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value);
+      const lines = chunk.split('\n');
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          if (data === '[DONE]') {
+            break;
+          }
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.text) {
+              onChunk(parsed.text);
+            }
+          } catch (e) {
+            console.error('Error parsing SSE data:', e);
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error in chat stream:', error);
+    throw error;
+  }
+};
 const GENERATE_CASE_URL = process.env.REACT_APP_GENERATE_CASE_URL;
 
 /**
