@@ -27,7 +27,7 @@ const ChatInput = ({ message, setMessage, handleSendMessage, isLoading }) => {
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleTextareaKeyDown}
           placeholder="Ask questions here..."
-          className="w-full py-3 px-4 bg-white/70 rounded-full focus:outline-none resize-none min-h-[48px] max-h-[200px] overflow-y-auto pr-14"
+          className="w-full py-3 px-4 bg-white/70 rounded-full focus:outline-none resize-none min-h-[48px] max-h-[200px] overflow-y-auto pr-14 text-sm text-gray-600 placeholder-gray-400"
           disabled={isLoading}
           rows={1}
         />
