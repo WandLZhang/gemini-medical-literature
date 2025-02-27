@@ -1,8 +1,12 @@
 import functions_framework
 from flask import jsonify
 from google.cloud import dlp_v2
+from google import genai
+from google.genai import types
 import json
 import logging
+import re
+from datetime import datetime
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -11,9 +15,17 @@ logger = logging.getLogger(__name__)
 # Initialize DLP client
 dlp_client = dlp_v2.DlpServiceClient()
 
+# Initialize Gemini client
+client = genai.Client(
+    vertexai=True,
+    project="gemini-med-lit-review",
+    location="us-central1",
+)
+
 def get_info_types():
     """Get list of info types to redact, excluding age, gender, medical terms, and document types."""
     all_types = [
+        info_type for info_type in [
         {"name": "FINANCIAL_ID"},
         {"name": "FRANCE_DRIVERS_LICENSE_NUMBER"},
         {"name": "MEXICO_CURP_NUMBER"},
@@ -214,14 +226,74 @@ def get_info_types():
         {"name": "SWEDEN_NATIONAL_ID_NUMBER"},
         {"name": "FINANCIAL_ACCOUNT_NUMBER"},
         {"name": "IBAN_CODE"}
+    ] if info_type["name"] != "DATE_OF_BIRTH"
     ]
 
+def standardize_date(date_string):
+    prompt = f"""
+    Convert the following date to YYYY-MM-DD format: {date_string}
+    
+    Respond with ONLY the standardized date in YYYY-MM-DD format.
+    If the date cannot be converted, respond with 'INVALID'.
+    """
+    
+    contents = [types.Content(role="user", parts=[types.Part.from_text(text=prompt)])]
+    
+    generate_content_config = types.GenerateContentConfig(
+        temperature=0,
+        top_p=1,
+        max_output_tokens=20,
+        response_modalities=["TEXT"],
+    )
+    
+    response = client.models.generate_content(
+        model="gemini-2.0-flash-001",
+        contents=contents,
+        config=generate_content_config
+    )
+    
+    standardized_date = response.text.strip()
+    if standardized_date == 'INVALID':
+        raise ValueError("Invalid date format")
+    return standardized_date
+
+def calculate_age(birth_date):
+    today = datetime.now()
+    birth_date = datetime.strptime(birth_date, "%Y-%m-%d")
+    age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
+    return age
+
 def deidentify_content(project_id, text):
-    """Deidentify sensitive content using DLP API."""
+    """Deidentify sensitive content using DLP API and Gemini for date processing."""
     if not text:
         return text
 
-    # Construct deidentification config
+    print(f"Original text: {text}")
+
+    # Regex pattern for potential dates (this is a simple example and may need refinement)
+    date_pattern = r'\b(\d{1,2}[-/]\d{1,2}[-/]\d{2,4}|\d{2,4}[-/]\d{1,2}[-/]\d{1,2})\b'
+    
+    def replace_date(match):
+        original_date = match.group(0)
+        try:
+            standardized_date = standardize_date(original_date)
+            age = calculate_age(standardized_date)
+            print(f"Date processing: Converted '{original_date}' to 'Age: {age}'")
+            return f"Age: {age}"
+        except Exception as e:
+            print(f"Date processing error: Failed to process '{original_date}'. Error: {str(e)}")
+            return original_date
+
+    # Replace dates with ages
+    text = re.sub(date_pattern, replace_date, text)
+
+    print(f"Text after date replacement: {text}")
+
+    # Get info types for redaction
+    info_types = get_info_types()
+    print(f"Info types used for redaction: {[t['name'] for t in info_types]}")
+
+    # Proceed with DLP API redaction
     deidentify_config = {
         "info_type_transformations": {
             "transformations": [
@@ -238,17 +310,13 @@ def deidentify_content(project_id, text):
         }
     }
 
-    # Construct inspection config
     inspect_config = {
-        "info_types": get_info_types(),
+        "info_types": info_types,
         "min_likelihood": dlp_v2.Likelihood.LIKELY,
-        "include_quote": False,
+        "include_quote": True,
     }
 
-    # Construct item
     item = {"value": text}
-
-    # Construct request
     parent = f"projects/{project_id}"
     request = {
         "parent": parent,
@@ -259,10 +327,22 @@ def deidentify_content(project_id, text):
 
     try:
         response = dlp_client.deidentify_content(request=request)
+        
+        print("DLP API Response:")
+        if hasattr(response, 'overview') and hasattr(response.overview, 'transformed_overview'):
+            for transformation in response.overview.transformed_overview.transformation_summaries:
+                print(f"  Info type found: {transformation.info_type.name}")
+                print(f"  Occurrences: {transformation.transformed_count}")
+                if hasattr(transformation, 'transformed_bytes'):
+                    print(f"  Transformed bytes: {transformation.transformed_bytes}")
+        else:
+            print("  No transformation overview available in the response.")
+        
+        print(f"Final redacted text: {response.item.value}")
         return response.item.value
     except Exception as e:
-        logger.error(f"Error in deidentify_content: {str(e)}")
-        raise
+        print(f"Error in deidentify_content: {str(e)}")
+        return None  # Return None instead of raising an exception
 
 @functions_framework.http
 def redact_sensitive_info(request):
@@ -282,6 +362,11 @@ def redact_sensitive_info(request):
         'Content-Type': 'application/json'
     }
 
+    debug_info = []
+
+    def capture_print(message):
+        debug_info.append(str(message))
+
     try:
         request_json = request.get_json()
         logger.info("Received request for redaction")
@@ -296,19 +381,68 @@ def redact_sensitive_info(request):
             logger.error("No text provided for redaction")
             return jsonify({'error': 'No text provided'}), 400, headers
 
+        # Redirect print statements to capture_print
+        import builtins
+        original_print = builtins.print
+        builtins.print = capture_print
+
         # Redact sensitive information
         project_id = "gemini-med-lit-review"  # Your GCP project ID
         redacted_text = deidentify_content(project_id, text)
 
+        # Restore original print function
+        builtins.print = original_print
+
+        if redacted_text is None:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to redact text',
+                'debugInfo': debug_info
+            }), 500, headers
+
         return jsonify({
             'success': True,
-            'redactedText': redacted_text
+            'redactedText': redacted_text,
+            'debugInfo': debug_info
         }), 200, headers
 
     except Exception as e:
         logger.error(f"Error in redact_sensitive_info: {str(e)}")
-        return jsonify({'error': str(e)}), 500, headers
+        # Restore original print function in case of exception
+        builtins.print = original_print
+        return jsonify({'error': str(e), 'debugInfo': debug_info}), 500, headers
+
+def get_info_types():
+    """Get list of info types to redact, excluding age, gender, medical terms, and document types."""
+    all_types = [
+        {"name": info_type}
+        for info_type in [
+            "PERSON_NAME",
+            "PHONE_NUMBER",
+            "EMAIL_ADDRESS",
+            # Add other info types here, but exclude DATE_OF_BIRTH
+        ]
+    ]
+    return all_types
 
 if __name__ == "__main__":
+    # Test cases
+    test_texts = [
+        "A now almost 4 year old female diagnosed with KMT2A-rearranged AML on 05/15/2021.",
+        "Patient born on 1990-03-22 is now 33 years old.",
+        "Treatment started on 12/31/2023 for this 45-year-old male.",
+        "The 2-month-old infant was admitted on 2025-01-15.",
+        "John Doe's email is john.doe@example.com and phone number is 555-123-4567."
+    ]
+
+    print("Running test cases:")
+    for i, text in enumerate(test_texts, 1):
+        print(f"\nTest Case {i}:")
+        print(f"Original text: {text}")
+        result = deidentify_content("gemini-med-lit-review", text)
+        print(f"Redacted text: {result}")
+        print("=" * 50)
+
+    # Run the Flask app
     app = functions_framework.create_app(target="redact_sensitive_info")
     app.run(host="0.0.0.0", port=8080, debug=True)
