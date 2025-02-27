@@ -45,12 +45,6 @@ const ChatMessage = ({ message }) => {
               : 'bg-surface-100 text-surface-800'
         }`}
       >
-        {!message.isUser && !hideAssistantHeader && (
-          <div className="font-bold mb-1 flex items-center gap-2">
-            {isError && <AlertCircle className="h-4 w-4" />}
-            Assistant
-          </div>
-        )}
         <div className="text-sm overflow-x-auto">
           {(() => {
             if (isDocument) {
