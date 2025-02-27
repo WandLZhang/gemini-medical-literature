@@ -53,9 +53,9 @@ const MainPanel = ({
   }, [chatHistory]);
 
   return (
-    <main className={`flex-1 flex flex-col min-h-0 pl-12 pt-10 pb-0 transition-all duration-500 ease-in-out relative
+    <main className={`flex-1 flex flex-col min-h-0 pl-12 pt-10 pb-8 transition-all duration-500 ease-in-out relative
       ${hasDocumentMessages || currentProgress ? 'ml-24 w-[calc(100%-96px)]' : 'ml-[40%]'}`}>
-      <div className="flex flex-col min-h-0 overflow-auto">
+      <div className="flex flex-col min-h-0 overflow-auto pb-24">
           <AnalysisSection
           extractedDisease={extractedDisease}
           extractedEvents={extractedEvents}
@@ -86,15 +86,17 @@ const MainPanel = ({
       </div>
       {/* Only show ChatInput after analysis is complete */}
       {chatHistory.some(msg => msg.analysis) && (
-        <div className="sticky bottom-0 w-full">
-              <div className="absolute inset-x-0 bg-gradient-to-t from-gray-50 via-gray-50/50 to-transparent h-8 -top-8 pointer-events-none" />
-          <ChatInput 
-            message={message}
-            setMessage={setMessage}
-            handleSendMessage={handleSendMessage}
-            handleGenerateSampleCase={handleGenerateSampleCase}
-            isLoading={isLoadingDocs || isLoadingAnalysis || isGeneratingSample}
-          />
+        <div className="fixed bottom-16 left-0 right-0 px-4">
+          <div className="absolute inset-x-0 bg-gradient-to-t from-gray-50 via-gray-50/50 to-transparent h-24 -top-24 pointer-events-none" />
+          <div className="relative z-10 max-w-[70%] mx-auto">
+            <ChatInput 
+              message={message}
+              setMessage={setMessage}
+              handleSendMessage={handleSendMessage}
+              handleGenerateSampleCase={handleGenerateSampleCase}
+              isLoading={isLoadingDocs || isLoadingAnalysis || isGeneratingSample}
+            />
+          </div>
         </div>
       )}
     </main>
