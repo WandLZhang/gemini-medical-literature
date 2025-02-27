@@ -1,4 +1,4 @@
-import { createNewChat } from '../../firebase';
+import { createNewChat, getChatMessages, getDoc } from '../../firebase';
 import { createMessageId } from './messageHandlers';
 import { getLatestMessages } from './utils';
 
@@ -91,7 +91,8 @@ export const handleChatSelect = async ({
   setActiveChat,
   setHasDocumentMessages,
   setChatHistory,
-  initializeNewChat
+  initializeNewChat,
+  userId
 }) => {
   if (chat) {
     setActiveChat(chat);
@@ -99,8 +100,11 @@ export const handleChatSelect = async ({
     
     const messages = [];
     
-    // Load all messages in chronological order
-    chat.messages?.forEach(msg => {
+    // Fetch the latest messages from Firestore
+    const latestMessages = await getChatMessages(userId, chat.id);
+    
+    // Process the fetched messages
+    latestMessages.forEach(msg => {
       switch (msg.type) {
         case 'initial_case':
           const initialCase = JSON.parse(msg.content);

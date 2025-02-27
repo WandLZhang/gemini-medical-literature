@@ -11,7 +11,8 @@ import {
   getDocs, 
   updateDoc,
   deleteDoc, 
-  doc 
+  doc,
+  getDoc
 } from 'firebase/firestore';
 
 // Your Firebase configuration object
@@ -96,6 +97,24 @@ export const deleteChat = async (userId, chatId) => {
     await deleteDoc(chatRef);
   } catch (error) {
     console.error('Error deleting chat:', error);
+    throw error;
+  }
+};
+
+export const getChatMessages = async (userId, chatId) => {
+  try {
+    const chatRef = doc(db, `chats/${userId}/conversations/${chatId}`);
+    const chatDoc = await getDoc(chatRef);
+    
+    if (chatDoc.exists()) {
+      const chatData = chatDoc.data();
+      return chatData.messages || [];
+    } else {
+      console.error('Chat document does not exist');
+      return [];
+    }
+  } catch (error) {
+    console.error('Error getting chat messages:', error);
     throw error;
   }
 };

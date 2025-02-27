@@ -47,9 +47,10 @@ const useChat = (user, selectedTemplate) => {
       setActiveChat,
       setHasDocumentMessages,
       setChatHistory,
-      initializeNewChat: handleInitializeNewChat
+      initializeNewChat: handleInitializeNewChat,
+      userId
     });
-  }, [handleInitializeNewChat]);
+  }, [handleInitializeNewChat, userId]);
 
   const handleMessageSend = useCallback(async (e) => {
     await handleSendMessage({
