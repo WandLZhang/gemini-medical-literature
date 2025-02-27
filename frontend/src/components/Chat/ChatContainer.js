@@ -10,7 +10,7 @@ const LoadingSpinner = ({ message }) => {
   console.log('LOADING_DEBUG: LoadingSpinner rendered with message:', message);
   return (
     <div className="flex justify-center items-center p-4">
-      <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-200 border-t-primary-600"></div>
+      <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-200 border-t-surface-700"></div>
       <span className="ml-2 text-sm text-gray-600">{message}</span>
     </div>
   );
@@ -88,7 +88,7 @@ const ChatContainer = ({
                         <div style={{ maxWidth: '400px' }}>
                           <div className="bg-gray-200 rounded-full h-2 mb-4 overflow-hidden">
                             <div
-                              className="bg-primary-600 h-2 rounded-full transition-all duration-300"
+                              className="bg-surface-700 h-2 rounded-full transition-all duration-300"
                               style={{ width: `${(() => {
                                 const match = currentProgress?.match(/Processed article (\d+) out of (\d+)/);
                                 if (!match) return 0;
