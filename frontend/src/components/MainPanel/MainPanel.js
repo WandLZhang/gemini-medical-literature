@@ -30,25 +30,26 @@ const MainPanel = ({
   handleGenerateSampleCase,
   hasDocumentMessages
 }) => {
-  React.useEffect(() => {
-    console.log('LOADING_DEBUG: MainPanel isLoadingAnalysis changed to:', isLoadingAnalysis);
-  }, [isLoadingAnalysis]);
-
-  console.log('LOADING_DEBUG: MainPanel render, isLoadingAnalysis:', isLoadingAnalysis);
-  
   const finalAnalysisRef = useRef(null);
   const messageEndRef = useRef(null);
 
+  // Handle scrolling based on message type
   useEffect(() => {
-    if (!isLoadingAnalysis && finalAnalysisRef.current) {
-      finalAnalysisRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, [isLoadingAnalysis]);
-
-  // Scroll to bottom when new messages are added
-  useEffect(() => {
-    if (messageEndRef.current) {
-      messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    console.log('[SCROLL_DEBUG] useEffect triggered');
+    if (chatHistory.length > 0) {
+      const lastMessage = chatHistory[chatHistory.length - 1];
+      console.log('[SCROLL_DEBUG] Last message:', lastMessage);
+      if (lastMessage.analysis !== undefined && finalAnalysisRef.current) {
+        console.log('[SCROLL_DEBUG] Scrolling to analysis');
+        finalAnalysisRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else if (lastMessage.text !== undefined && messageEndRef.current) {
+        console.log('[SCROLL_DEBUG] Scrolling to bottom for user/assistant message');
+        messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        console.log('[SCROLL_DEBUG] No scroll action taken');
+      }
+    } else {
+      console.log('[SCROLL_DEBUG] Chat history is empty');
     }
   }, [chatHistory]);
 

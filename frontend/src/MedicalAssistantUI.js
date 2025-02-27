@@ -361,7 +361,7 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
                 console.log('Sending analysis message to handleSendMessage:', JSON.stringify(analysisContent, null, 2));
                 await handleSendMessage(analysisContent);
                 console.log('Analysis message sent successfully');
-                setCurrentProgress('Final analysis complete.');
+                setCurrentProgress('Processing complete.');
               } catch (error) {
                 console.error('Error generating final analysis:', error);
                 setCurrentProgress('Error generating final analysis. Please try again.');
