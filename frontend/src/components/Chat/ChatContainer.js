@@ -25,7 +25,9 @@ const ChatContainer = ({
   currentArticleData,
   articles,
   finalAnalysisRef,
-  messageEndRef
+  messageEndRef,
+  showArticleResults,
+  initialArticleResultsExpanded
 }) => {
   // Add detailed logging for chat initialization debugging
   console.log('[CHAT_DEBUG] ChatContainer render with chatHistory length:', chatHistory.length);

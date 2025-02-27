@@ -1,14 +1,33 @@
-import React from 'react';
+import React, { useState } from 'react';
 
-const ArticleResults = ({ articles }) => {
+const ArticleResults = ({ articles, initialExpanded = false }) => {
+  const [isExpanded, setIsExpanded] = useState(initialExpanded);
+
   if (!articles?.length) {
     return null;
   }
 
   return (
-    <div>
-      {/* Display Analyzed Articles */}
-        <div className="mt-4 overflow-x-scroll" style={{ maxWidth: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+    <div className="mt-4 bg-surface-50 shadow-lg rounded-lg p-4">
+      <div className="flex justify-between items-center mb-2">
+        <h2 className="text-sm font-medium text-gray-700">Article Results</h2>
+        <button 
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="text-gray-500 hover:text-gray-700 focus:outline-none"
+        >
+          {isExpanded ? (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+          )}
+        </button>
+      </div>
+      {isExpanded && (
+        <div className="overflow-x-scroll" style={{ maxWidth: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
           <table className="min-w-max bg-white border border-gray-300" style={{ minWidth: '120%' }}>
             <thead>
               <tr>
@@ -144,6 +163,7 @@ const ArticleResults = ({ articles }) => {
             </tbody>
           </table>
         </div>
+      )}
     </div>
   );
 };
