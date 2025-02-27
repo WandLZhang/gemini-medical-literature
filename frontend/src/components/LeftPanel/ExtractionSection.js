@@ -21,7 +21,7 @@ const ExtractionSection = ({
       <button 
         onClick={handleExtract}
         disabled={isProcessing}
-        className={`text-xs px-3 py-1 bg-primary-600 text-white rounded hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 w-[60px] flex items-center justify-center ${
+        className={`text-xs px-3 py-1 bg-surface-700 text-white rounded hover:bg-surface-600 focus:outline-none focus:ring-2 focus:ring-surface-500 focus:ring-offset-2 w-[60px] flex items-center justify-center ${
           isProcessing ? 'opacity-50 cursor-not-allowed' : ''
         }`}
       >
