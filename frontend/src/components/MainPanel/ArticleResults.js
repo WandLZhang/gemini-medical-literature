@@ -1,9 +1,15 @@
 import React, { useState } from 'react';
 
-const ArticleResults = ({ articles, initialExpanded = false }) => {
+const ArticleResults = ({ 
+  articles, 
+  initialExpanded = false, 
+  currentProgress, 
+  totalArticles, 
+  processedArticles 
+}) => {
   const [isExpanded, setIsExpanded] = useState(initialExpanded);
 
-  if (!articles?.length) {
+  if (!articles?.length && !currentProgress) {
     return null;
   }
 
@@ -26,7 +32,25 @@ const ArticleResults = ({ articles, initialExpanded = false }) => {
           )}
         </button>
       </div>
-      {isExpanded && (
+      
+      {currentProgress && (
+        <div className="mb-4">
+          <div className="text-sm text-gray-600 mb-2">Currently analyzing:</div>
+          <div className="text-xs flex items-center gap-2 mb-1">
+            <span className="text-gray-600">{currentProgress}</span>
+          </div>
+          <div style={{ maxWidth: '400px' }}>
+            <div className="bg-gray-200 rounded-full h-2 mb-4 overflow-hidden">
+              <div
+                className="bg-surface-700 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${(processedArticles / totalArticles) * 100}%` }}
+              ></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isExpanded && articles?.length > 0 && (
         <div className="overflow-x-scroll" style={{ maxWidth: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
           <table className="min-w-max bg-white border border-gray-300" style={{ minWidth: '120%' }}>
             <thead>

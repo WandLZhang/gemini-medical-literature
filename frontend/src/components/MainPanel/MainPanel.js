@@ -82,6 +82,10 @@ const MainPanel = ({
             articles={articles}
             finalAnalysisRef={finalAnalysisRef}
             messageEndRef={messageEndRef}
+            showArticleResults={true}
+            initialArticleResultsExpanded={false}
+            totalArticles={numArticles}
+            processedArticles={articles.length}
           />
       </div>
       {/* Only show ChatInput after analysis is complete */}

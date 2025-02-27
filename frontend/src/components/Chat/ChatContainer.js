@@ -27,7 +27,9 @@ const ChatContainer = ({
   finalAnalysisRef,
   messageEndRef,
   showArticleResults,
-  initialArticleResultsExpanded
+  initialArticleResultsExpanded,
+  totalArticles,
+  processedArticles
 }) => {
   // Add detailed logging for chat initialization debugging
   console.log('[CHAT_DEBUG] ChatContainer render with chatHistory length:', chatHistory.length);
@@ -101,9 +103,15 @@ const ChatContainer = ({
                           </div>
                         </div>
                         {/* Show incremental table updates */}
-                        <ArticleResults 
-                          articles={articles}
-                        />
+                        {showArticleResults && (
+                          <ArticleResults 
+                            articles={articles}
+                            initialExpanded={initialArticleResultsExpanded}
+                            currentProgress={currentProgress}
+                            totalArticles={totalArticles}
+                            processedArticles={processedArticles}
+                          />
+                        )}
                       </div>
                     )}
                   </>
@@ -119,10 +127,15 @@ const ChatContainer = ({
                     timestamp: msg.timestamp
                   }),
                   <div className="ml-4 mt-2">
-                    <ArticleResults 
-                      currentProgress={msg.currentProgress}
-                      articles={msg.articles}
-                    />
+                    {showArticleResults && (
+                      <ArticleResults 
+                        currentProgress={msg.currentProgress}
+                        articles={msg.articles}
+                        initialExpanded={initialArticleResultsExpanded}
+                        totalArticles={totalArticles}
+                        processedArticles={processedArticles}
+                      />
+                    )}
                   </div>
                 )}
 
