@@ -92,7 +92,7 @@ const MainPanel = ({
       {/* Only show ChatInput after analysis is complete */}
       {chatHistory.some(msg => msg.analysis) && (
         <div className="fixed bottom-16 left-0 right-0 px-4">
-          <div className="absolute inset-x-0 bg-gradient-to-t from-gray-50 via-gray-50/50 to-transparent h-24 -top-24 pointer-events-none" />
+          <div className="absolute inset-x-0 bg-gradient-to-t from-gray-50 via-gray-50/50 to-transparent h-24 -top-20 pointer-events-none" />
           <div className="relative z-10 max-w-[70%] mx-auto">
             <ChatInput 
               message={message}
