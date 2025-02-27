@@ -44,7 +44,7 @@ const ChatHistoryItem = ({ chat, isActive, onClick, onRename, onDelete }) => {
           value={newTitle}
           onChange={(e) => setNewTitle(e.target.value)}
           placeholder="Enter chat title"
-          className="w-full px-2 py-1 text-sm border rounded bg-white text-gray-900"
+          className="w-full px-2 py-1 text-sm border rounded bg-white text-surface-900"
           autoFocus
           onBlur={() => setIsRenaming(false)}
         />
@@ -54,8 +54,8 @@ const ChatHistoryItem = ({ chat, isActive, onClick, onRename, onDelete }) => {
 
   return (
     <div 
-      className={`group flex items-center justify-between w-full text-left px-3 py-2 text-sm hover:bg-gray-700 rounded-md ${
-        isActive ? 'bg-gray-700' : ''
+      className={`group flex items-center justify-between w-full text-left px-3 py-2 text-sm hover:bg-surface-600 rounded-md ${
+        isActive ? 'bg-surface-600' : ''
       }`}
     >
       <button
@@ -74,7 +74,7 @@ const ChatHistoryItem = ({ chat, isActive, onClick, onRename, onDelete }) => {
             e.stopPropagation();
             setIsRenaming(true);
           }}
-          className="p-1 hover:bg-gray-600 rounded text-white"
+          className="p-1 hover:bg-surface-800 rounded text-white"
         >
           <Pencil size={14} />
         </button>
@@ -83,7 +83,7 @@ const ChatHistoryItem = ({ chat, isActive, onClick, onRename, onDelete }) => {
             e.stopPropagation();
             onDelete(chat.id);
           }}
-          className="p-1 hover:bg-gray-600 rounded text-red-400"
+          className="p-1 hover:bg-surface-800 rounded text-red-400"
         >
           <Trash2 size={14} />
         </button>
@@ -153,11 +153,11 @@ const ExpandableSidebar = ({ user, onChatSelect, activeChat, initializeNewChat }
   };
 
   return (
-    <div className={`fixed top-16 left-0 h-[calc(100vh-4rem)] bg-gray-800 shadow-lg transition-all duration-300 ease-in-out flex z-20 ${isExpanded ? 'w-64' : 'w-12'}`}>
+    <div className={`fixed top-16 left-0 h-[calc(100vh-4rem)] bg-surface-700 shadow-lg transition-all duration-300 ease-in-out flex z-20 ${isExpanded ? 'w-64' : 'w-12'}`}>
       {/* Toggle button */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="absolute right-0 top-4 translate-x-full bg-gray-800 p-2 rounded-r-lg shadow-lg hover:bg-gray-700 transition-colors text-white"
+        className="absolute right-0 top-4 translate-x-full bg-surface-700 p-2 rounded-r-lg shadow-lg hover:bg-surface-600 transition-colors text-white"
         aria-label={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
       >
         {isExpanded ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
@@ -166,7 +166,7 @@ const ExpandableSidebar = ({ user, onChatSelect, activeChat, initializeNewChat }
       {/* Sidebar content */}
       <div className={`w-full overflow-hidden transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
         <div className="p-4 text-white">
-          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+          <h2 className="text-xs font-semibold text-surface-200 uppercase tracking-wider mb-2">
             Chat History
           </h2>
           <div className="space-y-2">
@@ -174,7 +174,7 @@ const ExpandableSidebar = ({ user, onChatSelect, activeChat, initializeNewChat }
               <>
                 <button
                   onClick={handleNewChat}
-                  className="flex items-center w-full text-left px-3 py-2 text-sm text-green-400 hover:bg-gray-700 rounded-md"
+                  className="flex items-center w-full text-left px-3 py-2 text-sm text-white hover:bg-surface-600 rounded-md"
                 >
                   <Plus size={16} className="mr-2" />
                   Start New Chat
@@ -196,7 +196,7 @@ const ExpandableSidebar = ({ user, onChatSelect, activeChat, initializeNewChat }
                 </div>
               </>
             ) : (
-              <div className="text-sm text-gray-400 px-3 py-2">
+              <div className="text-sm text-surface-200 px-3 py-2">
                 Sign in to view chat history
               </div>
             )}
