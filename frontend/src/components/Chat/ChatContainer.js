@@ -82,36 +82,16 @@ const ChatContainer = ({
                 {((!msg.analysis && !msg.type) || (msg.text !== undefined)) && (
                   <>
                     <ChatMessage message={msg} />
-                    {/* Show progress and incremental updates after case initialization */}
-                    {msg.initialCase?.extractedDisease && currentProgress && !chatHistory.find(m => m.type === 'document') && (
+                    {/* Show incremental table updates */}
+                    {msg.initialCase?.extractedDisease && currentProgress && !chatHistory.find(m => m.type === 'document') && showArticleResults && (
                       <div className="ml-4 mt-2">
-                        <div className="text-sm text-gray-600 mb-2">Currently analyzing:</div>
-                        <div className="text-xs flex items-center gap-2 mb-1">
-                          <span className="text-gray-600">{currentProgress}</span>
-                        </div>
-                        <div style={{ maxWidth: '400px' }}>
-                          <div className="bg-gray-200 rounded-full h-2 mb-4 overflow-hidden">
-                            <div
-                              className="bg-surface-700 h-2 rounded-full transition-all duration-300"
-                              style={{ width: `${(() => {
-                                const match = currentProgress?.match(/Processed article (\d+) out of (\d+)/);
-                                if (!match) return 0;
-                                const [_, current, total] = match;
-                                return (parseInt(current) / parseInt(total)) * 100;
-                              })()}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                        {/* Show incremental table updates */}
-                        {showArticleResults && (
-                          <ArticleResults 
-                            articles={articles}
-                            initialExpanded={initialArticleResultsExpanded}
-                            currentProgress={currentProgress}
-                            totalArticles={totalArticles}
-                            processedArticles={processedArticles}
-                          />
-                        )}
+                        <ArticleResults 
+                          articles={articles}
+                          initialExpanded={initialArticleResultsExpanded}
+                          currentProgress={currentProgress}
+                          totalArticles={totalArticles}
+                          processedArticles={processedArticles}
+                        />
                       </div>
                     )}
                   </>
