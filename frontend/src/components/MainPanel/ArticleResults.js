@@ -16,7 +16,7 @@ const ArticleResults = ({
   return (
     <div className="mt-4 bg-surface-50 shadow-lg rounded-lg p-4">
       <div className="flex justify-between items-center mb-2">
-        <h2 className="text-sm font-medium text-gray-700">Retrieved Articles</h2>
+        <h2 className="text-sm font-medium text-gray-700">Retrieved articles</h2>
         <button 
           onClick={() => setIsExpanded(!isExpanded)}
           className="text-gray-500 hover:text-gray-700 focus:outline-none"
