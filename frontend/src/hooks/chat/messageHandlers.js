@@ -41,7 +41,7 @@ export const handleSendMessage = ({
   const userMessage = typeof e === 'object' && e.content ? e.content : message;
   
   if ((typeof e === 'object' && e.content) || (message.trim() && !isLoadingDocs && !isLoadingAnalysis)) {
-    setMessage('');
+    setMessage(''); // Clear the message state immediately
     return handleUserMessage({
       userMessage,
       user,
@@ -51,7 +51,8 @@ export const handleSendMessage = ({
       setIsLoadingDocs,
       setIsLoadingAnalysis,
       selectedTemplate,
-      userId
+      userId,
+      setMessage // Pass setMessage to handleUserMessage
     });
   }
 };
@@ -115,8 +116,10 @@ const handleUserMessage = async ({
   setIsLoadingDocs,
   setIsLoadingAnalysis,
   selectedTemplate,
-  userId
+  userId,
+  setMessage
 }) => {
+  setMessage(''); // Clear the message input immediately
   // Redact sensitive information from user message
   let redactedMessage;
   try {
