@@ -1,37 +1,48 @@
 // src/components/Header/UserMenu.js
 import React from 'react';
 
-const UserMenu = ({ user, handleLogin, handleLogout, showUserMenu, setShowUserMenu, isAuthenticated }) => {
-  if (!isAuthenticated()) {
-    return (
-      <button
-        onClick={handleLogin}
-        className="bg-gray-800 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-700 transition-colors"
-      >
-        Login
-      </button>
-    );
+const UserMenu = ({ user, firstName, handleLogout, showUserMenu, setShowUserMenu, isAuthenticated }) => {
+  console.log('[USER_MENU_DEBUG] UserMenu: Rendering, isAuthenticated:', isAuthenticated, 'showUserMenu:', showUserMenu);
+
+  if (!isAuthenticated) {
+    return null;
   }
+
+  const toggleUserMenu = () => {
+    console.log('[USER_MENU_DEBUG] UserMenu: Toggling user menu, current state:', showUserMenu);
+    setShowUserMenu(!showUserMenu);
+    console.log('[USER_MENU_DEBUG] UserMenu: New state after toggle:', !showUserMenu);
+  };
 
   return (
     <div className="relative">
-      <button
-        onClick={() => setShowUserMenu(!showUserMenu)}
-        className="flex items-center focus:outline-none"
+      <div
+        className="relative z-20 cursor-pointer"
+        onClick={toggleUserMenu}
       >
-        <img
-          src={user.photoURL}
-          alt="Profile"
-          className="w-8 h-8 rounded-full"
-        />
-      </button>
+        {user?.photoURL ? (
+          <img
+            src={user.photoURL}
+            alt="Profile"
+            className="w-8 h-8 rounded-full"
+          />
+        ) : (
+          <div className="w-8 h-8 rounded-full bg-white text-[#FF7F00] flex items-center justify-center">
+            {(firstName || user?.displayName || 'U')[0].toUpperCase()}
+          </div>
+        )}
+      </div>
       {showUserMenu && (
-        <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg py-1 z-10">
-          <div className="px-4 py-2 text-sm text-gray-200">{user.displayName}</div>
-          <div className="px-4 py-2 text-sm text-gray-300">{user.email}</div>
+        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-30">
+          <div className="px-4 py-2 text-sm text-[#FF7F00]">Welcome, {firstName || user?.displayName}</div>
+          <div className="px-4 py-2 text-sm text-gray-600">{user?.email}</div>
           <button
-            onClick={handleLogout}
-            className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-700"
+            onClick={() => {
+              console.log('[USER_MENU_DEBUG] UserMenu: Logout button clicked');
+              handleLogout();
+              setShowUserMenu(false);
+            }}
+            className="block w-full text-left px-4 py-2 text-sm text-[#FF7F00] hover:bg-orange-100"
           >
             Sign out
           </button>

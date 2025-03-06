@@ -1,11 +1,11 @@
 // src/components/ChatMessage.js
 
-import React, { useState } from 'react';
+import React, { useState, forwardRef } from 'react';
 import { AlertCircle } from 'lucide-react';
 import ArticleResults from './MainPanel/ArticleResults';
 import ReactMarkdown from 'react-markdown';
 
-const ChatMessage = ({ message }) => {
+const ChatMessage = React.forwardRef(({ message }, ref) => {
   const [isErrorExpanded, setIsErrorExpanded] = useState(false);
 
   console.log('[CHAT_DEBUG] ChatMessage received:', {
@@ -35,7 +35,7 @@ const ChatMessage = ({ message }) => {
   const hideAssistantHeader = message.initialCase || isAnalysis;
 
   return (
-    <div className={`flex ${message.isUser ? 'justify-end' : ''} mb-4`}>
+    <div ref={ref} className={`flex ${message.isUser ? 'justify-end' : ''} mb-4`}>
       <div 
         className={`${isDocument || isAnalysis ? 'w-full' : 'max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl'} rounded-lg p-3 ${message.isUser ? 'ml-auto' : ''} ${
           isError 
@@ -103,6 +103,6 @@ const ChatMessage = ({ message }) => {
       </div>
     </div>
   );
-};
+});
 
 export default ChatMessage;

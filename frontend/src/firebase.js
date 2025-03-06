@@ -12,7 +12,8 @@ import {
   updateDoc,
   deleteDoc, 
   doc,
-  getDoc
+  getDoc,
+  onSnapshot
 } from 'firebase/firestore';
 
 // Your Firebase configuration object
@@ -128,6 +129,21 @@ export const signInAnonymousUser = async () => {
     console.error("Error signing in anonymously:", error);
     return null;
   }
+};
+
+export const getChatDocumentsRealTime = (userId, callback) => {
+  const chatsRef = collection(db, `chats/${userId}/conversations`);
+  const q = query(chatsRef, orderBy('updatedAt', 'desc'));
+
+  return onSnapshot(q, (querySnapshot) => {
+    const chats = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    callback(chats);
+  }, (error) => {
+    console.error("Error getting real-time chat documents:", error);
+  });
 };
 
 export default app;

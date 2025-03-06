@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 // Components
 import DisclaimerModal from './components/DisclaimerModal';
-import ExpandableSidebar from './components/ExpandableSidebar';
+import { WrappedExpandableSidebar } from './components/ExpandableSidebar';
 import TopBar from './components/TopBar';
 import LeftPanel from './components/LeftPanel/LeftPanel';
 import MainPanel from './components/MainPanel/MainPanel';
@@ -39,11 +39,29 @@ const MedicalAssistantUI = () => {
   const [currentArticleData, setCurrentArticleData] = useState(null);
   const [isPromptExpanded, setIsPromptExpanded] = useState(true);
   const [numArticles, setNumArticles] = useState(15);
-  const [caseNotes, setCaseNotes] = useState(presetCaseNotes);
-  const [labResults, setLabResults] = useState(presetLabResults);
+  const [caseNotes, setCaseNotes] = useState('');
+  const [labResults, setLabResults] = useState('');
   const [currentPromptContent, setCurrentPromptContent] = useState(promptContent);
+  const [isNewChat, setIsNewChat] = useState(true);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
 
-  const { user, loading, handleLogin, handleLogout, isAuthenticated } = useAuth(setShowUserMenu);
+  const handleSidebarToggle = () => {
+    setIsSidebarExpanded(prevState => !prevState);
+  };
+
+  console.log('MedicalAssistantUI: setCaseNotes is a function:', typeof setCaseNotes === 'function');
+
+  const { user, firstName, loading, handleLogin, handleLogout, isAuthenticated } = useAuth();
+  console.log('[AUTH_MENU_DEBUG] MedicalAssistantUI: auth state:', { user, isAuthenticated, firstName, showUserMenu });
+
+  useEffect(() => {
+    console.log('[AUTH_MENU_DEBUG] MedicalAssistantUI: Authentication state changed:', { isAuthenticated, firstName, showUserMenu });
+  }, [isAuthenticated, firstName, showUserMenu]);
+
+  const handleToggleUserMenu = () => {
+    console.log('[AUTH_MENU_DEBUG] MedicalAssistantUI: Toggling user menu');
+    setShowUserMenu(prevState => !prevState);
+  };
   
   const {
     chatHistory,
@@ -52,12 +70,19 @@ const MedicalAssistantUI = () => {
     activeChat,
     message,
     setMessage,
-    handleChatSelect,
+    handleChatSelect: originalHandleChatSelect,
     handleSendMessage,
     initializeNewChat,
     initializeActiveChat,
     hasDocumentMessages
   } = useChat(user);
+
+  const handleChatSelect = (chat) => {
+    setIsNewChat(true);
+    setCaseNotes('');
+    setLabResults('');
+    originalHandleChatSelect(chat);
+  };
 
   const handleGenerateSampleCase = async () => {
     setIsGeneratingSample(true);
@@ -96,7 +121,9 @@ const MedicalAssistantUI = () => {
         setExtractedEvents(extractedEvents);
       }
     } else {
-      // Clear extraction content and reset prompt expansion when there's no chat history
+      // Clear all content and reset prompt expansion when there's no chat history
+      setCaseNotes('');
+      setLabResults('');
       setExtractedDisease('');
       setExtractedEvents([]);
       setIsPromptExpanded(true); // Reset prompt expansion when starting new chat
@@ -151,6 +178,36 @@ const MedicalAssistantUI = () => {
       setIsProcessing(false);
     }
   };
+
+  const handleExampleLoad = (exampleCaseNotes, exampleLabResults) => {
+    setCaseNotes(exampleCaseNotes);
+    setLabResults(exampleLabResults);
+  };
+
+  const handleClearAll = useCallback(() => {
+    console.log('[CLEAR_DEBUG] MedicalAssistantUI: handleClearAll called');
+    console.log('[CLEAR_DEBUG] Before clear - caseNotes:', caseNotes, 'labResults:', labResults);
+    setCaseNotes('');
+    setLabResults('');
+    setExtractedDisease('');
+    setExtractedEvents([]);
+    setIsBox2Hovered(false);
+    setIsBox3Hovered(false);
+    setArticles([]);
+    setCurrentProgress('');
+    setPmids([]);
+    setTotalArticles(0);
+    setCurrentArticleData(null);
+    setIsPromptExpanded(true);
+    setIsNewChat(true);
+    initializeNewChat();
+    console.log('[CLEAR_DEBUG] MedicalAssistantUI: All states reset');
+    
+    // Force a re-render to ensure the UI updates
+    setTimeout(() => {
+      console.log('[CLEAR_DEBUG] After timeout - caseNotes:', caseNotes, 'labResults:', labResults);
+    }, 0);
+  }, [setCaseNotes, setLabResults, setExtractedDisease, setExtractedEvents, initializeNewChat, caseNotes, labResults]);
 
   const handleRetrieve = async () => {
     if (!extractedDisease || !extractedEvents.length) return;
@@ -298,42 +355,33 @@ const MedicalAssistantUI = () => {
       <DisclaimerModal isOpen={showDisclaimer} onClose={handleCloseDisclaimer} />
       <TopBar 
         user={user}
+        firstName={firstName}
         handleLogin={handleLogin}
         handleLogout={handleLogout}
         showUserMenu={showUserMenu}
-        setShowUserMenu={setShowUserMenu}
+        setShowUserMenu={handleToggleUserMenu}
         isAuthenticated={isAuthenticated}
       />
+      {/* Debug information */}
+      <div className="fixed bottom-0 left-0 bg-black text-white p-2 text-xs">
+        Debug: isAuthenticated: {isAuthenticated.toString()}, firstName: {firstName}
+      </div>
 
       <div className="flex flex-1 min-h-0 relative w-full">
         <div className="absolute z-10">
-          <ExpandableSidebar
+          <WrappedExpandableSidebar
             user={user}
             onChatSelect={handleChatSelect}
             activeChat={activeChat}
             initializeNewChat={initializeNewChat}
+            setIsNewChat={setIsNewChat}
+            isExpanded={isSidebarExpanded}
+            onToggle={handleSidebarToggle}
           />
         </div>
 
         <LeftPanel
-          caseNotes={caseNotes}
-          setCaseNotes={setCaseNotes}
-          labResults={labResults}
-          setLabResults={setLabResults}
-          extractedDisease={extractedDisease}
-          extractedEvents={extractedEvents}
-          setExtractedDisease={setExtractedDisease}
-          setExtractedEvents={setExtractedEvents}
-          isProcessing={isProcessing}
-          handleExtract={handleExtract}
-          isBox2Hovered={isBox2Hovered}
-          setIsBox2Hovered={setIsBox2Hovered}
           isLoading={!!currentProgress || hasDocumentMessages}
-        />
-
-        <MainPanel
-          extractedDisease={extractedDisease}
-          extractedEvents={extractedEvents}
           isRetrieving={isRetrieving}
           handleRetrieve={handleRetrieve}
           isBox3Hovered={isBox3Hovered}
@@ -343,6 +391,16 @@ const MedicalAssistantUI = () => {
           promptContent={currentPromptContent}
           setPromptContent={setCurrentPromptContent}
           currentProgress={currentProgress}
+          numArticles={numArticles}
+          setNumArticles={setNumArticles}
+          hasDocumentMessages={hasDocumentMessages}
+        />
+
+        <MainPanel
+          extractedDisease={extractedDisease}
+          extractedEvents={extractedEvents}
+          setExtractedDisease={setExtractedDisease}
+          setExtractedEvents={setExtractedEvents}
           articles={articles}
           currentArticleData={currentArticleData}
           chatHistory={chatHistory}
@@ -353,9 +411,26 @@ const MedicalAssistantUI = () => {
           setMessage={setMessage}
           handleSendMessage={handleSendMessage}
           handleGenerateSampleCase={handleGenerateSampleCase}
+          caseNotes={caseNotes}
+          setCaseNotes={setCaseNotes}
+          labResults={labResults}
+          setLabResults={setLabResults}
+          isProcessing={isProcessing}
+          handleExtract={handleExtract}
+          currentProgress={currentProgress}
           numArticles={numArticles}
           setNumArticles={setNumArticles}
-          hasDocumentMessages={hasDocumentMessages}
+          isNewChat={isNewChat}
+          firstName={firstName}
+          isRetrieving={isRetrieving}
+          handleRetrieve={handleRetrieve}
+          isBox3Hovered={isBox3Hovered}
+          setIsBox3Hovered={setIsBox3Hovered}
+          isPromptExpanded={isPromptExpanded}
+          setIsPromptExpanded={setIsPromptExpanded}
+          promptContent={currentPromptContent}
+          setPromptContent={setCurrentPromptContent}
+          handleClearAll={handleClearAll}
         />
       </div>
       

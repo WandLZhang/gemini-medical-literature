@@ -4,13 +4,8 @@ from google.cloud import dlp_v2
 from google import genai
 from google.genai import types
 import json
-import logging
 import re
 from datetime import datetime
-
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
 
 # Initialize DLP client
 dlp_client = dlp_v2.DlpServiceClient()
@@ -23,211 +18,213 @@ client = genai.Client(
 )
 
 def get_info_types():
-    """Get list of info types to redact, excluding age, gender, medical terms, and document types."""
+    """Get list of info types to redact, including DATE_OF_BIRTH."""
     all_types = [
-        info_type for info_type in [
-        {"name": "FINANCIAL_ID"},
-        {"name": "FRANCE_DRIVERS_LICENSE_NUMBER"},
-        {"name": "MEXICO_CURP_NUMBER"},
-        {"name": "ORGANIZATION_NAME"},
-        {"name": "DOD_ID_NUMBER"},
-        {"name": "STORAGE_SIGNED_POLICY_DOCUMENT"},
-        {"name": "KOREA_PASSPORT"},
-        {"name": "HONG_KONG_ID_NUMBER"},
-        {"name": "EMAIL_ADDRESS"},
-        {"name": "IRELAND_EIRCODE"},
-        {"name": "TAIWAN_ID_NUMBER"},
-        {"name": "COUNTRY_DEMOGRAPHIC"},
-        {"name": "SPAIN_CIF_NUMBER"},
-        {"name": "US_ADOPTION_TAXPAYER_IDENTIFICATION_NUMBER"},
-        {"name": "RELIGIOUS_TERM"},
-        {"name": "SSL_CERTIFICATE"},
-        {"name": "INDONESIA_NIK_NUMBER"},
-        {"name": "BRAZIL_CPF_NUMBER"},
-        {"name": "HTTP_USER_AGENT"},
-        {"name": "AZURE_AUTH_TOKEN"},
-        {"name": "STREET_ADDRESS"},
-        {"name": "LOCATION"},
-        {"name": "GCP_CREDENTIALS"},
-        {"name": "WEAK_PASSWORD_HASH"},
-        {"name": "POLITICAL_TERM"},
-        {"name": "CANADA_QUEBEC_HIN"},
-        {"name": "PORTUGAL_NIB_NUMBER"},
-        {"name": "VEHICLE_IDENTIFICATION_NUMBER"},
-        {"name": "CHILE_CDI_NUMBER"},
-        {"name": "US_BANK_ROUTING_MICR"},
-        {"name": "AUTH_TOKEN"},
-        {"name": "SINGAPORE_NATIONAL_REGISTRATION_ID_NUMBER"},
-        {"name": "PORTUGAL_SOCIAL_SECURITY_NUMBER"},
-        {"name": "UK_NATIONAL_INSURANCE_NUMBER"},
-        {"name": "CHINA_PASSPORT"},
-        {"name": "ARGENTINA_DNI_NUMBER"},
-        {"name": "DOCUMENT_TYPE/R&D/SOURCE_CODE"},
-        {"name": "AMERICAN_BANKERS_CUSIP_ID"},
-        {"name": "AWS_CREDENTIALS"},
-        {"name": "SCOTLAND_COMMUNITY_HEALTH_INDEX_NUMBER"},
-        {"name": "ADVERTISING_ID"},
-        {"name": "VAT_NUMBER"},
-        {"name": "OAUTH_CLIENT_SECRET"},
-        {"name": "INDONESIA_PASSPORT"},
-        {"name": "HTTP_COOKIE"},
-        {"name": "BELGIUM_NATIONAL_ID_CARD_NUMBER"},
-        {"name": "ITALY_FISCAL_CODE"},
-        {"name": "POLAND_PASSPORT"},
-        {"name": "MARITAL_STATUS"},
-        {"name": "PARAGUAY_TAX_NUMBER"},
-        {"name": "SOUTH_AFRICA_ID_NUMBER"},
-        {"name": "MAC_ADDRESS"},
-        {"name": "SEXUAL_ORIENTATION"},
-        {"name": "SWEDEN_PASSPORT"},
-        {"name": "US_SOCIAL_SECURITY_NUMBER"},
-        {"name": "US_STATE"},
-        {"name": "ENCRYPTION_KEY"},
-        {"name": "DOCUMENT_TYPE/HR/RESUME"},
-        {"name": "PORTUGAL_CDC_NUMBER"},
-        {"name": "UK_DRIVERS_LICENSE_NUMBER"},
-        {"name": "INDIA_AADHAAR_INDIVIDUAL"},
-        {"name": "US_INDIVIDUAL_TAXPAYER_IDENTIFICATION_NUMBER"},
-        {"name": "DOCUMENT_TYPE/LEGAL/COURT_ORDER"},
-        {"name": "US_DEA_NUMBER"},
-        {"name": "TINK_KEYSET"},
-        {"name": "IMSI_ID"},
-        {"name": "EMPLOYMENT_STATUS"},
-        {"name": "SWITZERLAND_SOCIAL_SECURITY_NUMBER"},
-        {"name": "US_PASSPORT"},
-        {"name": "CANADA_BANK_ACCOUNT"},
-        {"name": "US_HEALTHCARE_NPI"},
-        {"name": "SECURITY_DATA"},
-        {"name": "UK_ELECTORAL_ROLL_NUMBER"},
-        {"name": "DOCUMENT_TYPE/LEGAL/LAW"},
-        {"name": "NORWAY_NI_NUMBER"},
-        {"name": "KOREA_ARN"},
-        {"name": "GERMANY_PASSPORT"},
-        {"name": "AUSTRALIA_DRIVERS_LICENSE_NUMBER"},
-        {"name": "LOCATION_COORDINATES"},
-        {"name": "IRELAND_DRIVING_LICENSE_NUMBER"},
-        {"name": "AUSTRALIA_MEDICARE_NUMBER"},
-        {"name": "URUGUAY_CDI_NUMBER"},
-        {"name": "POLAND_PESEL_NUMBER"},
-        {"name": "GOVERNMENT_ID"},
-        {"name": "DOCUMENT_TYPE/FINANCE/SEC_FILING"},
-        {"name": "TIME"},
-        {"name": "SPAIN_NIE_NUMBER"},
-        {"name": "IMEI_HARDWARE_ID"},
-        {"name": "POLAND_NATIONAL_ID_NUMBER"},
-        {"name": "JSON_WEB_TOKEN"},
-        {"name": "ETHNIC_GROUP"},
-        {"name": "DOCUMENT_TYPE/LEGAL/PLEADING"},
-        {"name": "CREDIT_CARD_TRACK_NUMBER"},
-        {"name": "GERMANY_DRIVERS_LICENSE_NUMBER"},
-        {"name": "FINLAND_BUSINESS_ID"},
-        {"name": "MAC_ADDRESS_LOCAL"},
-        {"name": "FRANCE_PASSPORT"},
-        {"name": "CANADA_SOCIAL_INSURANCE_NUMBER"},
-        {"name": "FEMALE_NAME"},
-        {"name": "ITALY_PASSPORT"},
-        {"name": "US_EMPLOYER_IDENTIFICATION_NUMBER"},
-        {"name": "KOREA_RRN"},
-        {"name": "DOCUMENT_TYPE/R&D/PATENT"},
-        {"name": "KAZAKHSTAN_PASSPORT"},
-        {"name": "AUSTRALIA_PASSPORT"},
-        {"name": "CREDIT_CARD_EXPIRATION_DATE"},
-        {"name": "PERU_DNI_NUMBER"},
-        {"name": "COLOMBIA_CDC_NUMBER"},
-        {"name": "GENERIC_ID"},
-        {"name": "SPAIN_NIF_NUMBER"},
-        {"name": "DENMARK_CPR_NUMBER"},
-        {"name": "SPAIN_SOCIAL_SECURITY_NUMBER"},
-        {"name": "SPAIN_DRIVERS_LICENSE_NUMBER"},
-        {"name": "GEOGRAPHIC_DATA"},
-        {"name": "US_DRIVERS_LICENSE_NUMBER"},
-        {"name": "PHONE_NUMBER"},
-        {"name": "PASSPORT"},
-        {"name": "IRELAND_PASSPORT"},
-        {"name": "GERMANY_SCHUFA_ID"},
-        {"name": "STORAGE_SIGNED_URL"},
-        {"name": "MALE_NAME"},
-        {"name": "MEDICAL_RECORD_NUMBER"},
-        {"name": "TRADE_UNION"},
-        {"name": "LAST_NAME"},
-        {"name": "URL"},
-        {"name": "NEW_ZEALAND_IRD_NUMBER"},
-        {"name": "FINLAND_NATIONAL_ID_NUMBER"},
-        {"name": "SWIFT_CODE"},
-        {"name": "SINGAPORE_PASSPORT"},
-        {"name": "JAPAN_CORPORATE_NUMBER"},
-        {"name": "DEMOGRAPHIC_DATA"},
-        {"name": "THAILAND_NATIONAL_ID_NUMBER"},
-        {"name": "CANADA_OHIP"},
-        {"name": "DOCUMENT_TYPE/FINANCE/REGULATORY"},
-        {"name": "JAPAN_DRIVERS_LICENSE_NUMBER"},
-        {"name": "XSRF_TOKEN"},
-        {"name": "DOMAIN_NAME"},
-        {"name": "FRANCE_NIR"},
-        {"name": "NETHERLANDS_BSN_NUMBER"},
-        {"name": "FRANCE_TAX_IDENTIFICATION_NUMBER"},
-        {"name": "AZERBAIJAN_PASSPORT"},
-        {"name": "INDIA_GST_INDIVIDUAL"},
-        {"name": "PERSON_NAME"},
-        {"name": "CANADA_DRIVERS_LICENSE_NUMBER"},
-        {"name": "JAPAN_BANK_ACCOUNT"},
-        {"name": "JAPAN_INDIVIDUAL_NUMBER"},
-        {"name": "NEW_ZEALAND_NHI_NUMBER"},
-        {"name": "UK_PASSPORT"},
-        {"name": "VENEZUELA_CDI_NUMBER"},
-        {"name": "PARAGUAY_CIC_NUMBER"},
-        {"name": "JAPAN_PASSPORT"},
-        {"name": "DOCUMENT_TYPE/R&D/DATABASE_BACKUP"},
-        {"name": "TAIWAN_PASSPORT"},
-        {"name": "UK_TAXPAYER_REFERENCE"},
-        {"name": "SPAIN_DNI_NUMBER"},
-        {"name": "INDIA_PAN_INDIVIDUAL"},
-        {"name": "DATE"},
-        {"name": "IRELAND_PPSN"},
-        {"name": "BASIC_AUTH_HEADER"},
-        {"name": "ARMENIA_PASSPORT"},
-        {"name": "DOCUMENT_TYPE/R&D/SYSTEM_LOG"},
-        {"name": "PASSWORD"},
-        {"name": "FRANCE_CNI"},
-        {"name": "AUSTRALIA_TAX_FILE_NUMBER"},
-        {"name": "US_PREPARER_TAXPAYER_IDENTIFICATION_NUMBER"},
-        {"name": "US_VEHICLE_IDENTIFICATION_NUMBER"},
-        {"name": "US_TOLLFREE_PHONE_NUMBER"},
-        {"name": "DOCUMENT_TYPE/LEGAL/BLANK_FORM"},
-        {"name": "ICCID_NUMBER"},
-        {"name": "FIRST_NAME"},
-        {"name": "UKRAINE_PASSPORT"},
-        {"name": "MEXICO_PASSPORT"},
-        {"name": "NETHERLANDS_PASSPORT"},
-        {"name": "CHINA_RESIDENT_ID_NUMBER"},
-        {"name": "CANADA_PASSPORT"},
-        {"name": "UZBEKISTAN_PASSPORT"},
-        {"name": "DATE_OF_BIRTH"},
-        {"name": "CREDIT_CARD_NUMBER"},
-        {"name": "TURKEY_ID_NUMBER"},
-        {"name": "CROATIA_PERSONAL_ID_NUMBER"},
-        {"name": "US_MEDICARE_BENEFICIARY_ID_NUMBER"},
-        {"name": "TECHNICAL_ID"},
-        {"name": "GERMANY_TAXPAYER_IDENTIFICATION_NUMBER"},
-        {"name": "CANADA_BC_PHN"},
-        {"name": "BELARUS_PASSPORT"},
-        {"name": "KOREA_DRIVERS_LICENSE_NUMBER"},
-        {"name": "GCP_API_KEY"},
-        {"name": "ISRAEL_IDENTITY_CARD_NUMBER"},
-        {"name": "INDIA_PASSPORT"},
-        {"name": "CVV_NUMBER"},
-        {"name": "DRIVERS_LICENSE_NUMBER"},
-        {"name": "UK_NATIONAL_HEALTH_SERVICE_NUMBER"},
-        {"name": "SPAIN_PASSPORT"},
-        {"name": "RUSSIA_PASSPORT"},
-        {"name": "GERMANY_IDENTITY_CARD_NUMBER"},
-        {"name": "IMMIGRATION_STATUS"},
-        {"name": "IP_ADDRESS"},
-        {"name": "SWEDEN_NATIONAL_ID_NUMBER"},
-        {"name": "FINANCIAL_ACCOUNT_NUMBER"},
-        {"name": "IBAN_CODE"}
-    ] if info_type["name"] != "DATE_OF_BIRTH"
+        {"name": info_type}
+        for info_type in [
+            "FINANCIAL_ID",
+            "FRANCE_DRIVERS_LICENSE_NUMBER",
+            "MEXICO_CURP_NUMBER",
+            "ORGANIZATION_NAME",
+            "DOD_ID_NUMBER",
+            "STORAGE_SIGNED_POLICY_DOCUMENT",
+            "KOREA_PASSPORT",
+            "HONG_KONG_ID_NUMBER",
+            "EMAIL_ADDRESS",
+            "IRELAND_EIRCODE",
+            "TAIWAN_ID_NUMBER",
+            "COUNTRY_DEMOGRAPHIC",
+            "SPAIN_CIF_NUMBER",
+            "US_ADOPTION_TAXPAYER_IDENTIFICATION_NUMBER",
+            "RELIGIOUS_TERM",
+            "SSL_CERTIFICATE",
+            "INDONESIA_NIK_NUMBER",
+            "BRAZIL_CPF_NUMBER",
+            "HTTP_USER_AGENT",
+            "AZURE_AUTH_TOKEN",
+            "STREET_ADDRESS",
+            "LOCATION",
+            "GCP_CREDENTIALS",
+            "WEAK_PASSWORD_HASH",
+            "POLITICAL_TERM",
+            "CANADA_QUEBEC_HIN",
+            "PORTUGAL_NIB_NUMBER",
+            "VEHICLE_IDENTIFICATION_NUMBER",
+            "CHILE_CDI_NUMBER",
+            "US_BANK_ROUTING_MICR",
+            "AUTH_TOKEN",
+            "SINGAPORE_NATIONAL_REGISTRATION_ID_NUMBER",
+            "PORTUGAL_SOCIAL_SECURITY_NUMBER",
+            "UK_NATIONAL_INSURANCE_NUMBER",
+            "CHINA_PASSPORT",
+            "ARGENTINA_DNI_NUMBER",
+            "DOCUMENT_TYPE/R&D/SOURCE_CODE",
+            "AMERICAN_BANKERS_CUSIP_ID",
+            "AWS_CREDENTIALS",
+            "SCOTLAND_COMMUNITY_HEALTH_INDEX_NUMBER",
+            "ADVERTISING_ID",
+            "VAT_NUMBER",
+            "OAUTH_CLIENT_SECRET",
+            "INDONESIA_PASSPORT",
+            "HTTP_COOKIE",
+            "BELGIUM_NATIONAL_ID_CARD_NUMBER",
+            "ITALY_FISCAL_CODE",
+            "POLAND_PASSPORT",
+            "MARITAL_STATUS",
+            "PARAGUAY_TAX_NUMBER",
+            "SOUTH_AFRICA_ID_NUMBER",
+            "MAC_ADDRESS",
+            "SEXUAL_ORIENTATION",
+            "SWEDEN_PASSPORT",
+            "US_SOCIAL_SECURITY_NUMBER",
+            "US_STATE",
+            "ENCRYPTION_KEY",
+            "DOCUMENT_TYPE/HR/RESUME",
+            "PORTUGAL_CDC_NUMBER",
+            "UK_DRIVERS_LICENSE_NUMBER",
+            "INDIA_AADHAAR_INDIVIDUAL",
+            "US_INDIVIDUAL_TAXPAYER_IDENTIFICATION_NUMBER",
+            "DOCUMENT_TYPE/LEGAL/COURT_ORDER",
+            "US_DEA_NUMBER",
+            "TINK_KEYSET",
+            "IMSI_ID",
+            "EMPLOYMENT_STATUS",
+            "SWITZERLAND_SOCIAL_SECURITY_NUMBER",
+            "US_PASSPORT",
+            "CANADA_BANK_ACCOUNT",
+            "US_HEALTHCARE_NPI",
+            "SECURITY_DATA",
+            "UK_ELECTORAL_ROLL_NUMBER",
+            "DOCUMENT_TYPE/LEGAL/LAW",
+            "NORWAY_NI_NUMBER",
+            "KOREA_ARN",
+            "GERMANY_PASSPORT",
+            "AUSTRALIA_DRIVERS_LICENSE_NUMBER",
+            "LOCATION_COORDINATES",
+            "IRELAND_DRIVING_LICENSE_NUMBER",
+            "AUSTRALIA_MEDICARE_NUMBER",
+            "URUGUAY_CDI_NUMBER",
+            "POLAND_PESEL_NUMBER",
+            "GOVERNMENT_ID",
+            "DOCUMENT_TYPE/FINANCE/SEC_FILING",
+            "TIME",
+            "SPAIN_NIE_NUMBER",
+            "IMEI_HARDWARE_ID",
+            "POLAND_NATIONAL_ID_NUMBER",
+            "JSON_WEB_TOKEN",
+            "ETHNIC_GROUP",
+            "DOCUMENT_TYPE/LEGAL/PLEADING",
+            "CREDIT_CARD_TRACK_NUMBER",
+            "GERMANY_DRIVERS_LICENSE_NUMBER",
+            "FINLAND_BUSINESS_ID",
+            "MAC_ADDRESS_LOCAL",
+            "FRANCE_PASSPORT",
+            "CANADA_SOCIAL_INSURANCE_NUMBER",
+            "FEMALE_NAME",
+            "ITALY_PASSPORT",
+            "US_EMPLOYER_IDENTIFICATION_NUMBER",
+            "KOREA_RRN",
+            "DOCUMENT_TYPE/R&D/PATENT",
+            "KAZAKHSTAN_PASSPORT",
+            "AUSTRALIA_PASSPORT",
+            "CREDIT_CARD_EXPIRATION_DATE",
+            "PERU_DNI_NUMBER",
+            "COLOMBIA_CDC_NUMBER",
+            "GENERIC_ID",
+            "SPAIN_NIF_NUMBER",
+            "DENMARK_CPR_NUMBER",
+            "SPAIN_SOCIAL_SECURITY_NUMBER",
+            "SPAIN_DRIVERS_LICENSE_NUMBER",
+            "GEOGRAPHIC_DATA",
+            "US_DRIVERS_LICENSE_NUMBER",
+            "PHONE_NUMBER",
+            "PASSPORT",
+            "IRELAND_PASSPORT",
+            "GERMANY_SCHUFA_ID",
+            "STORAGE_SIGNED_URL",
+            "MALE_NAME",
+            "MEDICAL_RECORD_NUMBER",
+            "TRADE_UNION",
+            "LAST_NAME",
+            "URL",
+            "NEW_ZEALAND_IRD_NUMBER",
+            "FINLAND_NATIONAL_ID_NUMBER",
+            "SWIFT_CODE",
+            "SINGAPORE_PASSPORT",
+            "JAPAN_CORPORATE_NUMBER",
+            "DEMOGRAPHIC_DATA",
+            "THAILAND_NATIONAL_ID_NUMBER",
+            "CANADA_OHIP",
+            "DOCUMENT_TYPE/FINANCE/REGULATORY",
+            "JAPAN_DRIVERS_LICENSE_NUMBER",
+            "XSRF_TOKEN",
+            "DOMAIN_NAME",
+            "FRANCE_NIR",
+            "NETHERLANDS_BSN_NUMBER",
+            "FRANCE_TAX_IDENTIFICATION_NUMBER",
+            "AZERBAIJAN_PASSPORT",
+            "INDIA_GST_INDIVIDUAL",
+            "PERSON_NAME",
+            "CANADA_DRIVERS_LICENSE_NUMBER",
+            "JAPAN_BANK_ACCOUNT",
+            "JAPAN_INDIVIDUAL_NUMBER",
+            "NEW_ZEALAND_NHI_NUMBER",
+            "UK_PASSPORT",
+            "VENEZUELA_CDI_NUMBER",
+            "PARAGUAY_CIC_NUMBER",
+            "JAPAN_PASSPORT",
+            "DOCUMENT_TYPE/R&D/DATABASE_BACKUP",
+            "TAIWAN_PASSPORT",
+            "UK_TAXPAYER_REFERENCE",
+            "SPAIN_DNI_NUMBER",
+            "INDIA_PAN_INDIVIDUAL",
+            "DATE",
+            "IRELAND_PPSN",
+            "BASIC_AUTH_HEADER",
+            "ARMENIA_PASSPORT",
+            "DOCUMENT_TYPE/R&D/SYSTEM_LOG",
+            "PASSWORD",
+            "FRANCE_CNI",
+            "AUSTRALIA_TAX_FILE_NUMBER",
+            "US_PREPARER_TAXPAYER_IDENTIFICATION_NUMBER",
+            "US_VEHICLE_IDENTIFICATION_NUMBER",
+            "US_TOLLFREE_PHONE_NUMBER",
+            "DOCUMENT_TYPE/LEGAL/BLANK_FORM",
+            "ICCID_NUMBER",
+            "FIRST_NAME",
+            "UKRAINE_PASSPORT",
+            "MEXICO_PASSPORT",
+            "NETHERLANDS_PASSPORT",
+            "CHINA_RESIDENT_ID_NUMBER",
+            "CANADA_PASSPORT",
+            "UZBEKISTAN_PASSPORT",
+            "DATE_OF_BIRTH",
+            "CREDIT_CARD_NUMBER",
+            "TURKEY_ID_NUMBER",
+            "CROATIA_PERSONAL_ID_NUMBER",
+            "US_MEDICARE_BENEFICIARY_ID_NUMBER",
+            "TECHNICAL_ID",
+            "GERMANY_TAXPAYER_IDENTIFICATION_NUMBER",
+            "CANADA_BC_PHN",
+            "BELARUS_PASSPORT",
+            "KOREA_DRIVERS_LICENSE_NUMBER",
+            "GCP_API_KEY",
+            "ISRAEL_IDENTITY_CARD_NUMBER",
+            "INDIA_PASSPORT",
+            "CVV_NUMBER",
+            "DRIVERS_LICENSE_NUMBER",
+            "UK_NATIONAL_HEALTH_SERVICE_NUMBER",
+            "SPAIN_PASSPORT",
+            "RUSSIA_PASSPORT",
+            "GERMANY_IDENTITY_CARD_NUMBER",
+            "IMMIGRATION_STATUS",
+            "IP_ADDRESS",
+            "SWEDEN_NATIONAL_ID_NUMBER",
+            "FINANCIAL_ACCOUNT_NUMBER",
+            "IBAN_CODE"
+        ]
     ]
+    return all_types
 
 def standardize_date(date_string):
     prompt = f"""
@@ -270,30 +267,47 @@ def deidentify_content(project_id, text):
 
     print(f"Original text: {text}")
 
-    # Regex pattern for potential dates (this is a simple example and may need refinement)
-    date_pattern = r'\b(\d{1,2}[-/]\d{1,2}[-/]\d{2,4}|\d{2,4}[-/]\d{1,2}[-/]\d{1,2})\b'
-    
-    def replace_date(match):
-        original_date = match.group(0)
-        try:
-            standardized_date = standardize_date(original_date)
-            age = calculate_age(standardized_date)
-            print(f"Date processing: Converted '{original_date}' to 'Age: {age}'")
-            return f"Age: {age}"
-        except Exception as e:
-            print(f"Date processing error: Failed to process '{original_date}'. Error: {str(e)}")
-            return original_date
-
-    # Replace dates with ages
-    text = re.sub(date_pattern, replace_date, text)
-
-    print(f"Text after date replacement: {text}")
-
     # Get info types for redaction
     info_types = get_info_types()
-    print(f"Info types used for redaction: {[t['name'] for t in info_types]}")
+    print(f"Info types used for identification: {[t['name'] for t in info_types]}")
 
-    # Proceed with DLP API redaction
+    # Set up DLP API request for inspection
+    inspect_config = {
+        "info_types": info_types,
+        "min_likelihood": dlp_v2.Likelihood.LIKELY,
+        "include_quote": True,
+    }
+
+    # Use DLP to find all instances of sensitive information
+    item = {"value": text}
+    parent = f"projects/{project_id}"
+    inspect_request = {
+        "parent": parent,
+        "inspect_config": inspect_config,
+        "item": item,
+    }
+
+    print("Calling DLP API for content inspection")
+    inspect_response = dlp_client.inspect_content(request=inspect_request)
+
+    # Process each finding
+    for finding in inspect_response.result.findings:
+        info_type = finding.info_type.name
+        quote = finding.quote
+        print(f"Found {info_type}: {quote}")
+
+        if info_type == "DATE_OF_BIRTH":
+            try:
+                standardized_date = standardize_date(quote)
+                age = calculate_age(standardized_date)
+                text = text.replace(quote, f"Age: {age}")
+                print(f"Replaced DATE_OF_BIRTH with age: {age}")
+            except Exception as e:
+                print(f"Error processing DATE_OF_BIRTH: {str(e)}")
+                text = text.replace(quote, "[REDACTED DATE_OF_BIRTH]")
+                print(f"Redacted DATE_OF_BIRTH due to processing error")
+
+    # Set up DLP API request for deidentification of remaining sensitive information
     deidentify_config = {
         "info_type_transformations": {
             "transformations": [
@@ -310,36 +324,27 @@ def deidentify_content(project_id, text):
         }
     }
 
-    inspect_config = {
-        "info_types": info_types,
-        "min_likelihood": dlp_v2.Likelihood.LIKELY,
-        "include_quote": True,
-    }
-
-    item = {"value": text}
-    parent = f"projects/{project_id}"
-    request = {
+    deidentify_request = {
         "parent": parent,
         "deidentify_config": deidentify_config,
         "inspect_config": inspect_config,
-        "item": item,
+        "item": {"value": text},
     }
 
     try:
-        response = dlp_client.deidentify_content(request=request)
+        print("Calling DLP API for content deidentification")
+        deidentify_response = dlp_client.deidentify_content(request=deidentify_request)
         
-        print("DLP API Response:")
-        if hasattr(response, 'overview') and hasattr(response.overview, 'transformed_overview'):
-            for transformation in response.overview.transformed_overview.transformation_summaries:
-                print(f"  Info type found: {transformation.info_type.name}")
+        print("DLP API Deidentification Response:")
+        if hasattr(deidentify_response, 'overview') and hasattr(deidentify_response.overview, 'transformed_overview'):
+            for transformation in deidentify_response.overview.transformed_overview.transformation_summaries:
+                print(f"  Info type redacted: {transformation.info_type.name}")
                 print(f"  Occurrences: {transformation.transformed_count}")
-                if hasattr(transformation, 'transformed_bytes'):
-                    print(f"  Transformed bytes: {transformation.transformed_bytes}")
         else:
             print("  No transformation overview available in the response.")
         
-        print(f"Final redacted text: {response.item.value}")
-        return response.item.value
+        print(f"Final redacted text: {deidentify_response.item.value}")
+        return deidentify_response.item.value
     except Exception as e:
         print(f"Error in deidentify_content: {str(e)}")
         return None  # Return None instead of raising an exception
@@ -369,16 +374,16 @@ def redact_sensitive_info(request):
 
     try:
         request_json = request.get_json()
-        logger.info("Received request for redaction")
+        print("Received request for redaction")
         
         if not request_json:
-            logger.error("No JSON data received in request")
+            print("No JSON data received in request")
             return jsonify({'error': 'No JSON data received'}), 400, headers
 
         # Extract text to redact
         text = request_json.get('text')
         if not text:
-            logger.error("No text provided for redaction")
+            print("No text provided for redaction")
             return jsonify({'error': 'No text provided'}), 400, headers
 
         # Redirect print statements to capture_print
@@ -407,23 +412,11 @@ def redact_sensitive_info(request):
         }), 200, headers
 
     except Exception as e:
-        logger.error(f"Error in redact_sensitive_info: {str(e)}")
+        print(f"Error in redact_sensitive_info: {str(e)}")
         # Restore original print function in case of exception
         builtins.print = original_print
         return jsonify({'error': str(e), 'debugInfo': debug_info}), 500, headers
 
-def get_info_types():
-    """Get list of info types to redact, excluding age, gender, medical terms, and document types."""
-    all_types = [
-        {"name": info_type}
-        for info_type in [
-            "PERSON_NAME",
-            "PHONE_NUMBER",
-            "EMAIL_ADDRESS",
-            # Add other info types here, but exclude DATE_OF_BIRTH
-        ]
-    ]
-    return all_types
 
 if __name__ == "__main__":
     # Test cases

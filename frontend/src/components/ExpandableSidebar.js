@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, MessageSquare, Plus, Pencil, Trash2 } from 'lucide-react';
-import { getUserChats, deleteChat, updateChatTitle, createNewChat } from '../firebase';
+import { getUserChats, deleteChat, updateChatTitle, createNewChat, getChatDocumentsRealTime } from '../firebase';
 
 const formatChatTitle = (chat) => {
   if (chat.title) return chat.title;
@@ -92,19 +92,41 @@ const ChatHistoryItem = ({ chat, isActive, onClick, onRename, onDelete }) => {
   );
 };
 
-const ExpandableSidebar = ({ user, onChatSelect, activeChat, initializeNewChat }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+const ExpandableSidebar = ({ user, onChatSelect, activeChat, initializeNewChat, isExpanded, onToggle }) => {
   const [chats, setChats] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
+    let unsubscribe;
+
     const loadChats = async () => {
-      if (user) {
-        const userChats = await getUserChats(user.uid);
-        setChats(userChats);
+      if (user && isExpanded) {
+        setIsLoading(true);
+        setError(null);
+        try {
+          unsubscribe = getChatDocumentsRealTime(user.uid, (newChats) => {
+            setChats(newChats);
+            setIsLoading(false);
+          });
+        } catch (err) {
+          console.error('Error loading chats:', err);
+          setError('Failed to load chats. Please try again.');
+          setIsLoading(false);
+        }
+      } else if (!isExpanded && unsubscribe) {
+        unsubscribe();
       }
     };
+
     loadChats();
-  }, [user]);
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [user, isExpanded]);
 
   const handleRenameChat = async (chatId, newTitle) => {
     try {
@@ -145,7 +167,7 @@ const ExpandableSidebar = ({ user, onChatSelect, activeChat, initializeNewChat }
         };
         setChats(prevChats => [newChat, ...prevChats]);
         onChatSelect(newChat);
-        setIsExpanded(false); // Minimize sidebar after creating new chat
+        onToggle(false); // Minimize sidebar after creating new chat
       } catch (error) {
         console.error('Error creating new chat:', error);
       }
@@ -153,10 +175,10 @@ const ExpandableSidebar = ({ user, onChatSelect, activeChat, initializeNewChat }
   };
 
   return (
-    <div className={`fixed top-16 left-0 h-[calc(100vh-4rem)] bg-surface-700 shadow-lg transition-all duration-300 ease-in-out flex z-20 ${isExpanded ? 'w-64' : 'w-12'}`}>
+    <div className={`fixed top-16 left-0 h-[calc(100vh-4rem)] bg-surface-700 shadow-lg transition-all duration-300 ease-in-out flex z-90 ${isExpanded ? 'w-64' : 'w-12'}`}>
       {/* Toggle button */}
       <button
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={() => onToggle(!isExpanded)}
         className="absolute right-0 top-4 translate-x-full bg-surface-700 p-2 rounded-r-lg shadow-lg hover:bg-surface-600 transition-colors text-white"
         aria-label={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
       >
@@ -179,21 +201,31 @@ const ExpandableSidebar = ({ user, onChatSelect, activeChat, initializeNewChat }
                   <Plus size={16} className="mr-2" />
                   Start New Chat
                 </button>
-                <div className="max-h-[calc(100vh-12rem)] overflow-y-auto space-y-1">
-                  {chats.map((chat) => (
-                    <ChatHistoryItem
-                      key={chat.id}
-                      chat={chat}
-                      isActive={activeChat?.id === chat.id}
-                      onClick={() => {
-                        onChatSelect(chat);
-                        setIsExpanded(false);
-                      }}
-                      onRename={handleRenameChat}
-                      onDelete={handleDeleteChat}
-                    />
-                  ))}
-                </div>
+                {isLoading ? (
+                  <div className="text-sm text-surface-200 px-3 py-2">
+                    Loading chats...
+                  </div>
+                ) : error ? (
+                  <div className="text-sm text-red-400 px-3 py-2">
+                    {error}
+                  </div>
+                ) : (
+                  <div className="max-h-[calc(100vh-12rem)] overflow-y-auto space-y-1">
+                    {chats.map((chat) => (
+                      <ChatHistoryItem
+                        key={chat.id}
+                        chat={chat}
+                        isActive={activeChat?.id === chat.id}
+                        onClick={() => {
+                          onChatSelect(chat);
+                          onToggle(false);
+                        }}
+                        onRename={handleRenameChat}
+                        onDelete={handleDeleteChat}
+                      />
+                    ))}
+                  </div>
+                )}
               </>
             ) : (
               <div className="text-sm text-surface-200 px-3 py-2">
@@ -207,4 +239,24 @@ const ExpandableSidebar = ({ user, onChatSelect, activeChat, initializeNewChat }
   );
 };
 
-export default ExpandableSidebar;
+// Wrap the ExpandableSidebar component to ensure onChatSelect is called correctly
+const WrappedExpandableSidebar = (props) => {
+  const wrappedOnChatSelect = (chat) => {
+    props.onChatSelect(chat);
+    // This will trigger the fade-in effect in WelcomeText
+    if (props.setIsNewChat) {
+      props.setIsNewChat(true);
+    }
+  };
+
+  return (
+    <ExpandableSidebar
+      {...props}
+      onChatSelect={wrappedOnChatSelect}
+      isExpanded={props.isExpanded}
+      onToggle={props.onToggle}
+    />
+  );
+};
+
+export { WrappedExpandableSidebar };

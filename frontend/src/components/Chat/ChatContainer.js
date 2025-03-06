@@ -1,10 +1,13 @@
 // src/components/Chat/ChatContainer.js
-import React from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import ChatMessage from '../ChatMessage';
 import DocumentList from '../DocumentList';
 import MarkdownRenderer from '../MarkdownRenderer';
 import ReactMarkdown from 'react-markdown';
 import ArticleResults from '../MainPanel/ArticleResults';
+import ExtractionSection from '../MainPanel/ExtractionSection';
+import AnalysisSection from '../MainPanel/AnalysisSection';
+import ChatInput from '../ChatInput';
 
 const LoadingSpinner = ({ message }) => {
   console.log('LOADING_DEBUG: LoadingSpinner rendered with message:', message);
@@ -26,11 +29,66 @@ const ChatContainer = ({
   articles,
   finalAnalysisRef,
   messageEndRef,
+  lastMessageRef,
   showArticleResults,
   initialArticleResultsExpanded,
   totalArticles,
-  processedArticles
+  processedArticles,
+  extractedDisease,
+  extractedEvents,
+  setExtractedDisease,
+  setExtractedEvents,
+  isRetrieving,
+  handleRetrieve,
+  isBox3Hovered,
+  setIsBox3Hovered,
+  isPromptExpanded,
+  setIsPromptExpanded,
+  promptContent,
+  setPromptContent,
+  numArticles,
+  setNumArticles,
+  chatInputHeight,
+  shouldUseScrollEffect,
+  message,
+  setMessage,
+  handleSendMessage,
+  handleGenerateSampleCase,
+  isLoading
 }) => {
+  const [showAnalysisSection, setShowAnalysisSection] = useState(false);
+  const containerRef = useRef(null);
+  const analysisRef = useRef(null);
+
+  const lastMessage = useMemo(() => chatHistory[chatHistory.length - 1], [chatHistory]);
+  const hasAnalysis = useMemo(() => chatHistory.some(msg => msg.analysis), [chatHistory]);
+
+  useEffect(() => {
+    if (shouldUseScrollEffect) {
+      console.log('[ANALYSIS_LOAD] Applying scroll effect');
+      if (lastMessage && lastMessage.analysis && analysisRef.current) {
+        console.log('[ANALYSIS_LOAD] Scrolling to top of analysis');
+        analysisRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else if (containerRef.current) {
+        console.log('[ANALYSIS_LOAD] Scrolling to bottom');
+        containerRef.current.scrollTop = containerRef.current.scrollHeight;
+      }
+      // Reset the flag after scrolling
+      shouldUseScrollEffect = false;
+    }
+  }, [shouldUseScrollEffect, lastMessage, chatHistory]);
+
+  useEffect(() => {
+    console.log('[ANALYSIS_LOAD] chatHistory length:', chatHistory.length);
+    console.log('[ANALYSIS_LOAD] Last message in chatHistory:', chatHistory[chatHistory.length - 1]);
+  }, [chatHistory]);
+
+  useEffect(() => {
+    if (extractedDisease && extractedEvents.length > 0) {
+      setTimeout(() => setShowAnalysisSection(true), 500);
+    }
+  }, [extractedDisease, extractedEvents]);
+
   // Add detailed logging for chat initialization debugging
   console.log('[CHAT_DEBUG] ChatContainer render with chatHistory length:', chatHistory.length);
   console.log('[CHAT_DEBUG] Full chatHistory details:', chatHistory.map(msg => ({
@@ -42,26 +100,13 @@ const ChatContainer = ({
     text: msg.text,
     timestamp: msg.timestamp
   })));
-
-  // Add useEffect for tracking chatHistory changes
-  React.useEffect(() => {
-    console.log('[CHAT_DEBUG] chatHistory changed:', {
-      length: chatHistory.length,
-      hasInitMessage: chatHistory.some(msg => msg.initialCase),
-      messages: chatHistory.map(msg => ({
-        id: msg.id,
-        type: msg.type,
-        text: msg.text,
-        hasInitialCase: !!msg.initialCase
-      }))
-    });
-  }, [chatHistory]);
   return (
-    <div className="flex-1 overflow-y-auto space-y-4">
+    <div ref={containerRef} className="flex-1 overflow-y-auto space-y-4" style={{ paddingBottom: chatInputHeight }}>
       <div className="max-w-[95%] space-y-6 px-4">
         {/* Chat messages with their associated documents and analysis */}
         <div className="space-y-4">
           {chatHistory.map((msg, index) => {
+            const isInitialCaseMessage = msg.initialCase && index === 0;
             // Find the next analysis message that follows this message
             const nextAnalysis = chatHistory.slice(index + 1).find(m => m.analysis);
             // Find if there's a document message after this one
@@ -81,7 +126,42 @@ const ChatContainer = ({
                 })}
                 {((!msg.analysis && !msg.type) || (msg.text !== undefined)) && (
                   <>
-                    <ChatMessage message={msg} />
+                    <ChatMessage 
+                      message={msg} 
+                      ref={msg.type === 'message' && index === chatHistory.length - 1 ? lastMessageRef : null}
+                    />
+                    {isInitialCaseMessage && (
+                      <>
+                        <div className="mb-4">
+                          <ExtractionSection
+                            extractedDisease={extractedDisease}
+                            extractedEvents={extractedEvents}
+                            setExtractedDisease={setExtractedDisease}
+                            setExtractedEvents={setExtractedEvents}
+                          />
+                        </div>
+                        {showAnalysisSection && (
+                          <div className="mb-4">
+                            <AnalysisSection
+                              extractedDisease={extractedDisease}
+                              extractedEvents={extractedEvents}
+                              isRetrieving={isRetrieving}
+                              handleRetrieve={handleRetrieve}
+                              isBox3Hovered={isBox3Hovered}
+                              setIsBox3Hovered={setIsBox3Hovered}
+                              isPromptExpanded={isPromptExpanded}
+                              setIsPromptExpanded={setIsPromptExpanded}
+                              promptContent={promptContent}
+                              setPromptContent={setPromptContent}
+                              currentProgress={currentProgress}
+                              numArticles={numArticles}
+                              setNumArticles={setNumArticles}
+                              hasDocumentMessages={chatHistory.some(msg => msg.type === 'document')}
+                            />
+                          </div>
+                        )}
+                      </>
+                    )}
                     {/* Show incremental table updates */}
                     {msg.initialCase?.extractedDisease && currentProgress && !chatHistory.find(m => m.type === 'document') && showArticleResults && (
                       <div className="ml-4 mt-2">
@@ -121,8 +201,8 @@ const ChatContainer = ({
 
                 {/* Show analysis messages */}
                 {msg.analysis && (
-                  <div className="ml-4 mt-2">
-                    <div ref={finalAnalysisRef} className="bg-white rounded-lg shadow-md p-8">
+                  <div ref={msg === chatHistory[chatHistory.length - 1] ? analysisRef : null} className="ml-4 mt-2">
+                    <div className="bg-white rounded-lg shadow-md p-8">
                       <h2 className="text-2xl font-bold mb-6 text-gray-900">Analysis Results</h2>
                       <div className="space-y-8">
                         <MarkdownRenderer content={msg.analysis} />
@@ -130,6 +210,12 @@ const ChatContainer = ({
                     </div>
                   </div>
                 )}
+                {console.log('[ANALYSIS_LOAD] Rendering message:', {
+                  id: msg.id,
+                  isAnalysis: !!msg.analysis,
+                  isLastMessage: msg === chatHistory[chatHistory.length - 1],
+                  analysisLength: msg.analysis ? msg.analysis.length : 0
+                })}
               </React.Fragment>
             );
           })}
@@ -149,9 +235,24 @@ const ChatContainer = ({
             <LoadingSpinner message="Preparing final analysis..." />
           </div>
         )}
+        {console.log('[ANALYSIS_LOAD] isLoadingAnalysis:', isLoadingAnalysis)}
       </div>
       {/* Invisible element that serves as scroll target */}
       <div ref={messageEndRef} />
+      {/* ChatInput component */}
+      {hasAnalysis && !isGeneratingSample && !isLoadingDocs && !isLoadingAnalysis && (
+        <div className="fixed bottom-16 left-0 right-0 z-85">
+          <div className="relative w-full">
+            <ChatInput 
+              message={message}
+              setMessage={setMessage}
+              handleSendMessage={handleSendMessage}
+              handleGenerateSampleCase={handleGenerateSampleCase}
+              isLoading={isLoading}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
