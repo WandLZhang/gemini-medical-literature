@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 
-const StreamedArticleResults = ({ currentProgress, article }) => {
+const StreamedArticleResults = ({ currentProgress, article, initialExpanded = true }) => {
+  const [isExpanded, setIsExpanded] = useState(initialExpanded);
   // Extract progress numbers from currentProgress if available
   const progressMatch = currentProgress?.match(/Processing article (\d+) of (\d+)/);
   const currentArticle = progressMatch ? parseInt(progressMatch[1]) : 0;
@@ -12,8 +13,28 @@ const StreamedArticleResults = ({ currentProgress, article }) => {
   }
 
   return (
-    <div>
-      {/* Progress bar */}
+    <div className="mt-4 bg-surface-50 shadow-lg rounded-lg p-4">
+      <div className="flex justify-between items-center mb-2">
+        <h2 className="text-sm font-medium text-gray-700">Streamed Article Results</h2>
+        <button 
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="text-gray-500 hover:text-gray-700 focus:outline-none"
+        >
+          {isExpanded ? (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+          )}
+        </button>
+      </div>
+
+      {isExpanded && (
+        <>
+          {/* Progress bar */}
       <div className="mt-2" style={{ maxWidth: '400px' }}>
         <div className="text-xs flex items-center gap-2 mb-1">
           <span className="text-gray-600">{currentProgress}</span>
@@ -31,8 +52,8 @@ const StreamedArticleResults = ({ currentProgress, article }) => {
         </div>
       </div>
 
-      {/* Current article table */}
-      <div className="mt-4 overflow-x-scroll" style={{ maxWidth: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          {/* Current article table */}
+          <div className="mt-4 overflow-x-scroll" style={{ maxWidth: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <table className="min-w-max bg-white border border-gray-300" style={{ minWidth: '120%' }}>
           <thead>
             <tr>
@@ -73,6 +94,8 @@ const StreamedArticleResults = ({ currentProgress, article }) => {
           </tbody>
         </table>
       </div>
+        </>
+      )}
     </div>
   );
 };

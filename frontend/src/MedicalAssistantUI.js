@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 
 // Components
 import DisclaimerModal from './components/DisclaimerModal';
@@ -45,12 +45,14 @@ const MedicalAssistantUI = () => {
   const [currentPromptContent, setCurrentPromptContent] = useState(promptContent);
   const [isNewChat, setIsNewChat] = useState(true);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
-  const [justExtracted, setJustExtracted] = useState(false);
-  const [isLoadingFromHistory, setIsLoadingFromHistory] = useState(false);
+const [justExtracted, setJustExtracted] = useState(false);
+const [isLoadingFromHistory, setIsLoadingFromHistory] = useState(false);
+const retrievalAttemptedRef = useRef(false);
+const [shouldRetrieve, setShouldRetrieve] = useState(false);
 
-  const handleSidebarToggle = () => {
-    setIsSidebarExpanded(prevState => !prevState);
-  };
+const handleSidebarToggle = () => {
+  setIsSidebarExpanded(prevState => !prevState);
+};
 
   console.log('MedicalAssistantUI: setCaseNotes is a function:', typeof setCaseNotes === 'function');
 
@@ -76,9 +78,13 @@ const MedicalAssistantUI = () => {
     handleChatSelect: originalHandleChatSelect,
     handleSendMessage,
     initializeNewChat,
-    initializeActiveChat,
-    hasDocumentMessages
+    initializeActiveChat
   } = useChat(user);
+
+  const hasDocumentMessages = useMemo(() => 
+    chatHistory.some(msg => msg.type === 'document' || msg.documents),
+    [chatHistory]
+  );
 
   const handleChatSelect = (chat) => {
     setIsNewChat(true);
@@ -136,57 +142,59 @@ const MedicalAssistantUI = () => {
     setIsLoadingFromHistory(false);
   }, [chatHistory]);
 
-  const handleExtract = async () => {
-    console.log('[CHAT_DEBUG] Starting extraction process');
+const handleExtract = async () => {
+  console.log('[CHAT_DEBUG] Starting extraction process');
+  try {
+    setIsProcessing(true);
+    console.log('[CHAT_DEBUG] User state:', {
+      isAuthenticated: !!user,
+      userId: user?.uid,
+      isAnonymous: user?.isAnonymous
+    });
+    // Combine case notes and lab results with clear separation
+    const combinedNotes = [
+      "Case Notes:",
+      caseNotes,
+      "\nLab Results:",
+      labResults
+    ].join('\n\n');
+
+    console.log('[CHAT_DEBUG] Extracting disease and events from notes');
+    const [disease, events] = await Promise.all([
+      extractDisease(combinedNotes),
+      extractEvents(combinedNotes, extractionPrompt)
+    ]);
+    console.log('[CHAT_DEBUG] Extraction results:', { disease, events });
+    setExtractedDisease(disease);
+    setExtractedEvents(events);
+    setIsBox2Hovered(true); // Keep box 2 solid after extraction
+
+    // Initialize active chat with the extracted information
     try {
-      setIsProcessing(true);
-      console.log('[CHAT_DEBUG] User state:', {
-        isAuthenticated: !!user,
-        userId: user?.uid,
-        isAnonymous: user?.isAnonymous
-      });
-      // Combine case notes and lab results with clear separation
-      const combinedNotes = [
-        "Case Notes:",
-        caseNotes,
-        "\nLab Results:",
-        labResults
-      ].join('\n\n');
-
-      console.log('[CHAT_DEBUG] Extracting disease and events from notes');
-      const [disease, events] = await Promise.all([
-        extractDisease(combinedNotes),
-        extractEvents(combinedNotes, extractionPrompt)
-      ]);
-      console.log('[CHAT_DEBUG] Extraction results:', { disease, events });
-      setExtractedDisease(disease);
-      setExtractedEvents(events);
-      setIsBox2Hovered(true); // Keep box 2 solid after extraction
-
-      // Initialize active chat with the extracted information
-      try {
-        console.log('[CHAT_DEBUG] Initializing active chat with extracted data');
-        await initializeActiveChat(caseNotes, labResults, disease, events);
-        console.log('[CHAT_DEBUG] Chat initialization successful');
-        
-        // Set justExtracted to true to trigger automatic retrieval
-        setJustExtracted(true);
-      } catch (error) {
-        console.error('[CHAT_DEBUG] Error initializing chat:', error);
-      }
+      console.log('[CHAT_DEBUG] Initializing active chat with extracted data');
+      await initializeActiveChat(caseNotes, labResults, disease, events);
+      console.log('[CHAT_DEBUG] Chat initialization successful');
+      
+      // Reset the retrieval attempt ref, set justExtracted to true, and set shouldRetrieve to true
+      retrievalAttemptedRef.current = false;
+      setJustExtracted(true);
+      setShouldRetrieve(true);
     } catch (error) {
-      console.error('[CHAT_DEBUG] Extraction error:', error);
-      if (error.message.includes('Failed to fetch')) {
-        setExtractedDisease('Network error. Please check your connection and try again.');
-        setExtractedEvents(['Network error. Please check your connection and try again.']);
-      } else {
-        setExtractedDisease(error.message || 'Error extracting disease. Please try again.');
-        setExtractedEvents([error.message || 'Error extracting events. Please try again.']);
-      }
-    } finally {
-      setIsProcessing(false);
+      console.error('[CHAT_DEBUG] Error initializing chat:', error);
     }
-  };
+  } catch (error) {
+    console.error('[CHAT_DEBUG] Extraction error:', error);
+    if (error.message.includes('Failed to fetch')) {
+      setExtractedDisease('Network error. Please check your connection and try again.');
+      setExtractedEvents(['Network error. Please check your connection and try again.']);
+    } else {
+      setExtractedDisease(error.message || 'Error extracting disease. Please try again.');
+      setExtractedEvents([error.message || 'Error extracting events. Please try again.']);
+    }
+  } finally {
+    setIsProcessing(false);
+  }
+};
 
   const handleExampleLoad = (exampleCaseNotes, exampleLabResults) => {
     setCaseNotes(exampleCaseNotes);
@@ -219,7 +227,24 @@ const MedicalAssistantUI = () => {
   }, [setCaseNotes, setLabResults, setExtractedDisease, setExtractedEvents, initializeNewChat, caseNotes, labResults]);
 
   const handleRetrieve = async () => {
-    if (isProcessingArticles || !extractedDisease || !extractedEvents.length) return;
+    console.log('Retrieval triggered. Conditions:', {
+      isProcessingArticles,
+      extractedDisease,
+      extractedEventsLength: extractedEvents.length,
+      justExtracted,
+      isRetrieving,
+      hasDocumentMessages,
+      isNewChat,
+      hasCaseNotes: !!caseNotes,
+      hasLabResults: !!labResults
+    });
+
+    // Check if retrieval should actually occur
+    if (isProcessingArticles || !extractedDisease || !extractedEvents.length) {
+      console.log('Retrieval aborted due to conditions not met');
+      return;
+    }
+
     setIsRetrieving(true);
     setIsProcessingArticles(true);
     setIsPromptExpanded(false);
@@ -230,7 +255,6 @@ const MedicalAssistantUI = () => {
 
     // Create a local variable to store processed articles
     let processedArticles = [];
-    console.log('[RETRIEVE_DEBUG] Starting article processing. Current processed articles:', processedArticles.length);
 
     try {
       // Combine case notes and lab results
@@ -353,13 +377,35 @@ const MedicalAssistantUI = () => {
     }
   };
 
-  useEffect(() => {
-    if (justExtracted && extractedDisease && extractedEvents.length > 0 && !isRetrieving && !isProcessingArticles) {
-      console.log('[RETRIEVE_DEBUG] Auto-triggering retrieval after extraction');
-      handleRetrieve();
-      setJustExtracted(false);
-    }
-  }, [justExtracted, extractedDisease, extractedEvents, isRetrieving, isProcessingArticles]);
+useEffect(() => {
+  if (justExtracted && 
+      extractedDisease && 
+      extractedEvents.length > 0 && 
+      !isRetrieving && 
+      !isProcessingArticles && 
+      !hasDocumentMessages &&
+      (caseNotes || labResults) &&
+      !retrievalAttemptedRef.current &&
+      shouldRetrieve) {
+    console.log('[RETRIEVAL_DEBUG] Conditions met for retrieval');
+    retrievalAttemptedRef.current = true;
+    handleRetrieve();
+    setJustExtracted(false);
+    setShouldRetrieve(false);
+  } else if (justExtracted) {
+    console.log('[RETRIEVAL_DEBUG] Retrieval conditions not met:', {
+      justExtracted,
+      extractedDisease,
+      extractedEventsLength: extractedEvents.length,
+      isRetrieving,
+      isProcessingArticles,
+      hasDocumentMessages,
+      hasCaseNotesOrLabResults: !!(caseNotes || labResults),
+      retrievalAttempted: retrievalAttemptedRef.current,
+      shouldRetrieve
+    });
+  }
+}, [justExtracted, extractedDisease, extractedEvents, isRetrieving, isProcessingArticles, hasDocumentMessages, isNewChat, caseNotes, labResults, shouldRetrieve]);
 
   if (loading) {
     return (
@@ -388,15 +434,20 @@ const MedicalAssistantUI = () => {
 
       <div className="flex flex-1 min-h-0 relative w-full">
         <div className="absolute z-10">
-          <WrappedExpandableSidebar
-            user={user}
-            onChatSelect={handleChatSelect}
-            activeChat={activeChat}
-            initializeNewChat={initializeNewChat}
-            setIsNewChat={setIsNewChat}
-            isExpanded={isSidebarExpanded}
-            onToggle={handleSidebarToggle}
-          />
+        <WrappedExpandableSidebar
+          user={user}
+          onChatSelect={handleChatSelect}
+          activeChat={activeChat}
+          initializeNewChat={initializeNewChat}
+          setIsNewChat={setIsNewChat}
+          isExpanded={isSidebarExpanded}
+          onToggle={handleSidebarToggle}
+          setShouldRetrieve={setShouldRetrieve}
+          setCaseNotes={setCaseNotes}
+          setLabResults={setLabResults}
+          setExtractedDisease={setExtractedDisease}
+          setExtractedEvents={setExtractedEvents}
+        />
         </div>
 
         <LeftPanel

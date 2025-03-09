@@ -58,7 +58,8 @@ const ChatContainer = ({
   onExtractionComplete,
   isLoadingFromHistory,
   isProcessingArticles,
-  setIsProcessingArticles
+  setIsProcessingArticles,
+  hasDocumentMessages
 }) => {
   const [showExtractionSection, setShowExtractionSection] = useState(false);
   const [showAnalysisSection, setShowAnalysisSection] = useState(false);
@@ -165,7 +166,7 @@ const ChatContainer = ({
                             currentProgress={currentProgress}
                             numArticles={numArticles}
                             setNumArticles={setNumArticles}
-                            hasDocumentMessages={chatHistory.some(msg => msg.type === 'document')}
+                            hasDocumentMessages={hasDocumentMessages}
                             className={showAnalysisSection ? 'opacity-100' : 'opacity-0'}
                             isLoadingFromHistory={isLoadingFromHistory}
                             isProcessingArticles={isProcessingArticles}

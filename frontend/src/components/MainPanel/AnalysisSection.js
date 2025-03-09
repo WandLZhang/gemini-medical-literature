@@ -26,7 +26,16 @@ const AnalysisSection = ({
   const [isRetrievalComplete, setIsRetrievalComplete] = useState(false);
   const [showProcessingMessage, setShowProcessingMessage] = useState(false);
 
-  useEffect(() => {
+useEffect(() => {
+  console.log('autoretrieval_debug: Document retrieval conditions:', {
+    isRetrieving,
+    isProcessingArticles,
+    hasDocumentMessages,
+    articlesCount: articles ? articles.length : 0,
+    isLoadingFromHistory
+  });
+
+  if (!hasDocumentMessages) {
     if (!isLoadingFromHistory && !isRetrieving && !isProcessingArticles) {
       if (articles && articles.length > 0) {
         setIsRetrievalComplete(true);
@@ -39,7 +48,13 @@ const AnalysisSection = ({
       setIsRetrievalComplete(true);
       setShowProcessingMessage(true);
     }
-  }, [isRetrieving, articles, isLoadingFromHistory, isProcessingArticles]);
+  }
+
+  console.log('autoretrieval_debug: Retrieval state updated:', {
+    isRetrievalComplete: !hasDocumentMessages && ((articles && articles.length > 0) || isLoadingFromHistory),
+    showProcessingMessage: !hasDocumentMessages && ((articles && articles.length > 0) || isLoadingFromHistory)
+  });
+}, [isRetrieving, articles, isLoadingFromHistory, isProcessingArticles, hasDocumentMessages]);
 
   return (
     <div 
@@ -50,7 +65,11 @@ const AnalysisSection = ({
       <div className="mb-1 flex justify-between items-center">
         <div className="flex items-center">
           <div className="w-4 h-4 mr-2 flex items-center justify-center">
-            {(isRetrieving || !showProcessingMessage) ? (
+            {hasDocumentMessages ? (
+              <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+            ) : (isRetrieving || !showProcessingMessage) ? (
               <LoadingSpinner className="h-4 w-4" />
             ) : (
               <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -59,16 +78,16 @@ const AnalysisSection = ({
             )}
           </div>
           <h2 className="text-xs font-medium text-gray-700">
-            {showProcessingMessage ? "Currently processing:" : "Sending instructions for paper retrieval"}
+            {showProcessingMessage ? "Sending instructions for paper retrieval" : "Sending instructions for paper retrieval"}
           </h2>
         </div>
         <div className="flex items-center gap-2">
           {isPromptExpanded && (
           <button
             onClick={handleRetrieve}
-            disabled={isRetrieving || isProcessingArticles || !extractedDisease || !extractedEvents.length}
+            disabled={isRetrieving || isProcessingArticles || !extractedDisease || !extractedEvents.length || hasDocumentMessages}
             className={`text-xs px-3 py-1 bg-surface-700 text-white rounded hover:bg-surface-600 focus:outline-none focus:ring-2 focus:ring-surface-500 focus:ring-offset-2 ${
-              (isRetrieving || isProcessingArticles || !extractedDisease || !extractedEvents.length) ? 'opacity-50 cursor-not-allowed' : ''
+              (isRetrieving || isProcessingArticles || !extractedDisease || !extractedEvents.length || hasDocumentMessages) ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
             {isRetrieving || isProcessingArticles ? <LoadingSpinner /> : 'Re-fetch'}

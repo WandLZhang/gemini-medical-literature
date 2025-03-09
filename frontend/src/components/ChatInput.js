@@ -20,7 +20,7 @@ const ChatInput = memo(({ message, setMessage, handleSendMessage, isLoading }) =
   const [isRedacting, setIsRedacting] = useState(false);
   console.log('message_clear_render: Initial redactedInput state:', redactedInput);
   
-  const debouncedInput = useDebounce(redactedInput, 1500);
+  const debouncedInput = useDebounce(redactedInput, 300);
 
   const handleClear = useCallback(() => {
     console.log('message_clear_render: handleClear called');

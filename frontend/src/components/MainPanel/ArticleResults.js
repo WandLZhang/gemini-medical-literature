@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 const ArticleResults = ({ 
   articles, 
-  initialExpanded = false, 
+  initialExpanded = true, 
   currentProgress, 
   totalArticles, 
   processedArticles 

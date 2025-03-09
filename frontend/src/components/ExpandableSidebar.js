@@ -153,26 +153,26 @@ const ExpandableSidebar = ({ user, onChatSelect, activeChat, initializeNewChat, 
     }
   };
 
-  const handleNewChat = async () => {
-    if (user) {
-      try {
-        const chatId = await initializeNewChat();
-        const newChat = {
-          id: chatId,
-          createdAt: {
-            seconds: Math.floor(Date.now() / 1000),
-            nanoseconds: 0
-          },
-          messages: []
-        };
-        setChats(prevChats => [newChat, ...prevChats]);
-        onChatSelect(newChat);
-        onToggle(false); // Minimize sidebar after creating new chat
-      } catch (error) {
-        console.error('Error creating new chat:', error);
-      }
+const handleNewChat = async () => {
+  if (user) {
+    try {
+      const chatId = await initializeNewChat();
+      const newChat = {
+        id: chatId,
+        createdAt: {
+          seconds: Math.floor(Date.now() / 1000),
+          nanoseconds: 0
+        },
+        messages: []
+      };
+      setChats(prevChats => [newChat, ...prevChats]);
+      onChatSelect(newChat);
+      onToggle(false); // Minimize sidebar after creating new chat
+    } catch (error) {
+      console.error('Error creating new chat:', error);
     }
-  };
+  }
+};
 
   return (
     <div className={`fixed top-16 left-0 h-[calc(100vh-4rem)] bg-surface-700 shadow-lg transition-all duration-300 ease-in-out flex z-90 ${isExpanded ? 'w-64' : 'w-12'}`}>
@@ -240,25 +240,54 @@ const ExpandableSidebar = ({ user, onChatSelect, activeChat, initializeNewChat, 
 };
 
 // Wrap the ExpandableSidebar component to ensure onChatSelect is called correctly
-const WrappedExpandableSidebar = (props) => {
+const WrappedExpandableSidebar = ({
+  onChatSelect,
+  setIsNewChat,
+  setShouldRetrieve,
+  setCaseNotes,
+  setLabResults,
+  setExtractedDisease,
+  setExtractedEvents,
+  ...otherProps
+}) => {
   const wrappedOnChatSelect = (chat) => {
-    props.onChatSelect(chat);
+    onChatSelect(chat);
     // This will trigger the fade-in effect in WelcomeText
-    if (props.setIsNewChat) {
-      props.setIsNewChat(true);
-    }
+    setIsNewChat(true);
     // Set shouldRetrieve to false when a chat is selected from history
-    if (props.setShouldRetrieve) {
-      props.setShouldRetrieve(false);
+    if (setShouldRetrieve) setShouldRetrieve(false);
+    // Reset other states
+    if (setCaseNotes) setCaseNotes('');
+    if (setLabResults) setLabResults('');
+    if (setExtractedDisease) setExtractedDisease('');
+    if (setExtractedEvents) setExtractedEvents([]);
+  };
+
+  const wrappedHandleNewChat = async () => {
+    if (otherProps.user) {
+      try {
+        const chatId = await otherProps.initializeNewChat();
+        const newChat = {
+          id: chatId,
+          createdAt: {
+            seconds: Math.floor(Date.now() / 1000),
+            nanoseconds: 0
+          },
+          messages: []
+        };
+        wrappedOnChatSelect(newChat);
+        otherProps.onToggle(false); // Minimize sidebar after creating new chat
+      } catch (error) {
+        console.error('Error creating new chat:', error);
+      }
     }
   };
 
   return (
     <ExpandableSidebar
-      {...props}
+      {...otherProps}
       onChatSelect={wrappedOnChatSelect}
-      isExpanded={props.isExpanded}
-      onToggle={props.onToggle}
+      initializeNewChat={wrappedHandleNewChat}
     />
   );
 };

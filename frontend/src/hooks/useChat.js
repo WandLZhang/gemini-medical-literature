@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { handleSendMessage } from './chat/messageHandlers';
 import { initializeActiveChat, initializeNewChat, handleChatSelect } from './chat/chatState';
 import { deleteChat } from '../firebase';
@@ -12,6 +12,10 @@ const useChat = (user, selectedTemplate) => {
   const [activeChat, setActiveChat] = useState(null);
   const [message, setMessage] = useState('');
   const [hasDocumentMessages, setHasDocumentMessages] = useState(false);
+
+  useEffect(() => {
+    setHasDocumentMessages(chatHistory.some(msg => msg.type === 'document' || msg.documents));
+  }, [chatHistory]);
 
   const handleInitializeActiveChat = useCallback(async (caseNotes, labResults, extractedDisease, extractedEvents) => {
     // If there's an active temporary chat, delete it first
@@ -45,8 +49,8 @@ const useChat = (user, selectedTemplate) => {
     await handleChatSelect({
       chat,
       setActiveChat,
-      setHasDocumentMessages,
       setChatHistory,
+      setHasDocumentMessages,
       initializeNewChat: handleInitializeNewChat,
       userId
     });
@@ -81,7 +85,8 @@ const useChat = (user, selectedTemplate) => {
     handleSendMessage: handleMessageSend,
     initializeNewChat: handleInitializeNewChat,
     initializeActiveChat: handleInitializeActiveChat,
-    hasDocumentMessages
+    hasDocumentMessages,
+    setHasDocumentMessages
   };
 };
 
