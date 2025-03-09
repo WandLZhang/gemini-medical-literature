@@ -46,7 +46,7 @@ const MedicalAssistantUI = () => {
   const [isNewChat, setIsNewChat] = useState(true);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [justExtracted, setJustExtracted] = useState(false);
-  const [isLoadingChatHistory, setIsLoadingChatHistory] = useState(false);
+  const [isLoadingFromHistory, setIsLoadingFromHistory] = useState(false);
 
   const handleSidebarToggle = () => {
     setIsSidebarExpanded(prevState => !prevState);
@@ -84,7 +84,7 @@ const MedicalAssistantUI = () => {
     setIsNewChat(true);
     setCaseNotes('');
     setLabResults('');
-    setIsLoadingChatHistory(true);
+    setIsLoadingFromHistory(true);
     originalHandleChatSelect(chat);
   };
 
@@ -132,8 +132,8 @@ const MedicalAssistantUI = () => {
       setExtractedEvents([]);
       setIsPromptExpanded(true); // Reset prompt expansion when starting new chat
     }
-    // Set isLoadingChatHistory back to false after loading is complete
-    setIsLoadingChatHistory(false);
+    // Set isLoadingFromHistory back to false after loading is complete
+    setIsLoadingFromHistory(false);
   }, [chatHistory]);
 
   const handleExtract = async () => {
@@ -219,18 +219,7 @@ const MedicalAssistantUI = () => {
   }, [setCaseNotes, setLabResults, setExtractedDisease, setExtractedEvents, initializeNewChat, caseNotes, labResults]);
 
   const handleRetrieve = async () => {
-    const hasDocumentMessages = chatHistory.some(msg => msg.type === 'document');
-    console.log('[retrieval_fetch] handleRetrieve called with conditions:', {
-      isProcessingArticles,
-      extractedDisease,
-      extractedEventsLength: extractedEvents.length,
-      isLoadingChatHistory,
-      hasDocumentMessages
-    });
-    if (isProcessingArticles || !extractedDisease || !extractedEvents.length || isLoadingChatHistory || hasDocumentMessages) {
-      console.log('[retrieval_fetch] Retrieval conditions not met, returning');
-      return;
-    }
+    if (isProcessingArticles || !extractedDisease || !extractedEvents.length) return;
     setIsRetrieving(true);
     setIsProcessingArticles(true);
     setIsPromptExpanded(false);
@@ -241,7 +230,7 @@ const MedicalAssistantUI = () => {
 
     // Create a local variable to store processed articles
     let processedArticles = [];
-    console.log('[retrieval_fetch] Starting article processing. Current processed articles:', processedArticles.length);
+    console.log('[RETRIEVE_DEBUG] Starting article processing. Current processed articles:', processedArticles.length);
 
     try {
       // Combine case notes and lab results
@@ -365,24 +354,12 @@ const MedicalAssistantUI = () => {
   };
 
   useEffect(() => {
-    const hasDocumentMessages = chatHistory.some(msg => msg.type === 'document');
-    console.log('[retrieval_fetch] Checking conditions for auto-retrieval:', {
-      justExtracted,
-      extractedDisease,
-      extractedEventsLength: extractedEvents.length,
-      isRetrieving,
-      isProcessingArticles,
-      isLoadingChatHistory,
-      hasDocumentMessages
-    });
-    if (justExtracted && extractedDisease && extractedEvents.length > 0 && !isRetrieving && !isProcessingArticles && !isLoadingChatHistory && !hasDocumentMessages) {
-      console.log('[retrieval_fetch] Auto-triggering retrieval after extraction');
+    if (justExtracted && extractedDisease && extractedEvents.length > 0 && !isRetrieving && !isProcessingArticles) {
+      console.log('[RETRIEVE_DEBUG] Auto-triggering retrieval after extraction');
       handleRetrieve();
       setJustExtracted(false);
-    } else {
-      console.log('[retrieval_fetch] Conditions not met for auto-retrieval');
     }
-  }, [justExtracted, extractedDisease, extractedEvents, isRetrieving, isProcessingArticles, isLoadingChatHistory, chatHistory]);
+  }, [justExtracted, extractedDisease, extractedEvents, isRetrieving, isProcessingArticles]);
 
   if (loading) {
     return (
@@ -476,7 +453,7 @@ const MedicalAssistantUI = () => {
           handleClearAll={handleClearAll}
           justExtracted={justExtracted}
           setJustExtracted={setJustExtracted}
-          isLoadingChatHistory={isLoadingChatHistory}
+          isLoadingFromHistory={isLoadingFromHistory}
           isProcessingArticles={isProcessingArticles}
           setIsProcessingArticles={setIsProcessingArticles}
         />

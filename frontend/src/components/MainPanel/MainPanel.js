@@ -45,7 +45,7 @@ const MainPanel = ({
   handleClearAll,
   justExtracted,
   setJustExtracted,
-  isLoadingChatHistory,
+  isLoadingFromHistory,
   isProcessingArticles,
   setIsProcessingArticles
 }) => {
@@ -172,7 +172,7 @@ const MainPanel = ({
             justExtracted={justExtracted}
             setJustExtracted={setJustExtracted}
             onExtractionComplete={handleExtractionComplete}
-            isLoadingChatHistory={isLoadingChatHistory}
+            isLoadingFromHistory={isLoadingFromHistory}
             isProcessingArticles={isProcessingArticles}
             setIsProcessingArticles={setIsProcessingArticles}
           />

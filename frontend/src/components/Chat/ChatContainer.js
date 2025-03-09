@@ -56,7 +56,7 @@ const ChatContainer = ({
   isLoading,
   showInitialCase,
   onExtractionComplete,
-  isLoadingChatHistory,
+  isLoadingFromHistory,
   isProcessingArticles,
   setIsProcessingArticles
 }) => {
@@ -167,7 +167,7 @@ const ChatContainer = ({
                             setNumArticles={setNumArticles}
                             hasDocumentMessages={chatHistory.some(msg => msg.type === 'document')}
                             className={showAnalysisSection ? 'opacity-100' : 'opacity-0'}
-                            isLoadingChatHistory={isLoadingChatHistory}
+                            isLoadingFromHistory={isLoadingFromHistory}
                             isProcessingArticles={isProcessingArticles}
                             articles={articles}
                           />
