@@ -1,22 +1,19 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { findLastIndex } from 'lodash';
 import ChatContainer from '../Chat/ChatContainer';
-import AnalysisSection from './AnalysisSection';
-import ArticleResults from './ArticleResults';
 import CaseInputSection from '../LeftPanel/CaseInputSection';
 import WelcomeText from './WelcomeText';
-import ExtractionSection from './ExtractionSection';
 import { db, auth } from '../../firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, onSnapshot } from 'firebase/firestore';
 
 const fadeAwayClass = "transition-opacity duration-500 ease-in-out";
 
 const CHAT_INPUT_HEIGHT = 60; // Estimated height of ChatInput
 
 const MainPanel = ({
+  chatHistory,
   articles,
   currentArticleData,
-  chatHistory,
   isGeneratingSample,
   isLoadingDocs,
   isLoadingAnalysis,
@@ -45,10 +42,20 @@ const MainPanel = ({
   message,
   setMessage,
   handleSendMessage,
-  handleClearAll
+  handleClearAll,
+  justExtracted,
+  setJustExtracted,
+  isLoadingChatHistory,
+  isProcessingArticles,
+  setIsProcessingArticles
 }) => {
   const [hasAnalysisMessage, setHasAnalysisMessage] = useState(false);
   const [shouldUseScrollEffect, setShouldUseScrollEffect] = useState(false);
+  const [showInitialCase, setShowInitialCase] = useState(false);
+
+  const handleExtractionComplete = useCallback(() => {
+    setJustExtracted(true);
+  }, [setJustExtracted]);
 
   useEffect(() => {
     const user = auth.currentUser;
@@ -114,9 +121,18 @@ const MainPanel = ({
     }
   }, [isNewChat]);
 
+  useEffect(() => {
+    if (chatHistory.length > 0 && chatHistory[0].initialCase) {
+      setShowInitialCase(true);
+    }
+  }, [chatHistory]);
+
   return (
-    <main className="flex-1 flex flex-col min-h-0 relative w-full max-w-4xl mx-auto">
-      <div ref={chatContainerRef} className="flex flex-col min-h-0 overflow-auto pb-24 pt-10">
+    <main className="flex-1 flex flex-col h-full relative w-full max-w-4xl mx-auto">
+      <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-0">
+        <WelcomeText show={showWelcomeText} firstName={firstName} />
+      </div>
+      <div ref={chatContainerRef} className="flex-1 flex flex-col overflow-auto mt-16">
           <ChatContainer 
             chatInputHeight={CHAT_INPUT_HEIGHT}
             chatHistory={chatHistory}
@@ -152,18 +168,20 @@ const MainPanel = ({
             handleSendMessage={handleSendMessage}
             handleGenerateSampleCase={handleGenerateSampleCase}
             isLoading={isLoadingDocs || isLoadingAnalysis || isGeneratingSample}
+            showInitialCase={showInitialCase}
+            justExtracted={justExtracted}
+            setJustExtracted={setJustExtracted}
+            onExtractionComplete={handleExtractionComplete}
+            isLoadingChatHistory={isLoadingChatHistory}
+            isProcessingArticles={isProcessingArticles}
+            setIsProcessingArticles={setIsProcessingArticles}
           />
       </div>
-      <div className="relative z-0">
-        {/* Wrapper for WelcomeText and CaseInputSection */}
-        <div className="fixed inset-0 z-10 pointer-events-none">
-          <div className="absolute top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 transition-opacity duration-300">
-            <WelcomeText show={showWelcomeText} firstName={firstName} />
-          </div>
-        </div>
+      <div className="relative z-0 mt-auto">
+        {/* CaseInputSection */}
         {showCaseInput && (
-          <div className={`fixed bottom-0 left-0 right-0 px-4 flex justify-center items-end h-full pb-16 z-30 ${fadeAwayClass} ${showCaseInput ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-            <div className="relative max-w-[70%] mx-auto">
+          <div className={`absolute bottom-0 left-0 right-0 px-4 flex justify-center items-end pb-16 z-50 ${fadeAwayClass} ${showCaseInput ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+            <div className="max-w-[70%] mx-auto">
               <CaseInputSection
                 caseNotes={caseNotes}
                 setCaseNotes={setCaseNotes}

@@ -1,19 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+
+const fadeInClass = "transition-opacity duration-1000 ease-in-out";
 
 const ExtractionSection = ({
   extractedDisease,
   extractedEvents,
   setExtractedDisease,
-  setExtractedEvents
+  setExtractedEvents,
+  onExtractionComplete,
+  className
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   // Ensure extractedEvents is always an array
   const events = Array.isArray(extractedEvents) ? extractedEvents : [];
 
+  useEffect(() => {
+    if (extractedDisease && events.length > 0) {
+      onExtractionComplete();
+    }
+  }, [extractedDisease, events, onExtractionComplete]);
+
   return (
-    <div className="w-1/2 bg-surface-50 shadow-lg rounded-lg p-4 mb-4">
+    <div className={`w-1/2 bg-surface-50 shadow-lg rounded-lg p-4 mb-4 ${fadeInClass} ${className}`}>
       <div className="mb-1 flex justify-between items-center">
-        <h2 className="text-xs font-medium text-gray-700">Disease and actionable events extracted</h2>
+        <div className="flex items-center">
+          <svg className="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+          <h2 className="text-xs font-medium text-gray-700">Disease and actionable events extracted</h2>
+        </div>
         <button 
           onClick={() => setIsExpanded(!isExpanded)}
           className="text-gray-500 hover:text-gray-700 focus:outline-none"

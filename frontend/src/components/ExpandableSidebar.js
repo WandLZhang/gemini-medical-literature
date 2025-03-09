@@ -247,6 +247,10 @@ const WrappedExpandableSidebar = (props) => {
     if (props.setIsNewChat) {
       props.setIsNewChat(true);
     }
+    // Set shouldRetrieve to false when a chat is selected from history
+    if (props.setShouldRetrieve) {
+      props.setShouldRetrieve(false);
+    }
   };
 
   return (

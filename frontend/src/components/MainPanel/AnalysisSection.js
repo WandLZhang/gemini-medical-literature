@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import LoadingSpinner from '../LoadingSpinner';
+
+const fadeInClass = "transition-opacity duration-1000 ease-in-out";
 
 const AnalysisSection = ({
   extractedDisease,
@@ -15,29 +17,69 @@ const AnalysisSection = ({
   currentProgress,
   numArticles,
   setNumArticles,
-  hasDocumentMessages
+  hasDocumentMessages,
+  articles,
+  className,
+  isLoadingChatHistory,
+  isProcessingArticles
 }) => {
+  const [isRetrievalComplete, setIsRetrievalComplete] = useState(false);
+  const [showProcessingMessage, setShowProcessingMessage] = useState(false);
+
+  useEffect(() => {
+    if (hasDocumentMessages) {
+      setIsRetrievalComplete(true);
+      setShowProcessingMessage(false);
+    } else if (!isLoadingChatHistory && !isRetrieving && !isProcessingArticles) {
+      if (articles && articles.length > 0) {
+        setIsRetrievalComplete(true);
+        setShowProcessingMessage(true);
+      } else {
+        setIsRetrievalComplete(false);
+        setShowProcessingMessage(false);
+      }
+    }
+  }, [isRetrieving, articles, isLoadingChatHistory, isProcessingArticles, hasDocumentMessages]);
+
   return (
     <div 
-      className={`w-1/2 bg-surface-50 shadow-lg rounded-lg p-4 mb-4 ${(!extractedDisease || !extractedEvents.length) ? 'opacity-25' : ''}`}
+      className={`w-1/2 bg-surface-50 shadow-lg rounded-lg p-4 mb-4 ${fadeInClass} ${className} ${(!extractedDisease || !extractedEvents.length) ? 'opacity-25' : ''}`}
       onMouseEnter={() => extractedDisease && extractedEvents.length && setIsBox3Hovered(true)}
       onMouseLeave={() => setIsBox3Hovered(false)}
     >
       <div className="mb-1 flex justify-between items-center">
-        <h2 className="text-xs font-medium text-gray-700">
-          {isPromptExpanded ? "Sending instructions for paper retrieval" : "Sending instructions for paper retrieval"}
-        </h2>
+        <div className="flex items-center">
+          <div className="w-4 h-4 mr-2 flex items-center justify-center">
+            {hasDocumentMessages ? (
+              <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+            ) : (isRetrieving || isProcessingArticles) ? (
+              <LoadingSpinner className="h-4 w-4" />
+            ) : isRetrievalComplete ? (
+              <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+            ) : null}
+          </div>
+          <h2 className="text-xs font-medium text-gray-700">
+            {hasDocumentMessages ? "Articles retrieved and analyzed" :
+             isLoadingChatHistory ? "Loading chat history..." :
+             showProcessingMessage ? "Currently processing:" : 
+             "Sending instructions for paper retrieval"}
+          </h2>
+        </div>
         <div className="flex items-center gap-2">
           {isPromptExpanded && (
-            <button
-              onClick={handleRetrieve}
-              disabled={isRetrieving || !extractedDisease || !extractedEvents.length}
-              className={`text-xs px-3 py-1 bg-surface-700 text-white rounded hover:bg-surface-600 focus:outline-none focus:ring-2 focus:ring-surface-500 focus:ring-offset-2 ${
-                (isRetrieving || !extractedDisease || !extractedEvents.length) ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-            >
-              {isRetrieving ? <LoadingSpinner /> : 'Re-fetch'}
-            </button>
+          <button
+            onClick={handleRetrieve}
+            disabled={isRetrieving || isProcessingArticles || !extractedDisease || !extractedEvents.length}
+            className={`text-xs px-3 py-1 bg-surface-700 text-white rounded hover:bg-surface-600 focus:outline-none focus:ring-2 focus:ring-surface-500 focus:ring-offset-2 ${
+              (isRetrieving || isProcessingArticles || !extractedDisease || !extractedEvents.length) ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+          >
+            {isRetrieving || isProcessingArticles ? <LoadingSpinner /> : 'Re-fetch'}
+          </button>
           )}
           <button 
             onClick={() => setIsPromptExpanded(!isPromptExpanded)}

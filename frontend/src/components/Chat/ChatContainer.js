@@ -29,7 +29,6 @@ const ChatContainer = ({
   articles,
   finalAnalysisRef,
   messageEndRef,
-  lastMessageRef,
   showArticleResults,
   initialArticleResultsExpanded,
   totalArticles,
@@ -54,11 +53,18 @@ const ChatContainer = ({
   setMessage,
   handleSendMessage,
   handleGenerateSampleCase,
-  isLoading
+  isLoading,
+  showInitialCase,
+  onExtractionComplete,
+  isLoadingChatHistory,
+  isProcessingArticles,
+  setIsProcessingArticles
 }) => {
+  const [showExtractionSection, setShowExtractionSection] = useState(false);
   const [showAnalysisSection, setShowAnalysisSection] = useState(false);
   const containerRef = useRef(null);
   const analysisRef = useRef(null);
+  const lastMessageRef = useRef(null);
 
   const lastMessage = useMemo(() => chatHistory[chatHistory.length - 1], [chatHistory]);
   const hasAnalysis = useMemo(() => chatHistory.some(msg => msg.analysis), [chatHistory]);
@@ -84,10 +90,11 @@ const ChatContainer = ({
   }, [chatHistory]);
 
   useEffect(() => {
-    if (extractedDisease && extractedEvents.length > 0) {
-      setTimeout(() => setShowAnalysisSection(true), 500);
+    if (showInitialCase) {
+      setTimeout(() => setShowExtractionSection(true), 1000);
+      setTimeout(() => setShowAnalysisSection(true), 2000);
     }
-  }, [extractedDisease, extractedEvents]);
+  }, [showInitialCase]);
 
   // Add detailed logging for chat initialization debugging
   console.log('[CHAT_DEBUG] ChatContainer render with chatHistory length:', chatHistory.length);
@@ -101,7 +108,7 @@ const ChatContainer = ({
     timestamp: msg.timestamp
   })));
   return (
-    <div ref={containerRef} className="flex-1 overflow-y-auto space-y-4" style={{ paddingBottom: chatInputHeight }}>
+    <div ref={containerRef} className="flex-1 overflow-y-auto space-y-4" style={{ paddingBottom: `calc(${chatInputHeight}px + 6rem)` }}>
       <div className="max-w-[95%] space-y-6 px-4">
         {/* Chat messages with their associated documents and analysis */}
         <div className="space-y-4">
@@ -128,7 +135,8 @@ const ChatContainer = ({
                   <>
                     <ChatMessage 
                       message={msg} 
-                      ref={msg.type === 'message' && index === chatHistory.length - 1 ? lastMessageRef : null}
+                      ref={index === chatHistory.length - 1 ? lastMessageRef : null}
+                      showInitialCase={showInitialCase}
                     />
                     {isInitialCaseMessage && (
                       <>
@@ -138,28 +146,32 @@ const ChatContainer = ({
                             extractedEvents={extractedEvents}
                             setExtractedDisease={setExtractedDisease}
                             setExtractedEvents={setExtractedEvents}
+                            onExtractionComplete={onExtractionComplete}
+                            className={showExtractionSection ? 'opacity-100' : 'opacity-0'}
                           />
                         </div>
-                        {showAnalysisSection && (
-                          <div className="mb-4">
-                            <AnalysisSection
-                              extractedDisease={extractedDisease}
-                              extractedEvents={extractedEvents}
-                              isRetrieving={isRetrieving}
-                              handleRetrieve={handleRetrieve}
-                              isBox3Hovered={isBox3Hovered}
-                              setIsBox3Hovered={setIsBox3Hovered}
-                              isPromptExpanded={isPromptExpanded}
-                              setIsPromptExpanded={setIsPromptExpanded}
-                              promptContent={promptContent}
-                              setPromptContent={setPromptContent}
-                              currentProgress={currentProgress}
-                              numArticles={numArticles}
-                              setNumArticles={setNumArticles}
-                              hasDocumentMessages={chatHistory.some(msg => msg.type === 'document')}
-                            />
-                          </div>
-                        )}
+                        <div className="mb-4">
+                          <AnalysisSection
+                            extractedDisease={extractedDisease}
+                            extractedEvents={extractedEvents}
+                            isRetrieving={isRetrieving}
+                            handleRetrieve={handleRetrieve}
+                            isBox3Hovered={isBox3Hovered}
+                            setIsBox3Hovered={setIsBox3Hovered}
+                            isPromptExpanded={isPromptExpanded}
+                            setIsPromptExpanded={setIsPromptExpanded}
+                            promptContent={promptContent}
+                            setPromptContent={setPromptContent}
+                            currentProgress={currentProgress}
+                            numArticles={numArticles}
+                            setNumArticles={setNumArticles}
+                            hasDocumentMessages={chatHistory.some(msg => msg.type === 'document')}
+                            className={showAnalysisSection ? 'opacity-100' : 'opacity-0'}
+                            isLoadingChatHistory={isLoadingChatHistory}
+                            isProcessingArticles={isProcessingArticles}
+                            articles={articles}
+                          />
+                        </div>
                       </>
                     )}
                     {/* Show incremental table updates */}
@@ -242,7 +254,7 @@ const ChatContainer = ({
       {/* ChatInput component */}
       {hasAnalysis && !isGeneratingSample && !isLoadingDocs && !isLoadingAnalysis && (
         <div className="fixed bottom-16 left-0 right-0 z-85">
-          <div className="relative w-full">
+          <div className="relative w-full bg-transparent">
             <ChatInput 
               message={message}
               setMessage={setMessage}

@@ -32,18 +32,21 @@ const MedicalAssistantUI = () => {
   const [isBox2Hovered, setIsBox2Hovered] = useState(false);
   const [isBox3Hovered, setIsBox3Hovered] = useState(false);
   const [isRetrieving, setIsRetrieving] = useState(false);
+  const [isProcessingArticles, setIsProcessingArticles] = useState(false);
   const [articles, setArticles] = useState([]);
   const [currentProgress, setCurrentProgress] = useState('');
   const [pmids, setPmids] = useState([]);
   const [totalArticles, setTotalArticles] = useState(0);
   const [currentArticleData, setCurrentArticleData] = useState(null);
   const [isPromptExpanded, setIsPromptExpanded] = useState(true);
-  const [numArticles, setNumArticles] = useState(15);
+  const [numArticles, setNumArticles] = useState(2);
   const [caseNotes, setCaseNotes] = useState('');
   const [labResults, setLabResults] = useState('');
   const [currentPromptContent, setCurrentPromptContent] = useState(promptContent);
   const [isNewChat, setIsNewChat] = useState(true);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  const [justExtracted, setJustExtracted] = useState(false);
+  const [isLoadingChatHistory, setIsLoadingChatHistory] = useState(false);
 
   const handleSidebarToggle = () => {
     setIsSidebarExpanded(prevState => !prevState);
@@ -81,6 +84,7 @@ const MedicalAssistantUI = () => {
     setIsNewChat(true);
     setCaseNotes('');
     setLabResults('');
+    setIsLoadingChatHistory(true);
     originalHandleChatSelect(chat);
   };
 
@@ -128,6 +132,8 @@ const MedicalAssistantUI = () => {
       setExtractedEvents([]);
       setIsPromptExpanded(true); // Reset prompt expansion when starting new chat
     }
+    // Set isLoadingChatHistory back to false after loading is complete
+    setIsLoadingChatHistory(false);
   }, [chatHistory]);
 
   const handleExtract = async () => {
@@ -162,6 +168,9 @@ const MedicalAssistantUI = () => {
         console.log('[CHAT_DEBUG] Initializing active chat with extracted data');
         await initializeActiveChat(caseNotes, labResults, disease, events);
         console.log('[CHAT_DEBUG] Chat initialization successful');
+        
+        // Set justExtracted to true to trigger automatic retrieval
+        setJustExtracted(true);
       } catch (error) {
         console.error('[CHAT_DEBUG] Error initializing chat:', error);
       }
@@ -210,8 +219,20 @@ const MedicalAssistantUI = () => {
   }, [setCaseNotes, setLabResults, setExtractedDisease, setExtractedEvents, initializeNewChat, caseNotes, labResults]);
 
   const handleRetrieve = async () => {
-    if (!extractedDisease || !extractedEvents.length) return;
+    const hasDocumentMessages = chatHistory.some(msg => msg.type === 'document');
+    console.log('[retrieval_fetch] handleRetrieve called with conditions:', {
+      isProcessingArticles,
+      extractedDisease,
+      extractedEventsLength: extractedEvents.length,
+      isLoadingChatHistory,
+      hasDocumentMessages
+    });
+    if (isProcessingArticles || !extractedDisease || !extractedEvents.length || isLoadingChatHistory || hasDocumentMessages) {
+      console.log('[retrieval_fetch] Retrieval conditions not met, returning');
+      return;
+    }
     setIsRetrieving(true);
+    setIsProcessingArticles(true);
     setIsPromptExpanded(false);
     setArticles([]);
     setCurrentProgress('');
@@ -220,7 +241,7 @@ const MedicalAssistantUI = () => {
 
     // Create a local variable to store processed articles
     let processedArticles = [];
-    console.log('Starting article processing. Current processed articles:', processedArticles.length);
+    console.log('[retrieval_fetch] Starting article processing. Current processed articles:', processedArticles.length);
 
     try {
       // Combine case notes and lab results
@@ -334,13 +355,34 @@ const MedicalAssistantUI = () => {
         numArticles // Pass numArticles to the API function
       );
     } catch (error) {
-      console.error('Error:', error);
+      console.error('[RETRIEVE_DEBUG] Error:', error);
       setCurrentProgress('Error retrieving articles. Please try again.');
     } finally {
       setIsRetrieving(false);
+      setIsProcessingArticles(false);
       setCurrentArticleData(null);
     }
   };
+
+  useEffect(() => {
+    const hasDocumentMessages = chatHistory.some(msg => msg.type === 'document');
+    console.log('[retrieval_fetch] Checking conditions for auto-retrieval:', {
+      justExtracted,
+      extractedDisease,
+      extractedEventsLength: extractedEvents.length,
+      isRetrieving,
+      isProcessingArticles,
+      isLoadingChatHistory,
+      hasDocumentMessages
+    });
+    if (justExtracted && extractedDisease && extractedEvents.length > 0 && !isRetrieving && !isProcessingArticles && !isLoadingChatHistory && !hasDocumentMessages) {
+      console.log('[retrieval_fetch] Auto-triggering retrieval after extraction');
+      handleRetrieve();
+      setJustExtracted(false);
+    } else {
+      console.log('[retrieval_fetch] Conditions not met for auto-retrieval');
+    }
+  }, [justExtracted, extractedDisease, extractedEvents, isRetrieving, isProcessingArticles, isLoadingChatHistory, chatHistory]);
 
   if (loading) {
     return (
@@ -402,6 +444,7 @@ const MedicalAssistantUI = () => {
           setExtractedDisease={setExtractedDisease}
           setExtractedEvents={setExtractedEvents}
           articles={articles}
+          setArticles={setArticles}
           currentArticleData={currentArticleData}
           chatHistory={chatHistory}
           isGeneratingSample={isGeneratingSample}
@@ -431,6 +474,11 @@ const MedicalAssistantUI = () => {
           promptContent={currentPromptContent}
           setPromptContent={setCurrentPromptContent}
           handleClearAll={handleClearAll}
+          justExtracted={justExtracted}
+          setJustExtracted={setJustExtracted}
+          isLoadingChatHistory={isLoadingChatHistory}
+          isProcessingArticles={isProcessingArticles}
+          setIsProcessingArticles={setIsProcessingArticles}
         />
       </div>
       

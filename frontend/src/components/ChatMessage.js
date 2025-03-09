@@ -5,7 +5,22 @@ import { AlertCircle } from 'lucide-react';
 import ArticleResults from './MainPanel/ArticleResults';
 import ReactMarkdown from 'react-markdown';
 
-const ChatMessage = React.forwardRef(({ message }, ref) => {
+const fadeInClass = "transition-opacity duration-1000 ease-in-out";
+
+const InitialCaseMessage = ({ message, show }) => {
+  return (
+    <div className={`w-1/2 bg-surface-50 shadow-lg rounded-lg p-4 mb-4 ${fadeInClass} ${show ? 'opacity-100' : 'opacity-0'}`}>
+      <div className="flex items-center">
+        <svg className="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+        <h2 className="text-xs font-medium text-gray-700">Case initialized with disease: {message.initialCase.extractedDisease}</h2>
+      </div>
+    </div>
+  );
+};
+
+const ChatMessage = React.forwardRef(({ message, showInitialCase }, ref) => {
   const [isErrorExpanded, setIsErrorExpanded] = useState(false);
 
   console.log('[CHAT_DEBUG] ChatMessage received:', {
@@ -33,6 +48,10 @@ const ChatMessage = React.forwardRef(({ message }, ref) => {
   const isDocument = message.type === 'document';
   const isAnalysis = message.analysis !== undefined;
   const hideAssistantHeader = message.initialCase || isAnalysis;
+
+  if (message.initialCase) {
+    return <InitialCaseMessage message={message} show={showInitialCase} />;
+  }
 
   return (
     <div ref={ref} className={`flex ${message.isUser ? 'justify-end' : ''} mb-4`}>
