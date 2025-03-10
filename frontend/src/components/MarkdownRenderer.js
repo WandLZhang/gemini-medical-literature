@@ -9,15 +9,21 @@ const CustomTable = ({ children, title, isSpecialTable }) => {
 
   return (
     <div className="my-2 border border-gray-300 rounded-lg shadow-sm overflow-hidden">
-      <div className="bg-gray-50 p-1 flex justify-end items-center">
+      <div className="bg-gray-50 p-2 flex justify-end items-center">
         <button 
           onClick={toggleExpand}
-          className="text-gray-500 hover:text-gray-700 focus:outline-none"
+          className="focus:outline-none flex items-center"
         >
           {isExpanded ? (
-            <ChevronUp size={16} />
+            <>
+              <span className="mr-1 text-sm text-gray-500 hover:text-gray-700">Collapse</span>
+              <ChevronUp size={16} className="text-gray-500" />
+            </>
           ) : (
-            <ChevronDown size={16} />
+            <>
+              <span className="mr-1 text-sm text-blue-600 hover:text-blue-800 font-medium">See more</span>
+              <ChevronDown size={16} className="text-gray-500" />
+            </>
           )}
         </button>
       </div>
