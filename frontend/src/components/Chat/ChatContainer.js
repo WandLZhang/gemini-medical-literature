@@ -216,7 +216,7 @@ const ChatContainer = ({
                 {msg.analysis && (
                   <div ref={msg === chatHistory[chatHistory.length - 1] ? analysisRef : null} className="ml-4 mt-2">
                     <div className="bg-white rounded-lg shadow-md p-8">
-                      <h2 className="text-2xl font-bold mb-6 text-gray-900">Analysis Results</h2>
+                      <h2 className="text-2xl font-bold mb-2 text-gray-900">Analysis Results</h2>
                       <div className="space-y-8">
                         <MarkdownRenderer content={msg.analysis} />
                       </div>

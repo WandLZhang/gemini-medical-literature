@@ -1,15 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Maximize2, Minimize2 } from 'lucide-react';
+import { Maximize2, Minimize2, ChevronDown, ChevronUp } from 'lucide-react';
 
-const CustomTable = ({ children }) => (
-  <div className="overflow-x-auto max-w-full my-6">
-    <table className="min-w-full bg-white border border-gray-300 rounded-lg shadow-sm table-fixed">
-      {children}
-    </table>
-  </div>
-);
+const CustomTable = ({ children, title, isSpecialTable }) => {
+  const [isExpanded, setIsExpanded] = useState(!isSpecialTable);
+  const toggleExpand = () => setIsExpanded(!isExpanded);
+
+  return (
+    <div className="my-2 border border-gray-300 rounded-lg shadow-sm overflow-hidden">
+      <div className="bg-gray-50 p-1 flex justify-end items-center">
+        <button 
+          onClick={toggleExpand}
+          className="text-gray-500 hover:text-gray-700 focus:outline-none"
+        >
+          {isExpanded ? (
+            <ChevronUp size={16} />
+          ) : (
+            <ChevronDown size={16} />
+          )}
+        </button>
+      </div>
+      <div className={`transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-full' : 'max-h-0'} overflow-hidden`}>
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-white">
+            {children}
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const CustomTableCell = ({ children, isHeader }) => {
   const content = React.Children.map(children, child => {
@@ -58,8 +79,60 @@ const CustomTableCell = ({ children, isHeader }) => {
   );
 };
 
+const parseMarkdownContent = (content) => {
+  const sections = content.split(/(?=## )/);
+  return sections.map(section => {
+    const [title, ...body] = section.split('\n');
+    const isSpecialTable = ['Actionable Events Analysis', 'Treatment Recommendations', 'Multi-Target Opportunities'].some(
+      specialTitle => title.includes(specialTitle)
+    );
+    return {
+      title: title.replace('## ', '').trim(),
+      content: body.join('\n'),
+      isSpecialTable
+    };
+  });
+};
+
 const MarkdownRenderer = ({ content }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [parsedContent, setParsedContent] = useState([]);
+
+  useEffect(() => {
+    setParsedContent(parseMarkdownContent(content));
+  }, [content]);
+
+  const components = {
+    table: ({ children, ...props }) => <CustomTable {...props}>{children}</CustomTable>,
+    thead: ({ children }) => <thead className="bg-gray-50 border-b border-gray-300">{children}</thead>,
+    tbody: ({ children }) => <tbody className="divide-y divide-gray-200">{children}</tbody>,
+    th: ({ children }) => <CustomTableCell isHeader={true}>{children}</CustomTableCell>,
+    td: ({ children }) => <CustomTableCell isHeader={false}>{children}</CustomTableCell>,
+    h1: ({ node, ...props }) => <h1 className="text-2xl font-bold text-gray-900 mt-6 mb-4" {...props} />,
+    h2: ({ node, ...props }) => <h2 className="text-xl font-semibold text-gray-800 mt-5 mb-3" {...props} />,
+    h3: ({ node, ...props }) => <h3 className="text-lg font-medium text-gray-800 mt-4 mb-2" {...props} />,
+    p: ({ node, ...props }) => <p className="text-gray-600 leading-relaxed mb-4" {...props} />,
+    ul: ({ node, ...props }) => <ul className="list-disc pl-5 mb-4 text-gray-600" {...props} />,
+    ol: ({ node, ...props }) => <ol className="list-decimal pl-5 mb-4 text-gray-600" {...props} />,
+    a: ({ node, ...props }) => (
+      <a 
+        className="text-blue-600 hover:text-blue-800 font-medium" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        {...props} 
+      />
+    ),
+    strong: ({ node, ...props }) => <strong className="font-semibold text-gray-900" {...props} />,
+    em: ({ node, ...props }) => <em className="text-gray-800" {...props} />,
+    blockquote: ({ node, ...props }) => (
+      <blockquote className="border-l-4 border-gray-200 pl-4 py-2 my-4 text-gray-600 italic" {...props} />
+    ),
+    code: ({ node, inline, ...props }) => (
+      inline 
+        ? <code className="px-1 py-0.5 bg-gray-100 rounded text-sm font-mono text-gray-800" {...props} />
+        : <code className="block bg-gray-50 p-4 rounded-lg text-sm font-mono text-gray-800 overflow-x-auto" {...props} />
+    ),
+  };
 
   return (
     <div className={`prose max-w-none ${isExpanded ? 'fixed inset-0 z-50 bg-white overflow-auto p-8' : 'relative'}`}>
@@ -70,41 +143,19 @@ const MarkdownRenderer = ({ content }) => {
       >
         {isExpanded ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
       </button>
-      <ReactMarkdown 
-        children={content}
-        remarkPlugins={[remarkGfm]}
-        components={{
-          table: CustomTable,
-          thead: ({ children }) => <thead className="bg-gray-50 border-b border-gray-300">{children}</thead>,
-          tbody: ({ children }) => <tbody className="divide-y divide-gray-200">{children}</tbody>,
-          th: ({ children }) => <CustomTableCell isHeader={true}>{children}</CustomTableCell>,
-          td: ({ children }) => <CustomTableCell isHeader={false}>{children}</CustomTableCell>,
-          h1: ({ node, ...props }) => <h1 className="text-2xl font-bold text-gray-900 mt-6 mb-4" {...props} />,
-          h2: ({ node, ...props }) => <h2 className="text-xl font-semibold text-gray-800 mt-5 mb-3" {...props} />,
-          h3: ({ node, ...props }) => <h3 className="text-lg font-medium text-gray-800 mt-4 mb-2" {...props} />,
-          p: ({ node, ...props }) => <p className="text-gray-600 leading-relaxed mb-4" {...props} />,
-          ul: ({ node, ...props }) => <ul className="list-disc pl-5 mb-4 text-gray-600" {...props} />,
-          ol: ({ node, ...props }) => <ol className="list-decimal pl-5 mb-4 text-gray-600" {...props} />,
-          a: ({ node, ...props }) => (
-            <a 
-              className="text-blue-600 hover:text-blue-800 font-medium" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              {...props} 
-            />
-          ),
-          strong: ({ node, ...props }) => <strong className="font-semibold text-gray-900" {...props} />,
-          em: ({ node, ...props }) => <em className="text-gray-800" {...props} />,
-          blockquote: ({ node, ...props }) => (
-            <blockquote className="border-l-4 border-gray-200 pl-4 py-2 my-4 text-gray-600 italic" {...props} />
-          ),
-          code: ({ node, inline, ...props }) => (
-            inline 
-              ? <code className="px-1 py-0.5 bg-gray-100 rounded text-sm font-mono text-gray-800" {...props} />
-              : <code className="block bg-gray-50 p-4 rounded-lg text-sm font-mono text-gray-800 overflow-x-auto" {...props} />
-          ),
-        }}
-      />
+      {parsedContent.map((section, index) => (
+        <div key={index}>
+          <h2 className="text-xl font-semibold text-gray-800 mt-5 mb-3">{section.title}</h2>
+          <ReactMarkdown 
+            children={section.content}
+            remarkPlugins={[remarkGfm]}
+            components={{
+              ...components,
+              table: (props) => <CustomTable title={section.title} isSpecialTable={section.isSpecialTable} {...props} />,
+            }}
+          />
+        </div>
+      ))}
     </div>
   );
 };

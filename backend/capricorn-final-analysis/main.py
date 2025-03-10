@@ -125,15 +125,21 @@ A brief paragraph summarizing the case.
 |-------|------|-------------|------------|------------------|
 [Fill with event details, one row per event]
 
+Following the table, provide a concise interpretation of the actionable events, focusing on their clinical implications, potential impact on treatment decisions, and overall prognosis. Highlight any synergistic or conflicting interactions between events.
+
 ### 3. Treatment Recommendations
 | Event | Treatment | Evidence (PMID) | Evidence Summary | Previous Response | Warnings |
 |-------|-----------|----------------|------------------|-------------------|-----------|
 [Fill with treatment details, one row per recommendation]
 
+After the table, offer a succinct clinical perspective on the recommended treatments. Address the strength of evidence, potential benefits and risks, and how these treatments align with the patient's specific genetic and clinical profile. Discuss any notable drug interactions or sequencing considerations.
+
 ### 4. Multi-Target Opportunities
 | Treatment Combination | Targeted Events | Evidence (PMID) | Summary |
 |---------------------|-----------------|----------------|----------|
 [Fill with combination details, one row per opportunity]
+
+Following this table, provide a brief analysis of the multi-target approach. Evaluate the potential synergistic effects, discuss the rationale behind combining therapies, and comment on the anticipated efficacy and safety profile of these combinations in the context of this specific case.
 
 IMPORTANT FORMATTING NOTES:
 1. Use proper markdown table syntax with | separators and aligned headers
@@ -151,6 +157,7 @@ IMPORTANT NOTES:
 - Keep explanations and summaries concise but informative
 - Ensure all PMIDs are formatted as clickable links
 - Use bullet points in cells where multiple items need to be listed
+- For each summary, prioritize clinically actionable insights. Focus on how the information in each table translates to practical decision-making in patient care. Keep the language concise and directly relevant to the case at hand.
 
 IMPORTANT: Return the analysis in markdown format with the specified table structure. Do not include any JSON formatting."""
 
