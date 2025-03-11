@@ -128,7 +128,10 @@ useEffect(() => {
               max="50"
               className="w-20 p-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-xs"
               value={numArticles}
-              onChange={(e) => setNumArticles(Math.min(50, Math.max(1, parseInt(e.target.value) || 15)))}
+              onChange={(e) => {
+                const value = Math.min(50, Math.max(1, parseInt(e.target.value) || 15));
+                setNumArticles(value);
+              }}
             />
           </div>
         </div>

@@ -39,7 +39,7 @@ const MedicalAssistantUI = () => {
   const [totalArticles, setTotalArticles] = useState(0);
   const [currentArticleData, setCurrentArticleData] = useState(null);
   const [isPromptExpanded, setIsPromptExpanded] = useState(true);
-  const [numArticles, setNumArticles] = useState(5);
+  const [numArticles, setNumArticles] = useState(15);
   const [caseNotes, setCaseNotes] = useState('');
   const [labResults, setLabResults] = useState('');
   const [currentPromptContent, setCurrentPromptContent] = useState(promptContent);

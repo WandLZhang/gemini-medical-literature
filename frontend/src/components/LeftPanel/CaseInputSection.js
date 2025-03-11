@@ -17,7 +17,9 @@ const CaseInputSection = ({
   handleExtract,
   handleExampleLoad,
   showCaseInput,
-  handleClearAll
+  handleClearAll,
+  numArticles,
+  setNumArticles
 }) => {
   const [isRedacting, setIsRedacting] = useState(false);
   const [showLabResults, setShowLabResults] = useState(false);
@@ -327,15 +329,32 @@ const CaseInputSection = ({
       </div>
       
       <div className="flex items-center justify-between mt-2 flex-shrink-0 relative h-10">
-        <button
-          onClick={toggleLabResults}
-          className="flex items-center text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors duration-200"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={showLabResults ? "M20 12H4" : "M12 4v16m8-8H4"} />
-          </svg>
-          {showLabResults ? 'Hide lab results' : 'Add lab results'}
-        </button>
+        <div className="flex items-center">
+          <button
+            onClick={toggleLabResults}
+            className="flex items-center text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors duration-200"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={showLabResults ? "M20 12H4" : "M12 4v16m8-8H4"} />
+            </svg>
+            {showLabResults ? 'Hide lab results' : 'Add lab results'}
+          </button>
+          <div className="flex items-center ml-12">
+            <label htmlFor="numArticles" className="text-gray-600 hover:text-gray-800 text-sm font-medium transition-colors duration-200 mr-2"># of articles:</label>
+            <input
+              id="numArticles"
+              type="number"
+              min="1"
+              max="50"
+              value={numArticles}
+              onChange={(e) => {
+                const value = Math.min(50, Math.max(1, parseInt(e.target.value) || 15));
+                setNumArticles(value);
+              }}
+              className="w-16 p-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
         
         <div className="flex items-center space-x-4">
           <button

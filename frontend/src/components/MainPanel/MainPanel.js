@@ -201,6 +201,8 @@ const MainPanel = ({
                   setLabResults('');
                   console.log('[CLEAR_DEBUG] MainPanel: After handleClearAll - caseNotes:', caseNotes, 'labResults:', labResults);
                 }}
+                numArticles={numArticles}
+                setNumArticles={setNumArticles}
               />
             </div>
           </div>
