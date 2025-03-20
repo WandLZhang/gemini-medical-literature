@@ -8,6 +8,7 @@ import ArticleResults from '../MainPanel/ArticleResults';
 import ExtractionSection from '../MainPanel/ExtractionSection';
 import AnalysisSection from '../MainPanel/AnalysisSection';
 import ChatInput from '../ChatInput';
+import CopyButton from '../CopyButton';
 
 const LoadingSpinner = ({ message }) => {
   console.log('LOADING_DEBUG: LoadingSpinner rendered with message:', message);
@@ -215,11 +216,12 @@ const ChatContainer = ({
                 {/* Show analysis messages */}
                 {msg.analysis && (
                   <div ref={msg === chatHistory[chatHistory.length - 1] ? analysisRef : null} className="ml-4 mt-2">
-                    <div className="bg-white rounded-lg shadow-md p-8">
+                    <div className="bg-white rounded-lg shadow-md p-8 relative">
                       <h2 className="text-2xl font-bold mb-2 text-gray-900">Analysis Results</h2>
                       <div className="space-y-8">
                         <MarkdownRenderer content={msg.analysis} />
                       </div>
+                      <CopyButton content={msg.analysis} />
                     </div>
                   </div>
                 )}
