@@ -47,8 +47,8 @@ const CaseInputSection = ({
   const caseNotesRef = useRef(null);
   const labResultsRef = useRef(null);
   const recognitionRef = useRef(null);
-  const debouncedCaseNotes = useDebounce(localCaseNotes, 500);
-  const debouncedLabResults = useDebounce(localLabResults, 500);
+  const debouncedCaseNotes = useDebounce(localCaseNotes, 2000);
+  const debouncedLabResults = useDebounce(localLabResults, 2000);
 
   useEffect(() => {
     const hasInputNow = localCaseNotes.trim().length > 0;
@@ -126,7 +126,7 @@ const CaseInputSection = ({
 
   const handleRedaction = useCallback(
     async (text, setter) => {
-      if (!text.trim()) return;
+      if (!text.trim()) return text;
       
       try {
         setIsRedacting(true);
@@ -135,8 +135,10 @@ const CaseInputSection = ({
         console.log('SPEECH_DEBUG: Received redacted text:', redactedText);
         setter(redactedText);
         console.log('SPEECH_DEBUG: Redaction completed and set');
+        return redactedText;
       } catch (error) {
         console.error('SPEECH_DEBUG: Redaction failed:', error);
+        return text; // Return original text on error
       } finally {
         setIsRedacting(false);
       }
@@ -170,7 +172,7 @@ const CaseInputSection = ({
     }
   };
 
-  const handleButtonClick = useCallback(() => {
+  const handleButtonClick = useCallback(async () => {
     if (!recognitionRef.current) return;
 
     if (!isListening) {
@@ -184,14 +186,37 @@ const CaseInputSection = ({
           setIsListening(false);
         }
       } else if (!isProcessing) {
-        handleExtract();
+        // Force immediate redaction before extraction
+        setIsRedacting(true);
+        
+        try {
+          // Redact both case notes and lab results
+          const redactedCaseNotes = await handleRedaction(localCaseNotes, setCaseNotes);
+          let redactedLabResults = localLabResults;
+          
+          if (localLabResults.trim()) {
+            redactedLabResults = await handleRedaction(localLabResults, setLabResults);
+          }
+          
+          // Ensure state is updated with redacted values before extraction
+          // Use a small timeout to ensure React state updates have propagated
+          setTimeout(() => {
+            // Now proceed with extraction using the redacted values
+            handleExtract();
+          }, 0);
+          
+        } catch (error) {
+          console.error('Error during forced redaction:', error);
+          setError('Failed to redact sensitive information. Please try again.');
+          // Do NOT proceed with extraction if redaction fails
+        }
       }
     } else {
       recognitionRef.current.stop();
       setIsListening(false);
       console.log('SPEECH_DEBUG: Manually stopped recording');
     }
-  }, [isListening, hasInput, isProcessing, handleExtract]);
+  }, [isListening, hasInput, isProcessing, handleExtract, localCaseNotes, localLabResults, handleRedaction]);
 
   const handleLabResultsChange = (e) => {
     const newText = e.target.value;
