@@ -232,10 +232,15 @@ const ChatContainer = ({
                   <div ref={msg === chatHistory[chatHistory.length - 1] ? analysisRef : null} className="ml-4 mt-2">
                     <div className="bg-white rounded-lg shadow-md p-8 relative">
                       <h2 className="text-2xl font-bold mb-2 text-gray-900">Analysis Results</h2>
-                      <div className="space-y-8">
-                        <MarkdownRenderer content={msg.analysis} />
-                      </div>
-                      <CopyButton content={msg.analysis} />
+      <div className="space-y-8">
+        <MarkdownRenderer content={msg.analysis} />
+      </div>
+      <div className="flex items-center justify-between">
+        <CopyButton content={msg.analysis} />
+        <span className="text-xs text-gray-500 italic ml-2">
+          For professional medical use only. Results require physician interpretation and clinical judgment. Capricorn is a decision support tool, not a substitute for professional medical advice.
+        </span>
+      </div>
                     </div>
                   </div>
                 )}
