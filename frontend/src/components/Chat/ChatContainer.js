@@ -23,6 +23,7 @@ import ExtractionSection from '../MainPanel/ExtractionSection';
 import AnalysisSection from '../MainPanel/AnalysisSection';
 import ChatInput from '../ChatInput';
 import CopyButton from '../CopyButton';
+import PrintButton from '../PrintButton';
 
 const LoadingSpinner = ({ message }) => {
   console.log('LOADING_DEBUG: LoadingSpinner rendered with message:', message);
@@ -235,17 +236,17 @@ const ChatContainer = ({
                 {/* Show analysis messages */}
                 {msg.analysis && (
                   <div ref={msg === chatHistory[chatHistory.length - 1] ? analysisRef : null} className="ml-4 mt-2">
-                    <div className="bg-white rounded-lg shadow-md p-8 relative">
+                    <div className="bg-white rounded-lg shadow-md p-8 pb-12 relative">
                       <h2 className="text-2xl font-bold mb-2 text-gray-900">Analysis Results</h2>
       <div className="space-y-8">
         <MarkdownRenderer content={msg.analysis} />
       </div>
-      <div className="flex items-center justify-between">
-        <CopyButton content={msg.analysis} />
-        <span className="text-xs text-gray-500 italic ml-2">
+      <div>
+        <span className="text-xs text-gray-500 italic block mb-4">
           For professional medical use only. Results require physician interpretation and clinical judgment. Capricorn is a decision support tool, not a substitute for professional medical advice.
         </span>
       </div>
+      <PrintButton content={msg.analysis} />
                     </div>
                   </div>
                 )}
