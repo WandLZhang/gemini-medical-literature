@@ -161,7 +161,7 @@ const PrintButton = ({ content, title = 'Analysis Results' }) => {
   return (
     <button
       onClick={handlePrint}
-      className="absolute bottom-4 right-4 p-2 rounded-md transition-all duration-200 ease-in-out bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+      className="absolute bottom-3 right-3 p-2 rounded-md transition-all duration-200 ease-in-out bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
       aria-label="Print analysis results"
       title="Print"
     >
