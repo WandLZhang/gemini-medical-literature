@@ -149,11 +149,16 @@ const ChatContainer = ({
                 })}
                 {((!msg.analysis && !msg.type) || (msg.text !== undefined)) && (
                   <>
-                    <ChatMessage 
-                      message={msg} 
-                      ref={index === chatHistory.length - 1 ? lastMessageRef : null}
-                      showInitialCase={showInitialCase}
-                    />
+    <ChatMessage 
+      message={msg} 
+      ref={index === chatHistory.length - 1 ? lastMessageRef : null}
+      showInitialCase={showInitialCase}
+    />
+    {!msg.isUser && (
+      <div className="text-[0.50rem] text-gray-400 italic ml-4 mt-1 mb-2">
+        Message requires physician interpretation and clinical judgment.
+      </div>
+    )}
                     {isInitialCaseMessage && (
                       <>
                         <div className="mb-4">

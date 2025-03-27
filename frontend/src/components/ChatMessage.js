@@ -68,9 +68,9 @@ const ChatMessage = React.forwardRef(({ message, showInitialCase }, ref) => {
   }
 
   return (
-    <div ref={ref} className={`flex ${message.isUser ? 'justify-end' : ''} mb-4`}>
+    <div ref={ref} className={`flex flex-col ${message.isUser ? 'items-end' : 'items-start'} mb-4`}>
       <div 
-        className={`${isDocument || isAnalysis ? 'w-full' : 'max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl'} rounded-lg p-3 ${message.isUser ? 'ml-auto' : ''} ${
+        className={`${isDocument || isAnalysis ? 'w-full' : 'max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl'} rounded-lg p-3 ${
           isError 
             ? 'bg-red-50 border border-red-200 text-red-800'
             : message.isUser 
@@ -121,13 +121,15 @@ const ChatMessage = React.forwardRef(({ message, showInitialCase }, ref) => {
                 );
               }
               return (
-                <div className={`prose prose-sm max-w-none ${
-                  message.isUser
-                    ? 'prose-headings:text-white prose-p:text-white prose-li:text-white'
-                    : 'prose-headings:text-gray-800 prose-p:text-gray-600 prose-li:text-gray-600'
-                } prose-headings:font-bold prose-h1:text-lg prose-h2:text-base prose-p:text-sm prose-li:text-sm prose-a:text-blue-600 hover:prose-a:text-blue-800 prose-headings:mb-2 prose-p:my-1 prose-ul:my-1 prose-li:my-0.5`}>
-                  <ReactMarkdown>{message.text || message.analysis}</ReactMarkdown>
-                </div>
+                <>
+                  <div className={`prose prose-sm max-w-none ${
+                    message.isUser
+                      ? 'prose-headings:text-white prose-p:text-white prose-li:text-white'
+                      : 'prose-headings:text-gray-800 prose-p:text-gray-600 prose-li:text-gray-600'
+                  } prose-headings:font-bold prose-h1:text-lg prose-h2:text-base prose-p:text-sm prose-li:text-sm prose-a:text-blue-600 hover:prose-a:text-blue-800 prose-headings:mb-2 prose-p:my-1 prose-ul:my-1 prose-li:my-0.5`}>
+                    <ReactMarkdown>{message.text || message.analysis}</ReactMarkdown>
+                  </div>
+                </>
               );
             }
             return null;
