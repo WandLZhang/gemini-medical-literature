@@ -89,7 +89,7 @@ def send_feedback_email(request):
         
         # Create email message
         message = Mail(
-            from_email='williszhang@google.com',
+            from_email='williszhang@williszhang.com',
             to_emails=[To(email=recipient) for recipient in recipients],
             subject='Capricorn Medical Research App Feedback',
             html_content=f"""

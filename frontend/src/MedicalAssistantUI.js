@@ -22,13 +22,15 @@ import LeftPanel from './components/LeftPanel/LeftPanel';
 import MainPanel from './components/MainPanel/MainPanel';
 import Footer from './components/Footer';
 import LoadingSpinner from './components/LoadingSpinner';
+import FeedbackButton from './components/Feedback/FeedbackButton';
+import FeedbackModal from './components/Feedback/FeedbackModal';
 
 // Hooks
 import { useAuth } from './hooks/useAuth';
 import useChat from './hooks/useChat';
 
 // API
-import { generateSampleCase, extractDisease, extractEvents, retrieveAndAnalyzeArticles, generateFinalAnalysis } from './utils/api';
+import { generateSampleCase, extractDisease, extractEvents, retrieveAndAnalyzeArticles, generateFinalAnalysis, sendFeedback } from './utils/api';
 
 // Preset Data
 import { extractionPrompt, promptContent, presetCaseNotes, presetLabResults } from './data/presetData';
@@ -59,10 +61,11 @@ const MedicalAssistantUI = () => {
   const [currentPromptContent, setCurrentPromptContent] = useState(promptContent);
   const [isNewChat, setIsNewChat] = useState(true);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
-const [justExtracted, setJustExtracted] = useState(false);
-const [isLoadingFromHistory, setIsLoadingFromHistory] = useState(false);
-const retrievalAttemptedRef = useRef(false);
-const [shouldRetrieve, setShouldRetrieve] = useState(false);
+  const [justExtracted, setJustExtracted] = useState(false);
+  const [isLoadingFromHistory, setIsLoadingFromHistory] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const retrievalAttemptedRef = useRef(false);
+  const [shouldRetrieve, setShouldRetrieve] = useState(false);
 
 const handleSidebarToggle = () => {
   setIsSidebarExpanded(prevState => !prevState);
@@ -429,6 +432,14 @@ useEffect(() => {
     );
   }
 
+  const handleOpenFeedbackModal = () => {
+    setShowFeedbackModal(true);
+  };
+
+  const handleCloseFeedbackModal = () => {
+    setShowFeedbackModal(false);
+  };
+
   return (
     <div className="flex flex-col h-screen bg-gray-50">
       <DisclaimerModal isOpen={showDisclaimer} onClose={handleCloseDisclaimer} />
@@ -445,6 +456,10 @@ useEffect(() => {
       <div className="fixed bottom-0 left-0 bg-black text-white p-2 text-xs">
         Debug: isAuthenticated: {isAuthenticated.toString()}, firstName: {firstName}
       </div>
+
+      {/* Feedback Button and Modal */}
+      <FeedbackButton onClick={handleOpenFeedbackModal} />
+      <FeedbackModal isOpen={showFeedbackModal} onClose={handleCloseFeedbackModal} />
 
       <div className="flex flex-1 min-h-0 relative w-full">
         <div className="absolute z-10">

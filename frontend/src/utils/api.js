@@ -345,3 +345,30 @@ export const generateFinalAnalysis = async (caseNotes, disease, events, analyzed
     throw new Error(`Failed to generate final analysis: ${error.message}`);
   }
 };
+
+/**
+ * Sends user feedback to the feedback endpoint
+ * @param {Object} feedbackData - The feedback data object containing name, email, and feedback
+ * @returns {Promise<Object>} - A promise that resolves to the response object
+ */
+export const sendFeedback = async (feedbackData) => {
+  try {
+    const response = await fetch('https://capricorn-feedback-934163632848.us-central1.run.app', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(feedbackData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error sending feedback:', error);
+    throw new Error(`Failed to send feedback: ${error.message}`);
+  }
+};
