@@ -166,6 +166,7 @@ const PrintButton = ({ content, title = 'Analysis Results' }) => {
       title="Print"
     >
       <div className="flex items-center text-gray-600">
+        <span className="mr-2 text-sm">Export</span>
         <svg 
           xmlns="http://www.w3.org/2000/svg" 
           className="w-4 h-4" 
