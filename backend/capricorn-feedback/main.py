@@ -27,7 +27,6 @@ logger = logging.getLogger(__name__)
 # Define team recipients
 TEAM_RECIPIENTS = [
     'williszhang@google.com',
-    'stonejiang@google.com',
     'U.ilan-2@prinsesmaximacentrum.nl'
 ]
 
