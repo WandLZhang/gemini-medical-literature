@@ -150,22 +150,57 @@ const ChatInput = memo(({ message, setMessage, handleSendMessage, isLoading }) =
     };
   }, []);
 
-const handleSubmit = useCallback((e) => {
+// Separate handleRedaction into its own function for direct calling
+const handleRedaction = useCallback(async (text) => {
+  if (!text.trim()) return text;
+  
+  try {
+    setIsRedacting(true);
+    console.log('message_clear_render: Forcing redaction of:', text);
+    const redactedText = await redactSensitiveInfo(text);
+    console.log('message_clear_render: Received redacted text:', redactedText);
+    return redactedText;
+  } catch (error) {
+    console.error('Redaction failed:', error);
+    return text; // Return original text on error
+  } finally {
+    setIsRedacting(false);
+  }
+}, []);
+
+const handleSubmit = useCallback(async (e) => {
   if (e) e.preventDefault();
   console.log('message_clear_render: handleSubmit called');
   console.log('message_clear_render: redactedInput:', redactedInput);
   console.log('message_clear_render: isLoading:', isLoading);
   console.log('message_clear_render: isListening:', isListening);
+  
   if (redactedInput.trim() && !isLoading && !isListening) {
-    console.log('message_clear_render: Calling handleSendMessage');
-    handleSendMessage(redactedInput.trim());
-    console.log('message_clear_render: Calling handleClear');
-    handleClear();
+    try {
+      // Force immediate redaction before sending
+      const finalRedactedText = await handleRedaction(redactedInput.trim());
+      console.log('message_clear_render: Final redacted text:', finalRedactedText);
+      
+      // Update the redactedInput and message with the final redacted text
+      setRedactedInput(finalRedactedText);
+      setMessage(finalRedactedText);
+      
+      // Ensure state is updated before sending
+      setTimeout(() => {
+        console.log('message_clear_render: Calling handleSendMessage with:', finalRedactedText);
+        handleSendMessage(finalRedactedText);
+        console.log('message_clear_render: Calling handleClear');
+        handleClear();
+      }, 0);
+    } catch (error) {
+      console.error('Error during message submission:', error);
+      setError('Failed to send message. Please try again.');
+    }
   } else {
     console.log('message_clear_render: Conditions not met for sending message');
   }
   console.log('message_clear_render: handleSubmit finished');
-}, [redactedInput, isLoading, isListening, handleSendMessage, handleClear]);
+}, [redactedInput, isLoading, isListening, handleSendMessage, handleClear, handleRedaction, setMessage, setError]);
 
   const handleTextareaKeyDown = useCallback((e) => {
     if (e.key === 'Enter' && !e.shiftKey) {

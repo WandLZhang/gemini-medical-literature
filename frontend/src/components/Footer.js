@@ -16,7 +16,7 @@ import React from 'react';
 
 const Footer = () => (
   <div className="fixed bottom-0 left-0 right-0 bg-surface-700 text-white py-4 px-6 z-50">
-    <div className="container mx-auto flex flex-col md:flex-row justify-between items-center">
+    <div className="container mx-auto flex flex-col md:flex-row justify-center items-center">
       <div className="flex flex-col md:flex-row items-center gap-4">
         <div className="flex items-center gap-2">
           <img 
@@ -25,7 +25,7 @@ const Footer = () => (
             className="h-6 w-auto"
           />
           <span className="text-xs">
-            Built by <a href="mailto:williszhang@google.com" className="text-modernOrange-200 hover:text-white transition-colors">Willis Zhang</a> and <a href="mailto:stonejiang@google.com" className="text-modernOrange-200 hover:text-white transition-colors">Stone Jiang</a>
+            Built by Willis Zhang and Stone Jiang
           </span>
         </div>
       </div>
