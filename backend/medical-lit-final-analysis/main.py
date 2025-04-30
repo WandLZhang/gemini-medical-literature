@@ -83,8 +83,8 @@ def get_full_articles(analyzed_articles):
         logger.error(f"Error retrieving articles: {str(e)}")
         return []
 
-def create_final_analysis_prompt(case_notes, disease, events, articles):
-    """Create the prompt for final analysis."""
+def create_medical_lit_analysis_prompt(case_notes, disease, events, articles):
+    """Create a generalized prompt for medical literature analysis, applicable to any specialty."""
     
     # Create a table of analyzed articles
     articles_table = []
@@ -98,23 +98,33 @@ def create_final_analysis_prompt(case_notes, disease, events, articles):
             for event in article.get('events', [])
         ])
         
-        articles_table.append(f"""
+        # Build a generic article summary that works for any medical specialty
+        article_summary = f"""
 PMID: {article.get('pmid', 'N/A')}
 Title: {article.get('title', 'N/A')}
 Journal: {article.get('journal_title', 'N/A')} (SJR: {article.get('journal_sjr', 0)})
 Year: {article.get('year', 'N/A')}
 Type: {article.get('paper_type', 'N/A')}
-Cancer Type: {article.get('type_of_cancer', 'N/A')}
-Events: {events_str}
+"""
+        
+        # Add disease-specific field if available (previously was "Cancer Type")
+        if article.get('type_of_cancer'):
+            article_summary += f"Disease: {article.get('type_of_cancer', 'N/A')}\n"
+        elif article.get('disease_type'):
+            article_summary += f"Disease: {article.get('disease_type', 'N/A')}\n"
+        
+        # Add the rest of the fields
+        article_summary += f"""Events: {events_str}
 Drug Results: {drug_results}
 Points: {article.get('overall_points', 0)}
 PMCID: {article.get('pmcid', 'N/A')}
 Full Text:
 {article.get('content', 'N/A')}
 {'='*80}
-""")
+"""
+        articles_table.append(article_summary)
 
-    prompt = f"""You are a pediatric hematologist sitting on a tumor board for patients with complex diseases. Your goal is to find the best treatment for every patient, considering their actionable events (genetic, immune-related, or other).
+    prompt = f"""You are a medical specialist evaluating a complex case. Your goal is to find the best treatment approach for the patient, considering their actionable events (genetic, molecular, physiological, or other).
 
 CASE INFORMATION:
 {case_notes}
@@ -154,7 +164,7 @@ IMPORTANT FOR TREATMENT RECOMMENDATIONS:
 - For every treatment recommendation, you MUST trace it back to specific information in at least one of the articles
 - Format PMIDs as clickable links: [PMID: 12345](https://pubmed.ncbi.nlm.nih.gov/12345/)
 
-After the table, offer a succinct clinical perspective on the recommended treatments. Address the strength of evidence, potential benefits and risks, and how these treatments align with the patient's specific genetic and clinical profile. Discuss any notable drug interactions or sequencing considerations.
+After the table, offer a succinct clinical perspective on the recommended treatments. Address the strength of evidence, potential benefits and risks, and how these treatments align with the patient's specific profile. Discuss any notable drug interactions or sequencing considerations.
 
 ### 4. Multi-Target Opportunities
 | Treatment Combination | Targeted Events | Evidence (PMID) | Summary |
@@ -228,8 +238,8 @@ def analyze_with_gemini(prompt):
         return None
 
 @functions_framework.http
-def final_analysis(request):
-    """HTTP Cloud Function for final analysis."""
+def medical_lit_analysis(request):
+    """HTTP Cloud Function for medical literature analysis."""
     # Handle CORS
     if request.method == 'OPTIONS':
         headers = {
@@ -289,7 +299,7 @@ def final_analysis(request):
             return jsonify({'error': 'Failed to retrieve articles from BigQuery'}), 500, headers
 
         # Create prompt and analyze
-        prompt = create_final_analysis_prompt(case_notes, disease, events, articles_with_content)
+        prompt = create_medical_lit_analysis_prompt(case_notes, disease, events, articles_with_content)
         analysis = analyze_with_gemini(prompt)
 
         if not analysis:
@@ -301,9 +311,9 @@ def final_analysis(request):
         }), 200, headers
 
     except Exception as e:
-        logger.error(f"Error in final_analysis: {str(e)}")
+        logger.error(f"Error in medical_lit_analysis: {str(e)}")
         return jsonify({'error': str(e)}), 500, headers
 
 if __name__ == "__main__":
-    app = functions_framework.create_app(target="final_analysis")
+    app = functions_framework.create_app(target="medical_lit_analysis")
     app.run(host="0.0.0.0", port=8080, debug=True)

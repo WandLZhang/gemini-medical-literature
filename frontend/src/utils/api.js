@@ -17,7 +17,7 @@
 export const retrieveAndAnalyzeArticles = async (disease, events, methodologyContent, onProgress, numArticles = 15) => {
   try {
     // Step 1: Get PMIDs and analysis from first cloud function
-    const response = await fetch(`${API_BASE_URL}/capricorn-retrieve-full-articles`, {
+    const response = await fetch(`https://med-lit-retrieve-full-articles-934163632848.us-central1.run.app`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -156,48 +156,68 @@ export const redactSensitiveInfo = async (text) => {
   }
 };
 
-export const extractDisease = async (text) => {
+export const extractMedicalInfo = async (text, extractionType, specialty, promptContent = null) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/pubmed-search-tester-extract-disease`, {
+    // Import prompts dynamically if needed
+    let prompt = promptContent;
+    if (!prompt) {
+      const { diseaseExtractionPrompts, eventExtractionPrompts } = await import('../data/presetData');
+      if (extractionType === 'disease') {
+        prompt = diseaseExtractionPrompts[specialty];
+      } else if (extractionType === 'events') {
+        prompt = eventExtractionPrompts[specialty];
+      }
+      
+      if (!prompt) {
+        throw new Error(`No ${extractionType} extraction prompt available for specialty: ${specialty}`);
+      }
+    }
+
+    // Use the direct endpoint URL
+    const response = await fetch('https://extract-medical-info-934163632848.us-central1.run.app', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({
+        text,
+        extraction_type: extractionType,
+        specialty,
+        prompt_content: prompt
+      }),
     });
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const data = await response.text();
-    return data.trim();
+    const data = await response.json();
+    
+    // Return appropriate data based on extraction type
+    if (extractionType === 'disease') {
+      return data.result.disease.trim();
+    } else if (extractionType === 'events') {
+      return data.result.events.filter(event => event.trim && event !== ' ');
+    }
+    
+    return data.result;
   } catch (error) {
-    console.error('Error:', error);
+    console.error(`Error extracting ${extractionType} for ${specialty}:`, error);
     throw error;
   }
 };
 
+// Legacy API functions - maintained for backward compatibility
+export const extractDisease = async (text) => {
+  return extractMedicalInfo(text, 'disease', 'oncology');
+};
+
+export const extractNeurologyDisease = async (text) => {
+  return extractMedicalInfo(text, 'disease', 'neurology');
+};
+
 export const extractEvents = async (text, promptContent) => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/pubmed-search-tester-extract-events`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ text: `${promptContent}\n\nCase input:\n${text}` }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.text();
-    return data.split('"').filter(event => event.trim() && event !== ' ');
-  } catch (error) {
-    console.error('Error:', error);
-    throw error;
-  }
+  return extractMedicalInfo(text, 'events', 'oncology', promptContent);
 };
 
 /**
@@ -318,7 +338,7 @@ export const generateFinalAnalysis = async (caseNotes, disease, events, analyzed
       analyzed_articles: analyzedArticles
     });
 
-    const response = await fetch(`${API_BASE_URL}/capricorn-final-analysis`, {
+    const response = await fetch(`https://medical-lit-final-analysis-934163632848.us-central1.run.app`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

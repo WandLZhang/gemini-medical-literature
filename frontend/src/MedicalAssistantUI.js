@@ -16,6 +16,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 
 // Components
 import DisclaimerModal from './components/DisclaimerModal';
+import SpecialtySelector from './components/SpecialtySelector';
 import { WrappedExpandableSidebar } from './components/ExpandableSidebar';
 import TopBar from './components/TopBar';
 import LeftPanel from './components/LeftPanel/LeftPanel';
@@ -30,10 +31,10 @@ import { useAuth } from './hooks/useAuth';
 import useChat from './hooks/useChat';
 
 // API
-import { generateSampleCase, extractDisease, extractEvents, retrieveAndAnalyzeArticles, generateFinalAnalysis, sendFeedback } from './utils/api';
+import { generateSampleCase, extractMedicalInfo, retrieveAndAnalyzeArticles, generateFinalAnalysis, sendFeedback } from './utils/api';
 
 // Preset Data
-import { extractionPrompt, promptContent, presetCaseNotes, presetLabResults } from './data/presetData';
+import { diseaseExtractionPrompts, eventExtractionPrompts, extractionPrompt, promptContents, promptContent, presetCaseNotes, presetLabResults } from './data/presetData';
 
 // Utilities
 const createMessageId = (type) => `${Date.now()}-${type}-${Math.random().toString(36).substr(2, 9)}`;
@@ -42,6 +43,8 @@ const MedicalAssistantUI = () => {
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isGeneratingSample, setIsGeneratingSample] = useState(false);
+  const [showSpecialtySelector, setShowSpecialtySelector] = useState(false);
+  const [selectedSpecialty, setSelectedSpecialty] = useState('oncology');
   const [isProcessing, setIsProcessing] = useState(false);
   const [extractedDisease, setExtractedDisease] = useState('');
   const [extractedEvents, setExtractedEvents] = useState([]);
@@ -163,11 +166,38 @@ const handleExtract = async () => {
   console.log('[CHAT_DEBUG] Starting extraction process');
   try {
     setIsProcessing(true);
+    
+    // Show specialty selector before proceeding with extraction
+    setShowSpecialtySelector(true);
+    
+  } catch (error) {
+    console.error('[CHAT_DEBUG] Extraction error:', error);
+    if (error.message.includes('Failed to fetch')) {
+      setExtractedDisease('Network error. Please check your connection and try again.');
+      setExtractedEvents(['Network error. Please check your connection and try again.']);
+    } else {
+      setExtractedDisease(error.message || 'Error extracting disease. Please try again.');
+      setExtractedEvents([error.message || 'Error extracting events. Please try again.']);
+    }
+    setIsProcessing(false);
+  }
+};
+
+const handleSpecialtySelected = async (specialty) => {
+    console.log('[CHAT_DEBUG] Selected specialty:', specialty);
+    setSelectedSpecialty(specialty);
+    
+    // Update prompt content based on selected specialty
+    setCurrentPromptContent(promptContents[specialty]);
+    console.log(`[CHAT_DEBUG] Updated prompt content for ${specialty} specialty`);
+  
+  try {
     console.log('[CHAT_DEBUG] User state:', {
       isAuthenticated: !!user,
       userId: user?.uid,
       isAnonymous: user?.isAnonymous
     });
+    
     // Combine case notes and lab results with clear separation
     const combinedNotes = [
       "Case Notes:",
@@ -177,11 +207,24 @@ const handleExtract = async () => {
     ].join('\n\n');
 
     console.log('[CHAT_DEBUG] Extracting disease and events from notes');
-    const [disease, events] = await Promise.all([
-      extractDisease(combinedNotes),
-      extractEvents(combinedNotes, extractionPrompt)
-    ]);
-    console.log('[CHAT_DEBUG] Extraction results:', { disease, events });
+    
+    let disease, events;
+    
+    try {
+      // Use the new unified function for both disease and events extraction
+      [disease, events] = await Promise.all([
+        extractMedicalInfo(combinedNotes, 'disease', specialty),
+        extractMedicalInfo(combinedNotes, 'events', specialty, eventExtractionPrompts[specialty])
+      ]);
+      
+      console.log(`[EXTRACTION_DEBUG] ${specialty} extraction results:`, { disease, events });
+    } catch (error) {
+      console.error(`[EXTRACTION_DEBUG] Error extracting medical info for ${specialty}:`, error);
+      disease = `Error extracting ${specialty} disease: ${error.message}`;
+      events = [`Error extracting ${specialty} events: ${error.message}`];
+    }
+    
+    console.log('[CHAT_DEBUG] Extraction results:', { disease, events, specialty });
     setExtractedDisease(disease);
     setExtractedEvents(events);
     setIsBox2Hovered(true); // Keep box 2 solid after extraction
@@ -356,7 +399,7 @@ const handleExtract = async () => {
               journal_title: analysis.journal_title,
               journal_sjr: analysis.journal_sjr,
               year: analysis.year,
-              cancer: analysis.type_of_cancer,
+              disease: analysis.type_of_disease,
               type: analysis.paper_type,
               events: analysis.actionable_events,
               drugs_tested: analysis.drugs_tested,
@@ -460,6 +503,11 @@ useEffect(() => {
       {/* Feedback Button and Modal */}
       <FeedbackButton onClick={handleOpenFeedbackModal} />
       <FeedbackModal isOpen={showFeedbackModal} onClose={handleCloseFeedbackModal} />
+      <SpecialtySelector 
+        isOpen={showSpecialtySelector} 
+        onClose={() => setShowSpecialtySelector(false)} 
+        onSelectSpecialty={handleSpecialtySelected} 
+      />
 
       <div className="flex flex-1 min-h-0 relative w-full">
         <div className="absolute z-10">

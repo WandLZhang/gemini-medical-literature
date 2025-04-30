@@ -1,17 +1,3 @@
-# Copyright 2025 Google LLC
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     https://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import functions_framework
 from flask import jsonify, request, Response
 from google import genai
@@ -205,9 +191,7 @@ Your task is to read the provided full article and extract key information, and 
 As an expert oncologist:
 1. Evaluate if the article's disease focus matches the patient's disease. Set disease_match to true if the article's cancer type is relevant to the patient's condition.
 2. Analyze treatment outcomes. Set treatment_shown to true if the article demonstrates positive treatment results.
-3. For each actionable event you find in the article, determine if it matches any of the patient's actionable events. For genetic mutations, create two separate events:
-   - When you find a general mutation mention (e.g., if the article mentions just "NRAS" when patient has "NRAS (p.Gln61Lys)"), create an event with the general form and set matches_query=true
-   - When you find an exact mutation match (e.g., if the article mentions "NRAS (p.Gln61Lys)" like it appears in the patient's events), create another event with the exact mutation and set matches_query=true
+3. For each actionable event you find in the article, determine if it matches any of the patient's actionable events. For genetic mutations, create two separate events: one for the general mutation (e.g., if patient has NRAS G12D and the article mentions NRAS, create an event for NRAS with matches_query=true) and another for the specific mutation (e.g., create another event for NRAS G12D with matches_query=true if the article specifically also mentions NRAS G12D).
 
 Please analyze the article and provide a JSON response with the following structure:
 
@@ -217,9 +201,9 @@ Please analyze the article and provide a JSON response with the following struct
     "year": "...",
     "journal_title": "...",  // Extract the journal title from the article
     "journal_sjr": 0,        // Look up the SJR score from the provided list. Use the score of the best matching journal title, or 0 if no match found
-    "cancer_focus": true/false,
+    "disease_focus": true/false,
     "pediatric_focus": true/false,
-    "type_of_cancer": "...",
+    "type_of_disease": "...",
     "disease_match": true/false,      // Set to true if article's disease is relevant to patient's condition
     "paper_type": "...",
     "actionable_events": [
@@ -347,7 +331,7 @@ def analyze_with_gemini(article_text, pmid, methodology_content=None, disease=No
                 return None
                 
             metadata = analysis['article_metadata']
-            required_fields = ['title', 'journal_title', 'journal_sjr', 'cancer_focus', 'type_of_cancer', 'paper_type', 'actionable_events']
+            required_fields = ['title', 'journal_title', 'journal_sjr', 'type_of_disease', 'paper_type', 'actionable_events']
             for field in required_fields:
                 if field not in metadata:
                     logger.error(f"Invalid JSON structure - missing {field}")

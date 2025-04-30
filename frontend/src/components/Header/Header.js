@@ -23,7 +23,7 @@ const Header = ({ user, firstName, handleLogin, handleLogout, showUserMenu, setS
   const showLoginButton = !isAuthenticated || isAnonymous;
 
   return (
-    <header className="h-16 p-4 flex justify-end items-center bg-[#FF7F00] text-white z-100 relative">
+    <header className="h-16 p-4 flex justify-end items-center bg-surface-700 text-white z-100 relative">
       <div className="flex items-center">
         {showLoginButton ? (
           <div className="relative z-20">

@@ -18,10 +18,10 @@ import Header from './Header/Header';
 const TopBar = ({ user, firstName, handleLogin, handleLogout, showUserMenu, setShowUserMenu, isAuthenticated }) => {
   console.log('[TOPBAR_DEBUG] Rendering TopBar, isAuthenticated:', isAuthenticated, 'showUserMenu:', showUserMenu);
   return (
-    <div className="h-16 bg-[#FF7F00] text-white flex items-center px-4 justify-between">
+    <div className="h-16 bg-surface-700 text-white flex items-center px-4 justify-between">
       <div>
-        <span className="font-bold">Capricorn</span>{' '}
-        <span className="font-light">| Medical Research</span>
+        <span className="font-bold">Medical Literature Review</span>{' '}
+        <span className="font-light">| powered by Google Gemini</span>
       </div>
       <Header 
         user={user}
