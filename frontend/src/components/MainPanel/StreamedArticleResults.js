@@ -89,7 +89,6 @@ const StreamedArticleResults = ({ currentProgress, article, initialExpanded = tr
               </td>
               <td className="px-4 py-2 text-xs border-t text-gray-500" style={{ maxHeight: '80px', overflowY: 'auto', display: 'block', minWidth: '200px', padding: '8px 16px' }}>{article.title}</td>
               <td className="px-4 py-2 text-xs border-t text-gray-500">{article.year}</td>
-              <td className="px-4 py-2 text-xs border-t text-gray-500" style={{ maxHeight: '80px', overflowY: 'auto', display: 'block', minWidth: '150px', padding: '8px 16px' }}>{article.cancer}</td>
               <td className="px-4 py-2 text-xs border-t text-gray-500">{article.type}</td>
               <td className="px-4 py-2 text-xs border-t text-gray-500" style={{ maxHeight: '80px', overflowY: 'auto', display: 'block', minWidth: '200px', padding: '8px 16px' }}>
                 {article.events?.map((event, i) => (

@@ -95,7 +95,6 @@ const ArticleResults = ({
                     </td>
                     <td className="px-4 py-2 text-xs border-t text-gray-500" style={{ maxHeight: '80px', overflowY: 'auto', display: 'block', minWidth: '200px', padding: '8px 16px' }}>{article.title}</td>
                     <td className="px-4 py-2 text-xs border-t text-gray-500">{article.year}</td>
-                    <td className="px-4 py-2 text-xs border-t text-gray-500" style={{ maxHeight: '80px', overflowY: 'auto', display: 'block', minWidth: '150px', padding: '8px 16px' }}>{article.cancer}</td>
                     <td className="px-4 py-2 text-xs border-t text-gray-500">{article.type}</td>
                     <td className="px-4 py-2 text-xs border-t text-gray-500" style={{ maxHeight: '80px', overflowY: 'auto', display: 'block', minWidth: '200px', padding: '8px 16px' }}>
                       {article.events.map((event, i) => (
@@ -112,13 +111,7 @@ const ArticleResults = ({
                     <td className="px-4 py-2 text-xs border-t text-gray-500">
                       <button
                         onClick={() => {
-                          const width = 800;
-                          const height = 600;
-                          const left = (window.screen.width - width) / 2;
-                          const top = (window.screen.height - height) / 2;
-                          const newWindow = window.open('', '_blank', 
-                            `width=${width},height=${height},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no`
-                          );
+                          const newWindow = window.open('', '_blank');
                           newWindow.document.write(`
                             <!DOCTYPE html>
                             <html>
@@ -129,7 +122,7 @@ const ArticleResults = ({
                               <body>
                                 <div class="min-h-screen bg-gray-50 py-8 px-4">
                                   <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6">
-                                    <button onclick="window.close()" class="mb-4 text-blue-500 hover:text-blue-700">← Back to Table</button>
+                                    <button onclick="window.close()" class="mb-4 text-blue-500 hover:text-blue-700">← Close Tab</button>
                                     <div class="prose max-w-none">
                                       <p class="whitespace-pre-wrap text-gray-700 text-lg leading-relaxed">${article.content}</p>
                                     </div>
@@ -148,13 +141,7 @@ const ArticleResults = ({
                     <td className="px-4 py-2 text-xs border-t text-gray-500">
                       <button
                         onClick={() => {
-                          const width = 800;
-                          const height = 600;
-                          const left = (window.screen.width - width) / 2;
-                          const top = (window.screen.height - height) / 2;
-                          const newWindow = window.open('', '_blank', 
-                            `width=${width},height=${height},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no`
-                          );
+                          const newWindow = window.open('', '_blank');
                           newWindow.document.write(`
                             <!DOCTYPE html>
                             <html>
@@ -165,7 +152,7 @@ const ArticleResults = ({
                               <body>
                                 <div class="min-h-screen bg-gray-50 py-8 px-4">
                                   <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6">
-                                    <button onclick="window.close()" class="mb-4 text-blue-500 hover:text-blue-700">← Back to Table</button>
+                                    <button onclick="window.close()" class="mb-4 text-blue-500 hover:text-blue-700">← Close Tab</button>
                                     <div class="space-y-4">
                                       <h2 class="text-2xl font-bold text-gray-800">Points Details</h2>
                                       <div class="text-4xl font-bold text-blue-600">${Math.round(article.points)} Points</div>
