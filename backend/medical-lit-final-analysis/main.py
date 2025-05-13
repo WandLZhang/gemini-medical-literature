@@ -151,12 +151,12 @@ A brief paragraph summarizing the case.
 
 Following the table, provide a concise interpretation of the actionable events, focusing on their clinical implications, potential impact on treatment decisions, and overall prognosis. Highlight any synergistic or conflicting interactions between events.
 
-### 3. Treatment Recommendations
+### 3. Treatment Options
 | Event | Treatment | Evidence (PMID) | Evidence Summary | Previous Response | Warnings |
 |-------|-----------|----------------|------------------|-------------------|-----------|
 [Fill with treatment details, one row per recommendation]
 
-IMPORTANT FOR TREATMENT RECOMMENDATIONS:
+IMPORTANT FOR TREATMENT OPTIONS:
 - You MUST include at least one PMID from the provided articles in the Evidence column for EACH recommendation
 - DO NOT use "N/A" in the Evidence column - instead, find the most relevant article(s) from the provided list
 - If multiple articles support a recommendation, include all relevant PMIDs
