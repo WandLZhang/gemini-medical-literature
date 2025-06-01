@@ -52,7 +52,7 @@ const SpecialtySelector = ({ isOpen, onClose, onSelectSpecialty }) => {
         <h2 className="text-2xl font-semibold mb-6 text-gray-800">Select Specialty</h2>
         
         <div className="mb-6 space-y-4">
-          {/* Oncology Option */}
+          {/* Pediatric Oncology Option */}
           <div 
             className={`border border-gray-200 rounded-lg p-4 cursor-pointer transition hover:border-blue-400 hover:bg-blue-50 ${selectedSpecialty === 'oncology' ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' : ''}`}
             onClick={() => setSelectedSpecialty('oncology')}
@@ -61,7 +61,20 @@ const SpecialtySelector = ({ isOpen, onClose, onSelectSpecialty }) => {
               <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedSpecialty === 'oncology' ? 'border-blue-500' : 'border-gray-400'}`}>
                 {selectedSpecialty === 'oncology' && <div className="w-3 h-3 rounded-full bg-blue-500"></div>}
               </div>
-              <label htmlFor="oncology" className="ml-3 text-lg cursor-pointer">Oncology</label>
+              <label htmlFor="oncology" className="ml-3 text-lg cursor-pointer">Pediatric Oncology</label>
+            </div>
+          </div>
+          
+          {/* Adult Oncology Option */}
+          <div 
+            className={`border border-gray-200 rounded-lg p-4 cursor-pointer transition hover:border-blue-400 hover:bg-blue-50 ${selectedSpecialty === 'adult_oncology' ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' : ''}`}
+            onClick={() => setSelectedSpecialty('adult_oncology')}
+          >
+            <div className="flex items-center">
+              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedSpecialty === 'adult_oncology' ? 'border-blue-500' : 'border-gray-400'}`}>
+                {selectedSpecialty === 'adult_oncology' && <div className="w-3 h-3 rounded-full bg-blue-500"></div>}
+              </div>
+              <label htmlFor="adult_oncology" className="ml-3 text-lg cursor-pointer">Adult Oncology</label>
             </div>
           </div>
           
