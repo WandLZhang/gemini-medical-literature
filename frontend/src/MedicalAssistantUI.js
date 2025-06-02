@@ -270,7 +270,7 @@ const handleSpecialtySelected = async (specialty) => {
     setLabResults(exampleLabResults);
   };
 
-  const handleClearAll = useCallback(() => {
+  const handleClearAll = useCallback(async () => {
     console.log('[CLEAR_DEBUG] MedicalAssistantUI: handleClearAll called');
     console.log('[CLEAR_DEBUG] Before clear - caseNotes:', caseNotes, 'labResults:', labResults);
     setCaseNotes('');
@@ -287,13 +287,15 @@ const handleSpecialtySelected = async (specialty) => {
     setIsPromptExpanded(true);
     setIsNewChat(true);
     setSpecialtyConfirmed(false); // Reset specialty confirmation
-    initializeNewChat();
+    const chatId = await initializeNewChat();
     console.log('[CLEAR_DEBUG] MedicalAssistantUI: All states reset');
     
     // Force a re-render to ensure the UI updates
     setTimeout(() => {
       console.log('[CLEAR_DEBUG] After timeout - caseNotes:', caseNotes, 'labResults:', labResults);
     }, 0);
+    
+    return chatId;
   }, [setCaseNotes, setLabResults, setExtractedDisease, setExtractedEvents, initializeNewChat, caseNotes, labResults]);
 
   const handleRetrieve = async () => {
@@ -525,7 +527,7 @@ useEffect(() => {
           user={user}
           onChatSelect={handleChatSelect}
           activeChat={activeChat}
-          initializeNewChat={initializeNewChat}
+          initializeNewChat={handleClearAll}
           setIsNewChat={setIsNewChat}
           isExpanded={isSidebarExpanded}
           onToggle={handleSidebarToggle}
