@@ -16,6 +16,7 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { findLastIndex } from 'lodash';
 import ChatContainer from '../Chat/ChatContainer';
 import CaseInputSection from '../LeftPanel/CaseInputSection';
+import SpecialtySelectionView from './SpecialtySelectionView';
 import WelcomeText from './WelcomeText';
 import { db, auth } from '../../firebase';
 import { collection, query, onSnapshot } from 'firebase/firestore';
@@ -61,7 +62,11 @@ const MainPanel = ({
   setJustExtracted,
   isLoadingFromHistory,
   isProcessingArticles,
-  setIsProcessingArticles
+  setIsProcessingArticles,
+  selectedSpecialty,
+  setSelectedSpecialty,
+  specialtyConfirmed,
+  handleSpecialtyConfirmed
 }) => {
   const [hasAnalysisMessage, setHasAnalysisMessage] = useState(false);
   const [shouldUseScrollEffect, setShouldUseScrollEffect] = useState(false);
@@ -192,32 +197,48 @@ const MainPanel = ({
           />
       </div>
       <div className="relative z-0 mt-auto">
-        {/* CaseInputSection */}
+        {/* Specialty Selection or Case Input */}
         {showCaseInput && (
-          <div className={`absolute bottom-0 left-0 right-0 px-4 flex justify-center items-end pb-16 z-50 ${fadeAwayClass} ${showCaseInput ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+          <div className="absolute bottom-0 left-0 right-0 px-4 flex justify-center items-end pb-16 z-50">
             <div className="max-w-[70%] mx-auto">
-              <CaseInputSection
-                caseNotes={caseNotes}
-                setCaseNotes={setCaseNotes}
-                labResults={labResults}
-                setLabResults={setLabResults}
-                isProcessing={isProcessing}
-                handleExtract={handleExtractWithWelcomeText}
-                handleExampleLoad={(exampleCaseNotes, exampleLabResults) => {
-                  setCaseNotes(exampleCaseNotes);
-                  setLabResults(exampleLabResults);
-                }}
-                showCaseInput={showCaseInput}
-                handleClearAll={() => {
-                  console.log('[CLEAR_DEBUG] MainPanel: handleClearAll called');
-                  handleClearAll();
-                  setCaseNotes('');
-                  setLabResults('');
-                  console.log('[CLEAR_DEBUG] MainPanel: After handleClearAll - caseNotes:', caseNotes, 'labResults:', labResults);
-                }}
-                numArticles={numArticles}
-                setNumArticles={setNumArticles}
-              />
+              {/* Show SpecialtySelectionView if specialty not confirmed */}
+              {!specialtyConfirmed && (
+                <div className={`${fadeAwayClass} ${!specialtyConfirmed ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                  <SpecialtySelectionView
+                    currentSpecialty={selectedSpecialty}
+                    onSpecialtyChange={setSelectedSpecialty}
+                    onConfirm={handleSpecialtyConfirmed}
+                  />
+                </div>
+              )}
+              
+              {/* Show CaseInputSection if specialty is confirmed */}
+              {specialtyConfirmed && (
+                <div className={`${fadeAwayClass} ${specialtyConfirmed ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                  <CaseInputSection
+                    caseNotes={caseNotes}
+                    setCaseNotes={setCaseNotes}
+                    labResults={labResults}
+                    setLabResults={setLabResults}
+                    isProcessing={isProcessing}
+                    handleExtract={handleExtractWithWelcomeText}
+                    handleExampleLoad={(exampleCaseNotes, exampleLabResults) => {
+                      setCaseNotes(exampleCaseNotes);
+                      setLabResults(exampleLabResults);
+                    }}
+                    showCaseInput={showCaseInput}
+                    handleClearAll={() => {
+                      console.log('[CLEAR_DEBUG] MainPanel: handleClearAll called');
+                      handleClearAll();
+                      setCaseNotes('');
+                      setLabResults('');
+                      console.log('[CLEAR_DEBUG] MainPanel: After handleClearAll - caseNotes:', caseNotes, 'labResults:', labResults);
+                    }}
+                    numArticles={numArticles}
+                    setNumArticles={setNumArticles}
+                  />
+                </div>
+              )}
             </div>
           </div>
         )}

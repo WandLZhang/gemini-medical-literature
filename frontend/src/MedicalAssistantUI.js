@@ -45,6 +45,7 @@ const MedicalAssistantUI = () => {
   const [isGeneratingSample, setIsGeneratingSample] = useState(false);
   const [showSpecialtySelector, setShowSpecialtySelector] = useState(false);
   const [selectedSpecialty, setSelectedSpecialty] = useState('oncology');
+  const [specialtyConfirmed, setSpecialtyConfirmed] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [extractedDisease, setExtractedDisease] = useState('');
   const [extractedEvents, setExtractedEvents] = useState([]);
@@ -167,8 +168,8 @@ const handleExtract = async () => {
   try {
     setIsProcessing(true);
     
-    // Show specialty selector before proceeding with extraction
-    setShowSpecialtySelector(true);
+    // Proceed with extraction since specialty is already selected
+    await handleSpecialtySelected(selectedSpecialty);
     
   } catch (error) {
     console.error('[CHAT_DEBUG] Extraction error:', error);
@@ -181,6 +182,14 @@ const handleExtract = async () => {
     }
     setIsProcessing(false);
   }
+};
+
+// New handler for specialty confirmation
+const handleSpecialtyConfirmed = (specialty) => {
+  console.log('[CHAT_DEBUG] Specialty confirmed:', specialty);
+  setSelectedSpecialty(specialty);
+  setCurrentPromptContent(promptContents[specialty]);
+  setSpecialtyConfirmed(true);
 };
 
 const handleSpecialtySelected = async (specialty) => {
@@ -277,6 +286,7 @@ const handleSpecialtySelected = async (specialty) => {
     setCurrentArticleData(null);
     setIsPromptExpanded(true);
     setIsNewChat(true);
+    setSpecialtyConfirmed(false); // Reset specialty confirmation
     initializeNewChat();
     console.log('[CLEAR_DEBUG] MedicalAssistantUI: All states reset');
     
@@ -584,6 +594,10 @@ useEffect(() => {
           isLoadingFromHistory={isLoadingFromHistory}
           isProcessingArticles={isProcessingArticles}
           setIsProcessingArticles={setIsProcessingArticles}
+          selectedSpecialty={selectedSpecialty}
+          setSelectedSpecialty={setSelectedSpecialty}
+          specialtyConfirmed={specialtyConfirmed}
+          handleSpecialtyConfirmed={handleSpecialtyConfirmed}
         />
       </div>
       
