@@ -20,8 +20,8 @@ const TopBar = ({ user, firstName, handleLogin, handleLogout, showUserMenu, setS
   return (
     <div className="h-16 bg-surface-700 text-white flex items-center px-4 justify-between">
       <div>
-        <span className="font-bold">Medical Literature Review</span>{' '}
-        <span className="font-light">| powered by Google Gemini</span>
+        <span className="font-bold">Capricorn</span>{' '}
+        <span className="font-light">(Preview) | Medical Research</span>
       </div>
       <Header 
         user={user}
