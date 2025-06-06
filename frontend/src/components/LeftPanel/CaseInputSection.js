@@ -15,7 +15,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { redactSensitiveInfo, processLabPDF } from '../../utils/api';
 import LoadingSpinner from '../LoadingSpinner';
-import { presetCaseNotes, presetLabResults } from '../../data/presetData';
+import { specialtyPresetData } from '../../data/presetData';
 import { Mic, MicOff, AlertTriangle, ArrowRight, Upload } from 'lucide-react';
 import useDebounce from '../../hooks/useDebounce';
 import LabInputModal from '../Modal/LabInputModal';
@@ -34,7 +34,8 @@ const CaseInputSection = ({
   showCaseInput,
   handleClearAll,
   numArticles,
-  setNumArticles
+  setNumArticles,
+  selectedSpecialty
 }) => {
   const [isRedacting, setIsRedacting] = useState(false);
   const [showLabResults, setShowLabResults] = useState(false);
@@ -304,6 +305,24 @@ const CaseInputSection = ({
   }, [localCaseNotes, localLabResults, hasInput]);
 
   const handleExampleClick = () => {
+    // Map the selectedSpecialty from the UI to the correct key in specialtyPresetData
+    let specialtyKey = selectedSpecialty || 'neurology'; // Default to neurology if no specialty is selected
+    
+    // Map 'oncology' to 'pediatric_oncology' to match the presetData keys
+    if (specialtyKey === 'oncology') {
+      specialtyKey = 'pediatric_oncology';
+    }
+    
+    const presetData = specialtyPresetData[specialtyKey];
+    
+    if (!presetData || (!presetData.caseNotes && !presetData.labResults)) {
+      // If no preset data available for this specialty, show an error
+      setError('No example available for this specialty yet.');
+      return;
+    }
+    
+    const { caseNotes: presetCaseNotes, labResults: presetLabResults } = presetData;
+    
     setLocalCaseNotes(presetCaseNotes);
     setLocalLabResults(presetLabResults);
     setCaseNotes(presetCaseNotes);

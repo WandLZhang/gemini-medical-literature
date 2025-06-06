@@ -483,7 +483,10 @@ Please analyze the article and provide a JSON response with the following struct
 // Export the default promptContent (for backward compatibility)
 export const promptContent = promptContents.oncology;
 
-export const presetCaseNotes = `Patient: 73-year-old male
+// Specialty-specific preset data
+export const specialtyPresetData = {
+  neurology: {
+    caseNotes: `Patient: 73-year-old male
 History of Present Illness:
 Mr. Smith has a 15-year history of Idiopathic Parkinson's Disease (IPD), initially diagnosed at age 58 based on asymmetric left-sided rest tremor, bradykinesia, and rigidity, with an excellent initial response to levodopa. His initial years were characterized by good motor control on moderate doses of Sinemet (carbidopa/levodopa).
 Over the past 5-7 years, his disease has progressed significantly. He now experiences marked motor fluctuations with debilitating "off" periods (estimated 4-5 hours per day) characterized by severe rigidity, bradykinesia, and disabling off-period dystonia primarily affecting his left foot. He also suffers from troublesome peak-dose dyskinesias (mixed choreiform and dystonic) involving his trunk and limbs, limiting further increases in levodopa dosage.
@@ -497,12 +500,34 @@ Previously tried ropinirole, discontinued due to worsening hallucinations and de
 Amantadine provided transient benefit for dyskinesia but worsened confusion/hallucinations.
 Underwent bilateral Subthalamic Nucleus Deep Brain Stimulation (STN-DBS) 5 years ago. Initially provided excellent benefit for tremor, rigidity, and reduced "off" time and dyskinesia, allowing medication reduction. However, benefits for gait (FOG, postural instability) were limited, and axial symptoms have worsened over the past 2 years despite programming adjustments. Levodopa requirements have increased again.
 Rivastigmine patch initiated 18 months ago for PDD with modest cognitive benefit. Quetiapine used PRN at low dose (12.5mg) for severe hallucinations.
-Current Status: Despite complex polypharmacy and DBS, patient experiences significant disability from motor fluctuations, FOG, falls, PDD, and hallucinations. He is being evaluated for potential medication adjustments (e.g., subcutaneous apomorphine, LCIG/Duopa) or alternative strategies.`;
-
-export const presetLabResults = `Neurological Exam: Confirms parkinsonian features (bradykinesia, rigidity > tremor). Marked postural instability (pull test positive). Gait demonstrates short steps, reduced arm swing, festination, and observable FOG during testing. Mini-Mental State Examination (MMSE) score 23/30, Montreal Cognitive Assessment (MoCA) score 18/30. Orthostatic vitals show drop of 25mmHg systolic / 12mmHg diastolic upon standing with symptoms.
+Current Status: Despite complex polypharmacy and DBS, patient experiences significant disability from motor fluctuations, FOG, falls, PDD, and hallucinations. He is being evaluated for potential medication adjustments (e.g., subcutaneous apomorphine, LCIG/Duopa) or alternative strategies.`,
+    labResults: `Neurological Exam: Confirms parkinsonian features (bradykinesia, rigidity > tremor). Marked postural instability (pull test positive). Gait demonstrates short steps, reduced arm swing, festination, and observable FOG during testing. Mini-Mental State Examination (MMSE) score 23/30, Montreal Cognitive Assessment (MoCA) score 18/30. Orthostatic vitals show drop of 25mmHg systolic / 12mmHg diastolic upon standing with symptoms.
 Brain MRI (3 years ago): Age-related generalized atrophy, mild chronic small vessel ischemic changes. No evidence of stroke, tumor, hydrocephalus, or specific patterns suggestive of atypical parkinsonism (e.g., marked cerebellar/brainstem atrophy, putaminal changes).
 DaTscan SPECT (performed at diagnosis): Showed bilateral, asymmetric reduced dopamine transporter uptake, more pronounced in the right posterior putamen, consistent with nigrostriatal degeneration.
 Formal Neuropsychological Testing (2 years ago): Profile consistent with Parkinson's Disease Dementia (PDD). Primary deficits noted in executive function (planning, set-shifting, working memory), visuospatial processing, and attention. Relative sparing of language, moderate impairment in delayed recall memory.
 Polysomnography (Sleep Study - 7 years ago): Confirmed REM Sleep Behavior Disorder (RBD) with REM sleep without atonia and dream enactment behaviors. Also noted mild obstructive sleep apnea.
 Genetic Testing (Parkinson's Panel - performed 4 years ago): Positive for heterozygous GBA mutation (p.N370S). Negative for LRRK2, SNCA, PARKIN mutations.
-Routine Labs (Recent): Complete Blood Count (CBC), Comprehensive Metabolic Panel (CMP), Thyroid Stimulating Hormone (TSH), Vitamin B12 levels - all within normal limits.`;
+Routine Labs (Recent): Complete Blood Count (CBC), Comprehensive Metabolic Panel (CMP), Thyroid Stimulating Hormone (TSH), Vitamin B12 levels - all within normal limits.`
+  },
+  pediatric_oncology: {
+    caseNotes: `A now almost 4-year-old female diagnosed with KMT2A-rearranged AML and CNS2 involvement exhibited refractory disease after NOPHO DBH AML 2012 protocol. Post- MEC and ADE, MRD remained at 35% and 53%. Vyxeos-clofarabine therapy reduced MRD to 18%. Third-line FLAG-Mylotarg lowered MRD to 3.5% (flow) and 1% (molecular). After a cord blood HSCT in December 2022, she relapsed 10 months later with 3% MRD and femoral extramedullary disease.
+After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX5613 trial, receiving revumenib for three months, leading to a reduction in KMT2A MRD to 0.1% by PCR. Subsequently, the patient underwent a second allogeneic HSCT using cord blood with treosulfan, thiotepa, and fludarabine conditioning, followed by revumenib maintenance. In August 2024, 6.5 months after the second HSCT, the patient experienced a bone marrow relapse with 33% blasts. The patient is currently in very good clinical condition.`,
+    labResults: `Diagnostic tests:			
+						 							
+  WES and RNAseq were performed on the 1st relapse sample showing KMT2A::MLLT3 fusion and NRAS (p.Gln61Lys) mutation.
+ 						
+						 							
+  Flow cytometry from the current relapse showed positive CD33 and CD123.
+ 						
+						 							
+  WES and RNAseq of the current relapse sample is pending.`
+  },
+  adult_oncology: {
+    caseNotes: '',
+    labResults: ''
+  }
+};
+
+// Export individual presets for backward compatibility
+export const presetCaseNotes = specialtyPresetData.neurology.caseNotes;
+export const presetLabResults = specialtyPresetData.neurology.labResults;

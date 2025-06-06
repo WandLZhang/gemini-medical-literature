@@ -236,6 +236,7 @@ const MainPanel = ({
                     }}
                     numArticles={numArticles}
                     setNumArticles={setNumArticles}
+                    selectedSpecialty={selectedSpecialty}
                   />
                 </div>
               )}
