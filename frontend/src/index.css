@@ -97,7 +97,6 @@ body.dark {
 }
 * {
   -webkit-tap-highlight-color: transparent;
-  position: relative;
   vertical-align: middle;
   color: inherit;
   margin: 0;
