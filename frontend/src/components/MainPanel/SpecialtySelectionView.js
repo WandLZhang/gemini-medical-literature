@@ -37,7 +37,7 @@ const SpecialtySelectionView = ({ currentSpecialty, onSpecialtyChange, onConfirm
     transition: 'all 0.3s ease',
     boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.12)',
     width: '100%',
-    maxWidth: '450px',
+    maxWidth: 'clamp(300px, 90%, 450px)',
     margin: '0',
     ...((className && className.includes('hover')) ? {
       background: 'linear-gradient(135deg, var(--surface-container) 0%, var(--surface-container-high) 100%)',
@@ -48,7 +48,7 @@ const SpecialtySelectionView = ({ currentSpecialty, onSpecialtyChange, onConfirm
 
   const labelStyle = {
     display: 'inline-block',
-    fontSize: '1rem',
+    fontSize: 'clamp(0.9rem, 2.5vw, 1rem)',
     fontWeight: '600',
     color: 'var(--primary)',
     marginBottom: 'var(--unit-2)',
@@ -60,7 +60,7 @@ const SpecialtySelectionView = ({ currentSpecialty, onSpecialtyChange, onConfirm
   };
 
   const descriptionStyle = {
-    fontSize: '0.875rem',
+    fontSize: 'clamp(0.8rem, 2vw, 0.875rem)',
     color: 'var(--on-surface-variant)',
     marginBottom: 'var(--unit-3)',
     lineHeight: '1.5'
@@ -75,8 +75,8 @@ const SpecialtySelectionView = ({ currentSpecialty, onSpecialtyChange, onConfirm
 
   const selectStyle = {
     flex: '1',
-    padding: 'var(--unit-4)',
-    paddingRight: 'var(--unit-10)',
+    padding: 'clamp(12px, 3vw, 16px)',
+    paddingRight: 'clamp(32px, 8vw, 40px)',
     border: '2px solid var(--outline-variant)',
     borderRadius: '12px',
     fontSize: '0.875rem',
@@ -105,8 +105,8 @@ const SpecialtySelectionView = ({ currentSpecialty, onSpecialtyChange, onConfirm
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    width: '48px',
-    height: '48px',
+    width: 'clamp(40px, 10vw, 48px)',
+    height: 'clamp(40px, 10vw, 48px)',
     borderRadius: '12px',
     border: 'none',
     background: currentSpecialty 
@@ -185,7 +185,7 @@ const SpecialtySelectionView = ({ currentSpecialty, onSpecialtyChange, onConfirm
           onMouseLeave={() => setIsButtonHovering(false)}
           aria-label="Continue with selected specialty"
         >
-          <ArrowRight style={{ width: '20px', height: '20px' }} />
+          <ArrowRight style={{ width: 'clamp(18px, 4vw, 20px)', height: 'clamp(18px, 4vw, 20px)' }} />
         </button>
       </div>
     </div>

@@ -146,6 +146,20 @@ const MainPanel = ({
     }
   }, [chatHistory]);
 
+  if (showCaseInput && !specialtyConfirmed) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center h-full p-4">
+        <div className={`${fadeAwayClass} ${!specialtyConfirmed ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+          <SpecialtySelectionView
+            currentSpecialty={selectedSpecialty}
+            onSpecialtyChange={setSelectedSpecialty}
+            onConfirm={handleSpecialtyConfirmed}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <main className="flex-1 flex flex-col h-full relative w-full max-w-4xl mx-auto">
       <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-0">
@@ -198,48 +212,34 @@ const MainPanel = ({
       </div>
       <div className="relative z-0 mt-auto">
         {/* Specialty Selection or Case Input */}
-        {showCaseInput && (
+        {showCaseInput && specialtyConfirmed && (
           <div className="absolute bottom-0 left-0 right-0 px-4 flex justify-center items-end pb-16 z-50">
             <div className="max-w-[70%] mx-auto">
-              {/* Show SpecialtySelectionView if specialty not confirmed */}
-              {!specialtyConfirmed && (
-                <div className={`${fadeAwayClass} ${!specialtyConfirmed ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                  <SpecialtySelectionView
-                    currentSpecialty={selectedSpecialty}
-                    onSpecialtyChange={setSelectedSpecialty}
-                    onConfirm={handleSpecialtyConfirmed}
-                  />
-                </div>
-              )}
-              
-              {/* Show CaseInputSection if specialty is confirmed */}
-              {specialtyConfirmed && (
-                <div className={`${fadeAwayClass} ${specialtyConfirmed ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                  <CaseInputSection
-                    caseNotes={caseNotes}
-                    setCaseNotes={setCaseNotes}
-                    labResults={labResults}
-                    setLabResults={setLabResults}
-                    isProcessing={isProcessing}
-                    handleExtract={handleExtractWithWelcomeText}
-                    handleExampleLoad={(exampleCaseNotes, exampleLabResults) => {
-                      setCaseNotes(exampleCaseNotes);
-                      setLabResults(exampleLabResults);
-                    }}
-                    showCaseInput={showCaseInput}
-                    handleClearAll={() => {
-                      console.log('[CLEAR_DEBUG] MainPanel: handleClearAll called');
-                      handleClearAll();
-                      setCaseNotes('');
-                      setLabResults('');
-                      console.log('[CLEAR_DEBUG] MainPanel: After handleClearAll - caseNotes:', caseNotes, 'labResults:', labResults);
-                    }}
-                    numArticles={numArticles}
-                    setNumArticles={setNumArticles}
-                    selectedSpecialty={selectedSpecialty}
-                  />
-                </div>
-              )}
+              <div className={`${fadeAwayClass} ${specialtyConfirmed ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                <CaseInputSection
+                  caseNotes={caseNotes}
+                  setCaseNotes={setCaseNotes}
+                  labResults={labResults}
+                  setLabResults={setLabResults}
+                  isProcessing={isProcessing}
+                  handleExtract={handleExtractWithWelcomeText}
+                  handleExampleLoad={(exampleCaseNotes, exampleLabResults) => {
+                    setCaseNotes(exampleCaseNotes);
+                    setLabResults(exampleLabResults);
+                  }}
+                  showCaseInput={showCaseInput}
+                  handleClearAll={() => {
+                    console.log('[CLEAR_DEBUG] MainPanel: handleClearAll called');
+                    handleClearAll();
+                    setCaseNotes('');
+                    setLabResults('');
+                    console.log('[CLEAR_DEBUG] MainPanel: After handleClearAll - caseNotes:', caseNotes, 'labResults:', labResults);
+                  }}
+                  numArticles={numArticles}
+                  setNumArticles={setNumArticles}
+                  selectedSpecialty={selectedSpecialty}
+                />
+              </div>
             </div>
           </div>
         )}
