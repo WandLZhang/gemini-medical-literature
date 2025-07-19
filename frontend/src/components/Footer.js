@@ -15,7 +15,7 @@
 import React from 'react';
 
 const Footer = () => (
-  <div className="fixed bottom-0 left-0 right-0 bg-surface-700 text-white py-4 px-6 z-50">
+  <div className="bg-surface-700 text-white py-4 px-6">
     <div className="container mx-auto flex flex-col md:flex-row justify-between items-center">
       <div className="text-sm italic mb-2 md:mb-0">
         "To cure every child with cancer, with optimal quality of life."

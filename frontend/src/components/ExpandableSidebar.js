@@ -193,7 +193,7 @@ const handleNewChat = async () => {
       {/* Toggle button */}
       <button
         onClick={() => onToggle(!isExpanded)}
-        className="absolute right-0 top-4 translate-x-full bg-surface-700 p-2 rounded-r-lg shadow-lg hover:bg-surface-600 transition-colors text-white"
+        className="absolute right-0 top-4 translate-x-full bg-surface-700 p-2 rounded-none rounded-r-lg shadow-lg hover:bg-surface-600 transition-colors text-white"
         aria-label={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
       >
         {isExpanded ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}

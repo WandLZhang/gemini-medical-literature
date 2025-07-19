@@ -19,7 +19,6 @@ import DisclaimerModal from './components/DisclaimerModal';
 import SpecialtySelector from './components/SpecialtySelector';
 import { WrappedExpandableSidebar } from './components/ExpandableSidebar';
 import TopBar from './components/TopBar';
-import LeftPanel from './components/LeftPanel/LeftPanel';
 import MainPanel from './components/MainPanel/MainPanel';
 import Footer from './components/Footer';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -496,7 +495,7 @@ useEffect(() => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
       <DisclaimerModal isOpen={showDisclaimer} onClose={handleCloseDisclaimer} />
       <TopBar 
         user={user}
@@ -507,10 +506,6 @@ useEffect(() => {
         setShowUserMenu={handleToggleUserMenu}
         isAuthenticated={isAuthenticated}
       />
-      {/* Debug information */}
-      <div className="fixed bottom-0 left-0 bg-black text-white p-2 text-xs">
-        Debug: isAuthenticated: {isAuthenticated.toString()}, firstName: {firstName}
-      </div>
 
       {/* Feedback Button and Modal */}
       <FeedbackButton onClick={handleOpenFeedbackModal} />
@@ -521,7 +516,7 @@ useEffect(() => {
         onSelectSpecialty={handleSpecialtySelected} 
       />
 
-      <div className="flex flex-1 min-h-0 relative w-full">
+      <div className="flex flex-1 min-h-0 relative w-full overflow-hidden">
         <div className="absolute z-10">
         <WrappedExpandableSidebar
           user={user}
@@ -539,68 +534,54 @@ useEffect(() => {
         />
         </div>
 
-        <LeftPanel
-          isLoading={!!currentProgress || hasDocumentMessages}
-          isRetrieving={isRetrieving}
-          handleRetrieve={handleRetrieve}
-          isBox3Hovered={isBox3Hovered}
-          setIsBox3Hovered={setIsBox3Hovered}
-          isPromptExpanded={isPromptExpanded}
-          setIsPromptExpanded={setIsPromptExpanded}
-          promptContent={currentPromptContent}
-          setPromptContent={setCurrentPromptContent}
-          currentProgress={currentProgress}
-          numArticles={numArticles}
-          setNumArticles={setNumArticles}
-          hasDocumentMessages={hasDocumentMessages}
-        />
-
-        <MainPanel
-          extractedDisease={extractedDisease}
-          extractedEvents={extractedEvents}
-          setExtractedDisease={setExtractedDisease}
-          setExtractedEvents={setExtractedEvents}
-          articles={articles}
-          setArticles={setArticles}
-          currentArticleData={currentArticleData}
-          chatHistory={chatHistory}
-          isGeneratingSample={isGeneratingSample}
-          isLoadingDocs={isLoadingDocs}
-          isLoadingAnalysis={isLoadingAnalysis}
-          message={message}
-          setMessage={setMessage}
-          handleSendMessage={handleSendMessage}
-          handleGenerateSampleCase={handleGenerateSampleCase}
-          caseNotes={caseNotes}
-          setCaseNotes={setCaseNotes}
-          labResults={labResults}
-          setLabResults={setLabResults}
-          isProcessing={isProcessing}
-          handleExtract={handleExtract}
-          currentProgress={currentProgress}
-          numArticles={numArticles}
-          setNumArticles={setNumArticles}
-          isNewChat={isNewChat}
-          firstName={firstName}
-          isRetrieving={isRetrieving}
-          handleRetrieve={handleRetrieve}
-          isBox3Hovered={isBox3Hovered}
-          setIsBox3Hovered={setIsBox3Hovered}
-          isPromptExpanded={isPromptExpanded}
-          setIsPromptExpanded={setIsPromptExpanded}
-          promptContent={currentPromptContent}
-          setPromptContent={setCurrentPromptContent}
-          handleClearAll={handleClearAll}
-          justExtracted={justExtracted}
-          setJustExtracted={setJustExtracted}
-          isLoadingFromHistory={isLoadingFromHistory}
-          isProcessingArticles={isProcessingArticles}
-          setIsProcessingArticles={setIsProcessingArticles}
-          selectedSpecialty={selectedSpecialty}
-          setSelectedSpecialty={setSelectedSpecialty}
-          specialtyConfirmed={specialtyConfirmed}
-          handleSpecialtyConfirmed={handleSpecialtyConfirmed}
-        />
+        <div className="ml-12 flex-1 flex w-full overflow-hidden">
+          <MainPanel
+            extractedDisease={extractedDisease}
+            extractedEvents={extractedEvents}
+            setExtractedDisease={setExtractedDisease}
+            setExtractedEvents={setExtractedEvents}
+            articles={articles}
+            setArticles={setArticles}
+            currentArticleData={currentArticleData}
+            chatHistory={chatHistory}
+            isGeneratingSample={isGeneratingSample}
+            isLoadingDocs={isLoadingDocs}
+            isLoadingAnalysis={isLoadingAnalysis}
+            message={message}
+            setMessage={setMessage}
+            handleSendMessage={handleSendMessage}
+            handleGenerateSampleCase={handleGenerateSampleCase}
+            caseNotes={caseNotes}
+            setCaseNotes={setCaseNotes}
+            labResults={labResults}
+            setLabResults={setLabResults}
+            isProcessing={isProcessing}
+            handleExtract={handleExtract}
+            currentProgress={currentProgress}
+            numArticles={numArticles}
+            setNumArticles={setNumArticles}
+            isNewChat={isNewChat}
+            firstName={firstName}
+            isRetrieving={isRetrieving}
+            handleRetrieve={handleRetrieve}
+            isBox3Hovered={isBox3Hovered}
+            setIsBox3Hovered={setIsBox3Hovered}
+            isPromptExpanded={isPromptExpanded}
+            setIsPromptExpanded={setIsPromptExpanded}
+            promptContent={currentPromptContent}
+            setPromptContent={setCurrentPromptContent}
+            handleClearAll={handleClearAll}
+            justExtracted={justExtracted}
+            setJustExtracted={setJustExtracted}
+            isLoadingFromHistory={isLoadingFromHistory}
+            isProcessingArticles={isProcessingArticles}
+            setIsProcessingArticles={setIsProcessingArticles}
+            selectedSpecialty={selectedSpecialty}
+            setSelectedSpecialty={setSelectedSpecialty}
+            specialtyConfirmed={specialtyConfirmed}
+            handleSpecialtyConfirmed={handleSpecialtyConfirmed}
+          />
+        </div>
       </div>
       
       <Footer />

@@ -445,7 +445,7 @@ const CaseInputSection = ({
         style={{ display: 'none' }}
       />
       
-      <div className="bg-white border border-gray-200 rounded-3xl p-6 pb-5 w-full min-w-[600px] flex flex-col transition-all duration-300 ease-in-out max-h-[75vh] overflow-hidden shadow-sm hover:shadow-md relative mb-8 px-8">
+      <div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 w-full flex flex-col transition-all duration-300 ease-in-out max-h-[75vh] overflow-hidden shadow-sm hover:shadow-md relative mb-8">
       {(isRedacting || isProcessingPDF) && (
         <div className="absolute top-0 left-0 right-0 bg-blue-100 bg-opacity-90 text-blue-700 px-2 py-1 text-xs z-10">
           <div className="flex items-center">
@@ -487,8 +487,8 @@ const CaseInputSection = ({
         )}
       </div>
       
-      <div className="flex items-center justify-between mt-2 flex-shrink-0 relative h-10">
-        <div className="flex items-center">
+      <div className="flex flex-col sm:flex-row items-center justify-between mt-4 sm:mt-2 flex-shrink-0 relative">
+        <div className="w-full sm:w-auto flex items-center justify-between mb-4 sm:mb-0">
           <button
             onClick={toggleLabResults}
             className="flex items-center text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors duration-200"
@@ -498,7 +498,7 @@ const CaseInputSection = ({
             </svg>
             {showLabResults ? 'Hide lab results' : 'Add lab results'}
           </button>
-          <div className="flex items-center ml-12">
+          <div className="flex items-center ml-4 sm:ml-12">
             <label htmlFor="numArticles" className="text-gray-600 hover:text-gray-800 text-sm font-medium transition-colors duration-200 mr-2"># of articles:</label>
             <input
               id="numArticles"
@@ -510,12 +510,12 @@ const CaseInputSection = ({
                 const value = Math.min(50, Math.max(1, parseInt(e.target.value) || 15));
                 setNumArticles(value);
               }}
-              className="w-16 p-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-16 p-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </div>
         
-        <div className="flex items-center space-x-4">
+        <div className="w-full sm:w-auto flex items-center justify-end space-x-4">
           <button
             onClick={handleExampleClick}
             className="text-gray-600 hover:text-gray-800 text-sm font-medium transition-colors duration-200"

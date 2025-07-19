@@ -109,7 +109,6 @@ body {
   background-color: var(--background);
   font-family: var(--font);
   font-size: var(--size);
-  padding: var(--unit-4);
 }
 
 /* Layout */
