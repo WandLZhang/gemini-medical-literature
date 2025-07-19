@@ -148,15 +148,18 @@ const MainPanel = ({
 
   if (showCaseInput && !specialtyConfirmed) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center h-full p-4">
-        <div className={`${fadeAwayClass} ${!specialtyConfirmed ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+      <main className="flex-1 flex flex-col items-center justify-center h-full p-4">
+        <div className="text-center mb-8">
+          <WelcomeText show={true} firstName={firstName} />
+        </div>
+        <div className={`${fadeAwayClass} w-full max-w-md ${!specialtyConfirmed ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
           <SpecialtySelectionView
             currentSpecialty={selectedSpecialty}
             onSpecialtyChange={setSelectedSpecialty}
             onConfirm={handleSpecialtyConfirmed}
           />
         </div>
-      </div>
+      </main>
     );
   }
 
