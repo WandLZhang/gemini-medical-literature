@@ -28,45 +28,164 @@ const SpecialtySelectionView = ({ currentSpecialty, onSpecialtyChange, onConfirm
     }
   };
 
+  const containerStyle = {
+    position: 'relative',
+    padding: 'var(--unit-5)',
+    background: 'linear-gradient(135deg, var(--surface-container-low) 0%, var(--surface-container) 100%)',
+    borderRadius: '16px',
+    border: '1px solid rgba(0, 0, 0, 0.05)',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.12)',
+    width: '100%',
+    maxWidth: '450px',
+    margin: '0',
+    ...((className && className.includes('hover')) ? {
+      background: 'linear-gradient(135deg, var(--surface-container) 0%, var(--surface-container-high) 100%)',
+      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)',
+      transform: 'translateY(-2px)'
+    } : {})
+  };
+
+  const labelStyle = {
+    display: 'inline-block',
+    fontSize: '1rem',
+    fontWeight: '600',
+    color: 'var(--primary)',
+    marginBottom: 'var(--unit-2)',
+    position: 'relative',
+    padding: '0',
+    top: '0',
+    left: '0',
+    background: 'transparent'
+  };
+
+  const descriptionStyle = {
+    fontSize: '0.875rem',
+    color: 'var(--on-surface-variant)',
+    marginBottom: 'var(--unit-3)',
+    lineHeight: '1.5'
+  };
+
+  const selectContainerStyle = {
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 'var(--unit-3)'
+  };
+
+  const selectStyle = {
+    flex: '1',
+    padding: 'var(--unit-4)',
+    paddingRight: 'var(--unit-10)',
+    border: '2px solid var(--outline-variant)',
+    borderRadius: '12px',
+    fontSize: '0.875rem',
+    lineHeight: '1.6',
+    background: 'var(--surface)',
+    color: 'var(--on-surface)',
+    transition: 'all 0.3s ease',
+    fontFamily: 'var(--font)',
+    WebkitAppearance: 'none',
+    MozAppearance: 'none',
+    appearance: 'none',
+    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23444746' class='bi bi-chevron-down' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E")`,
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'right var(--unit-4) center',
+    cursor: 'pointer',
+    outline: 'none'
+  };
+
+  const selectFocusStyle = currentSpecialty ? {
+    borderColor: 'var(--primary)',
+    boxShadow: '0 0 0 4px rgba(11, 87, 208, 0.1), 0 2px 8px rgba(11, 87, 208, 0.05)',
+    background: 'var(--surface-bright)'
+  } : {};
+
+  const buttonStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '48px',
+    height: '48px',
+    borderRadius: '12px',
+    border: 'none',
+    background: currentSpecialty 
+      ? 'linear-gradient(135deg, var(--primary) 0%, #0842a0 100%)'
+      : 'var(--surface-variant)',
+    color: currentSpecialty ? 'var(--on-primary)' : 'var(--on-surface-variant)',
+    cursor: currentSpecialty ? 'pointer' : 'not-allowed',
+    transition: 'all 0.3s ease',
+    boxShadow: currentSpecialty 
+      ? '0 2px 8px rgba(11, 87, 208, 0.3), 0 1px 3px rgba(11, 87, 208, 0.2)'
+      : 'none',
+    outline: 'none'
+  };
+
+  const buttonHoverStyle = currentSpecialty ? {
+    background: 'linear-gradient(135deg, #0842a0 0%, #062e6f 100%)',
+    boxShadow: '0 4px 12px rgba(11, 87, 208, 0.4), 0 2px 4px rgba(11, 87, 208, 0.3)',
+    transform: 'translateY(-1px)'
+  } : {};
+
+  const [isHovering, setIsHovering] = React.useState(false);
+  const [isFocused, setIsFocused] = React.useState(false);
+  const [isButtonHovering, setIsButtonHovering] = React.useState(false);
+
   return (
-    <div className={`bg-white border border-gray-200 rounded-3xl p-6 pb-5 w-full min-w-[600px] flex flex-col transition-all duration-300 ease-in-out shadow-sm hover:shadow-md relative mb-8 px-8 ${className || ''}`}>
-      <div className="flex flex-col">
-        <h2 className="text-gray-800 text-sm font-medium mb-4">Select your specialty to continue</h2>
-        
-        <div className="relative mb-4">
-          <select
-            value={currentSpecialty}
-            onChange={(e) => onSpecialtyChange(e.target.value)}
-            className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-4 py-3 pr-10 text-sm text-gray-800 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 cursor-pointer"
-          >
-            <option value="" disabled>
-              Choose a specialty
-            </option>
-            {specialties.map((specialty) => (
-              <option key={specialty.id} value={specialty.id}>
-                {specialty.label}
-              </option>
-            ))}
-          </select>
-          <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
-            <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
-          </div>
-        </div>
-      </div>
+    <div 
+      style={{
+        ...containerStyle,
+        ...(isHovering ? {
+          background: 'linear-gradient(135deg, var(--surface-container) 0%, var(--surface-container-high) 100%)',
+          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)',
+          transform: 'translateY(-2px)'
+        } : {})
+      }}
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
+      className={className}
+    >
+      <label style={labelStyle} htmlFor="specialty-select">
+        Medical Specialty
+      </label>
+      <p style={descriptionStyle}>
+        Select your specialty to continue
+      </p>
       
-      <div className="flex items-center justify-end flex-shrink-0">
+      <div style={selectContainerStyle}>
+        <select
+          id="specialty-select"
+          value={currentSpecialty}
+          onChange={(e) => onSpecialtyChange(e.target.value)}
+          style={{
+            ...selectStyle,
+            ...(isFocused ? selectFocusStyle : {})
+          }}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+        >
+          <option value="" disabled>
+            Choose a specialty...
+          </option>
+          {specialties.map((specialty) => (
+            <option key={specialty.id} value={specialty.id}>
+              {specialty.label}
+            </option>
+          ))}
+        </select>
+        
         <button
           onClick={handleConfirm}
           disabled={!currentSpecialty}
-          className={`flex items-center justify-center rounded-full w-10 h-10 focus:outline-none focus:ring-2 transition-all duration-300 shadow-sm ${
-            currentSpecialty
-              ? "bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-300"
-              : "bg-gray-300 text-gray-500 cursor-not-allowed"
-          }`}
+          style={{
+            ...buttonStyle,
+            ...(isButtonHovering && currentSpecialty ? buttonHoverStyle : {})
+          }}
+          onMouseEnter={() => setIsButtonHovering(true)}
+          onMouseLeave={() => setIsButtonHovering(false)}
+          aria-label="Continue with selected specialty"
         >
-          <ArrowRight className="w-5 h-5" />
+          <ArrowRight style={{ width: '20px', height: '20px' }} />
         </button>
       </div>
     </div>
