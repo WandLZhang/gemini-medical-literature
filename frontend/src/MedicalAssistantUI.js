@@ -15,7 +15,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 
 // Components
-import DisclaimerModal from './components/DisclaimerModal';
+import IntendedUseModal from './components/IntendedUseModal';
 import SpecialtySelector from './components/SpecialtySelector';
 import { WrappedExpandableSidebar } from './components/ExpandableSidebar';
 import TopBar from './components/TopBar';
@@ -39,7 +39,7 @@ import { diseaseExtractionPrompts, eventExtractionPrompts, extractionPrompt, pro
 const createMessageId = (type) => `${Date.now()}-${type}-${Math.random().toString(36).substr(2, 9)}`;
 
 const MedicalAssistantUI = () => {
-  const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const [showIntendedUse, setShowIntendedUse] = useState(true);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isGeneratingSample, setIsGeneratingSample] = useState(false);
   const [showSpecialtySelector, setShowSpecialtySelector] = useState(false);
@@ -125,17 +125,9 @@ const handleSidebarToggle = () => {
     setIsGeneratingSample(false);
   };
 
-  // Effect to show disclaimer on initial load
-  useEffect(() => {
-    const hasSeenDisclaimer = localStorage.getItem('hasSeenDisclaimer');
-    if (!hasSeenDisclaimer) {
-      setShowDisclaimer(true);
-    }
-  }, []);
-
-  const handleCloseDisclaimer = () => {
-    localStorage.setItem('hasSeenDisclaimer', 'true');
-    setShowDisclaimer(false);
+  // No effect needed - modal shows on every visit
+  const handleCloseIntendedUse = () => {
+    setShowIntendedUse(false);
   };
 
   // Effect to handle loading case information when chat history changes
@@ -495,8 +487,8 @@ useEffect(() => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
-      <DisclaimerModal isOpen={showDisclaimer} onClose={handleCloseDisclaimer} />
+    <div className="flex flex-col h-screen bg-gray-50">
+      <IntendedUseModal isOpen={showIntendedUse} onClose={handleCloseIntendedUse} />
       <TopBar 
         user={user}
         firstName={firstName}

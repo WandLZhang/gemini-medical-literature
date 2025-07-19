@@ -12,8 +12,8 @@ logger = logging.getLogger(__name__)
 # Initialize Vertex AI client
 client = genai.Client(
     vertexai=True,
-    project="gemini-med-lit-review",
-    location="us-central1",
+    project=os.environ.get('PROJECT_ID', 'gemini-med-lit-review'),
+    location=os.environ.get('LOCATION', 'global'),
 )
 
 @functions_framework.http

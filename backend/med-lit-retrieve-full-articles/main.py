@@ -19,12 +19,13 @@ journal_impact_data = {}
 def fetch_journal_impact_data():
     """Fetch journal impact data from BigQuery and store in memory."""
     global journal_impact_data
-    query = """
+    project_id = os.environ.get('GENAI_PROJECT_ID', 'gemini-med-lit-review')
+    query = f"""
     SELECT
       `title`,
       `sjr`
     FROM
-      `gemini-med-lit-review.journal_rank.scimagojr_2023`
+      `{project_id}.journal_rank.scimagojr_2023`
     ORDER BY 
       sjr DESC
     """
@@ -38,13 +39,13 @@ def fetch_journal_impact_data():
     except Exception as e:
         logger.error(f"Error fetching journal impact data: {str(e)}")
 
-# Initialize clients
+# Initialize clients with environment variables
 client = genai.Client(
     vertexai=True,
-    project="gemini-med-lit-review",
-    location="us-central1",
+    project=os.environ.get('GENAI_PROJECT_ID', 'gemini-med-lit-review'),
+    location=os.environ.get('LOCATION', 'us-central1'),
 )
-bq_client = bigquery.Client(project="playground-439016")
+bq_client = bigquery.Client(project=os.environ.get('BIGQUERY_PROJECT_ID', 'playground-439016'))
 
 def normalize_journal_score(sjr):
     """Normalize journal SJR score to points between 0-25 to align with other scoring metrics."""
@@ -363,34 +364,33 @@ def analyze_with_gemini(article_text, pmid, methodology_content=None, disease=No
         return None
 
 def create_bq_query(events_text, num_articles=15):
+    project_id = os.environ.get('BIGQUERY_PROJECT_ID', 'playground-439016')
     return f"""
     DECLARE query_text STRING;
     SET query_text = \"\"\"
-    {events_text}
-    \"\"\";
-
+{events_text}
+\"\"\";
     WITH query_embedding AS (
       SELECT ml_generate_embedding_result AS embedding_col
       FROM ML.GENERATE_EMBEDDING(
-        MODEL `playground-439016.pmid_uscentral.textembed`,
+        MODEL `{project_id}.pmid_uscentral.textembed`,
         (SELECT query_text AS content),
         STRUCT(TRUE AS flatten_json_output)
       )
     )
-    SELECT 
-  base.name as name,  -- This is the PMCID from pmid_embed_nonzero table
-  PMID,              -- This is the PMID from pmid_metadata table
+    SELECT
+  base.name as PMCID,
   base.content,
   distance
     FROM VECTOR_SEARCH(
-    TABLE `playground-439016.pmid_uscentral.pmid_embed_nonzero`,
+    TABLE `{project_id}.pmid_uscentral.pmid_embed_nonzero`,
     'ml_generate_embedding_result',
     (SELECT embedding_col FROM query_embedding),
     top_k => {num_articles}
     ) results
-    JOIN `playground-439016.pmid_uscentral.pmid_embed_nonzero` base 
+    JOIN `{project_id}.pmid_uscentral.pmid_embed_nonzero` base 
     ON results.base.name = base.name  -- Join on PMCID
-    JOIN playground-439016.pmid_uscentral.pmid_metadata metadata
+    JOIN {project_id}.pmid_uscentral.pmid_metadata metadata
     ON base.name = metadata.AccessionID  -- Join on PMCID (AccessionID is PMCID)
     ORDER BY distance ASC;
     """

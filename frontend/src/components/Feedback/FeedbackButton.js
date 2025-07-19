@@ -24,7 +24,7 @@ const FeedbackButton = ({ onClick }) => {
   return (
     <button
       onClick={onClick}
-      className="fixed bottom-20 right-6 z-50 flex items-center justify-center px-4 h-12 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
+      className="fixed bottom-20 right-6 flex items-center justify-center px-4 h-12 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
       aria-label="Send Feedback"
       title="Send Feedback"
     >

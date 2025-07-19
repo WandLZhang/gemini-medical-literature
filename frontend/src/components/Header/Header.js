@@ -26,7 +26,7 @@ const Header = ({ user, firstName, handleLogin, handleLogout, showUserMenu, setS
     <div className="p-4 flex justify-end items-center">
       <div className="flex items-center">
         {showLoginButton ? (
-          <div className="relative z-20">
+          <div className="relative">
             <button
               onClick={() => {
                 console.log('[USER_MENU_DEBUG] Header: Login button clicked');
