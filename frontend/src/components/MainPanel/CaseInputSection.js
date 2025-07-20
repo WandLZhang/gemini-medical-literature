@@ -302,42 +302,30 @@ const CaseInputSection = ({
   };
 
   const adjustAllTextareas = () => {
-    // When both textareas are visible, split the available height
     if (showLabResults && caseNotesRef.current && labResultsRef.current) {
       const maxTotalHeight = calculateMaxHeight();
-      
-      // Calculate natural heights
       caseNotesRef.current.style.height = 'auto';
       labResultsRef.current.style.height = 'auto';
-      
       const caseNotesHeight = caseNotesRef.current.scrollHeight + 4;
       const labResultsHeight = labResultsRef.current.scrollHeight + 4;
-      const totalHeight = caseNotesHeight + labResultsHeight + 20; // 20px for gap
-      
+      const totalHeight = caseNotesHeight + labResultsHeight + 20;
       if (totalHeight > maxTotalHeight) {
-        // Need to constrain heights
-        const availableForTextareas = maxTotalHeight - 20; // Subtract gap
+        const availableForTextareas = maxTotalHeight - 20;
         const caseNotesRatio = caseNotesHeight / totalHeight;
         const labResultsRatio = labResultsHeight / totalHeight;
-        
         const caseNotesMaxHeight = Math.floor(availableForTextareas * caseNotesRatio);
         const labResultsMaxHeight = Math.floor(availableForTextareas * labResultsRatio);
-        
-        caseNotesRef.current.style.height = Math.min(caseNotesHeight, caseNotesMaxHeight) + 'px';
+        caseNotesRef.current.style.height = `${Math.min(caseNotesHeight, caseNotesMaxHeight)}px`;
         caseNotesRef.current.style.overflowY = caseNotesHeight > caseNotesMaxHeight ? 'auto' : 'hidden';
-        
-        labResultsRef.current.style.height = Math.min(labResultsHeight, labResultsMaxHeight) + 'px';
+        labResultsRef.current.style.height = `${Math.min(labResultsHeight, labResultsMaxHeight)}px`;
         labResultsRef.current.style.overflowY = labResultsHeight > labResultsMaxHeight ? 'auto' : 'hidden';
       } else {
-        // Natural heights fit
-        caseNotesRef.current.style.height = caseNotesHeight + 'px';
+        caseNotesRef.current.style.height = `${caseNotesHeight}px`;
         caseNotesRef.current.style.overflowY = 'hidden';
-        
-        labResultsRef.current.style.height = labResultsHeight + 'px';
+        labResultsRef.current.style.height = `${labResultsHeight}px`;
         labResultsRef.current.style.overflowY = 'hidden';
       }
     } else {
-      // Single textarea
       adjustTextareaHeight(caseNotesRef.current);
       adjustTextareaHeight(labResultsRef.current);
     }
@@ -539,120 +527,121 @@ const CaseInputSection = ({
         onChange={handleFileSelect}
         style={{ display: 'none' }}
       />
-      
-      <div className="case-input-container mt-12 border border-gray-200 rounded-lg p-4" style={{ maxHeight: `${calculateContainerMaxHeight()}px` }}>
-      {(isRedacting || isProcessingPDF) && (
-        <div className="absolute top-0 left-0 right-0 bg-blue-100 bg-opacity-90 text-blue-700 px-2 py-1 text-xs z-10">
-          <div className="flex items-center">
-            <svg className="animate-spin h-3 w-3 mr-1 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            {isProcessingPDF ? 'Processing lab report...' : 'Redacting sensitive information...'}
+      <div 
+        className="case-input-container mt-12 border border-gray-200 rounded-lg p-4 flex flex-col"
+        style={{ maxHeight: `${calculateContainerMaxHeight()}px` }}
+      >
+        {(isRedacting || isProcessingPDF) && (
+          <div className="absolute top-0 left-0 right-0 bg-blue-100 bg-opacity-90 text-blue-700 px-2 py-1 text-xs z-10">
+            <div className="flex items-center">
+              <svg className="animate-spin h-3 w-3 mr-1 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              {isProcessingPDF ? 'Processing lab report...' : 'Redacting sensitive information...'}
+            </div>
           </div>
-        </div>
-      )}
-      <div className="flex-grow flex flex-col" style={{ overflowY: 'auto' }}>
-        <div className="relative">
-          <textarea
-            ref={caseNotesRef}
-            className="w-full bg-transparent text-gray-800 text-sm placeholder-gray-400 border-none focus:outline-none resize-none mb-2 overflow-y-auto"
-            value={localCaseNotes + (focusedInput === 'caseNotes' && isListening ? ' ' + interimTranscript : '')}
-            onChange={handleCaseNotesChange}
-            onFocus={handleCaseNotesFocus}
-            onBlur={handleCaseNotesBlur}
-            placeholder="Please input your case notes"
-            style={{ minHeight: '3em' }}
-          />
-        </div>
-        
-        {showLabResults && (
-          <div className="mt-2 pt-4 border-t border-gray-100">
+        )}
+        <div className="flex-grow overflow-y-auto">
+          <div className="relative">
             <textarea
-              ref={labResultsRef}
-              className="w-full bg-transparent text-gray-800 text-sm placeholder-gray-400 border-none focus:outline-none resize-none overflow-y-auto"
-              value={localLabResults + (focusedInput === 'labResults' && isListening ? ' ' + interimTranscript : '')}
-              onChange={handleLabResultsChange}
-              onFocus={handleLabResultsFocus}
-              onBlur={handleLabResultsBlur}
-              placeholder="Enter lab results here"
+              ref={caseNotesRef}
+              className="w-full bg-transparent text-gray-800 text-sm placeholder-gray-400 border-none focus:outline-none resize-none mb-2"
+              value={localCaseNotes + (focusedInput === 'caseNotes' && isListening ? ' ' + interimTranscript : '')}
+              onChange={handleCaseNotesChange}
+              onFocus={handleCaseNotesFocus}
+              onBlur={handleCaseNotesBlur}
+              placeholder="Please input your case notes"
               style={{ minHeight: '3em' }}
             />
           </div>
-        )}
-      </div>
-      
-      <div className="flex flex-col sm:flex-row items-center justify-between mt-4 sm:mt-2 flex-shrink-0 relative">
-        <div className="w-full sm:w-auto flex items-center justify-between mb-4 sm:mb-0">
-          <button
-            onClick={toggleLabResults}
-            className="flex items-center text-gray-600 hover:text-gray-800 hover:bg-gray-100 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={showLabResults ? "M20 12H4" : "M12 4v16m8-8H4"} />
-            </svg>
-            {showLabResults ? 'Hide lab results' : 'Add lab results'}
-          </button>
-          <div className="flex items-center ml-4 sm:ml-12">
-            <label htmlFor="numArticles" className="text-gray-600 text-sm font-medium mr-2 bg-transparent"># of articles:</label>
-            <input
-              id="numArticles"
-              type="number"
-              min="1"
-              max="50"
-              value={numArticles}
-              onChange={(e) => {
-                const value = Math.min(50, Math.max(1, parseInt(e.target.value) || 15));
-                setNumArticles(value);
-              }}
-              className="w-16 subtle-input"
-            />
+          {showLabResults && (
+            <div className="mt-2 pt-4 border-t border-gray-100">
+              <textarea
+                ref={labResultsRef}
+                className="w-full bg-transparent text-gray-800 text-sm placeholder-gray-400 border-none focus:outline-none resize-none"
+                value={localLabResults + (focusedInput === 'labResults' && isListening ? ' ' + interimTranscript : '')}
+                onChange={handleLabResultsChange}
+                onFocus={handleLabResultsFocus}
+                onBlur={handleLabResultsBlur}
+                placeholder="Enter lab results here"
+                style={{ minHeight: '3em' }}
+              />
+            </div>
+          )}
+        </div>
+        <div className="flex-shrink-0 pt-2">
+          <div className="flex flex-col sm:flex-row items-center justify-between mt-4 sm:mt-2 relative">
+            <div className="w-full sm:w-auto flex items-center justify-between mb-4 sm:mb-0">
+              <button
+                onClick={toggleLabResults}
+                className="flex items-center text-gray-600 hover:text-gray-800 hover:bg-gray-100 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+>>>>>>>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={showLabResults ? "M20 12H4" : "M12 4v16m8-8H4"} />
+                </svg>
+                {showLabResults ? 'Hide lab results' : 'Add lab results'}
+              </button>
+              <div className="flex items-center ml-4 sm:ml-12">
+                <label htmlFor="numArticles" className="text-gray-600 text-sm font-medium mr-2 bg-transparent"># of articles:</label>
+                <input
+                  id="numArticles"
+                  type="number"
+                  min="1"
+                  max="50"
+                  value={numArticles}
+                  onChange={(e) => {
+                    const value = Math.min(50, Math.max(1, parseInt(e.target.value) || 15));
+                    setNumArticles(value);
+                  }}
+                  className="w-16 subtle-input"
+                />
+              </div>
+            </div>
+            <div className="w-full sm:w-auto flex items-center justify-end space-x-4">
+              <button
+                onClick={handleExampleClick}
+                className="text-gray-600 hover:text-gray-800 hover:bg-gray-100 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200"
+              >
+                Example
+              </button>
+              <button
+                onClick={handleClear}
+                className="text-gray-600 hover:text-gray-800 hover:bg-gray-100 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200"
+              >
+                Clear
+              </button>
+              <button
+                onClick={handleButtonClick}
+                disabled={isProcessing}
+                className={`flex items-center justify-center rounded-full w-10 h-10 focus:outline-none focus:ring-2 transition-all duration-300 shadow-sm ${
+                  isProcessing ? "bg-gray-400 text-white focus:ring-gray-300" :
+                  isListening ? "bg-red-500 hover:bg-red-600 text-white focus:ring-red-300 animate-pulse" :
+                  hasInput ? "bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-300" :
+                  "bg-gray-700 hover:bg-gray-800 text-white focus:ring-gray-400"
+                }`}
+              >
+                {isProcessing ? (
+                  <div className="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
+                ) : isListening ? (
+                  <MicOff className="w-5 h-5" />
+                ) : hasInput ? (
+                  <ArrowRight className="w-5 h-5" />
+                ) : (
+                  <Mic className="w-5 h-5" />
+                )}
+              </button>
+            </div>
           </div>
-        </div>
-        
-        <div className="w-full sm:w-auto flex items-center justify-end space-x-4">
-          <button
-            onClick={handleExampleClick}
-            className="text-gray-600 hover:text-gray-800 hover:bg-gray-100 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200"
-          >
-            Example
-          </button>
-          <button
-            onClick={handleClear}
-            className="text-gray-600 hover:text-gray-800 hover:bg-gray-100 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200"
-          >
-            Clear
-          </button>
-          <button
-            onClick={handleButtonClick}
-            disabled={isProcessing}
-            className={`flex items-center justify-center rounded-full w-10 h-10 focus:outline-none focus:ring-2 transition-all duration-300 shadow-sm ${
-              isProcessing ? "bg-gray-400 text-white focus:ring-gray-300" :
-              isListening ? "bg-red-500 hover:bg-red-600 text-white focus:ring-red-300 animate-pulse" :
-              hasInput ? "bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-300" :
-              "bg-gray-700 hover:bg-gray-800 text-white focus:ring-gray-400"
-            }`}
-          >
-            {isProcessing ? (
-              <div className="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
-            ) : isListening ? (
-              <MicOff className="w-5 h-5" />
-            ) : hasInput ? (
-              <ArrowRight className="w-5 h-5" />
-            ) : (
-              <Mic className="w-5 h-5" />
-            )}
-          </button>
+          {error && (
+            <div className="text-red-500 flex items-center mt-2">
+              <AlertTriangle className="w-5 h-5 mr-2" />
+              {error}
+            </div>
+          )}
         </div>
       </div>
-      {error && (
-        <div className="text-red-500 flex items-center mt-2">
-          <AlertTriangle className="w-5 h-5 mr-2" />
-          {error}
-        </div>
-      )}
-    </div>
-    
     {/* Lab Input Choice Modal */}
     <LabInputModal
       isOpen={showLabInputChoiceModal}
@@ -660,8 +649,7 @@ const CaseInputSection = ({
       onUploadClick={handleModalUploadClick}
       onTextClick={handleModalTextClick}
     />
-    </>
-  );
+  </>
+);
 };
-
 export default CaseInputSection;

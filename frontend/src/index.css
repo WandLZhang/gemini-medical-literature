@@ -563,7 +563,7 @@ input[type="submit"]:hover,
 input[type="reset"]:hover,
 input[type="button"]:hover,
 input[type="file"]::file-selector-button:hover {
-  background-color: var(--on-primary-container);
+  background-color: rgba(0, 0, 0, 0.1);
 }
 
 button:disabled,
