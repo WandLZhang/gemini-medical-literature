@@ -101,6 +101,36 @@ Output: Amyotrophic Lateral Sclerosis (ALS)
 
 Extract the disease from the provided patient information. Only output the disease name, exactly as it is written in the case notes. Do not include any other text or formatting.
 
+Case notes:`,
+
+  general_pediatrics: `You are an expert pediatrician with extensive experience in pediatric rheumatology and autoimmune conditions. Your role is to analyze patient case notes and identify the primary disease being discussed.
+
+Input: Patient case notes, as provided by a clinician. This will include information on diagnosis, treatment history, and relevant diagnostic findings.
+
+Task:
+
+Disease Extraction:
+
+Carefully analyze the patient case notes.
+
+Identify the primary disease the patient is diagnosed with and/or being treated for. Extract this disease name exactly as it is written in the notes. It should be the initial diagnosis.
+
+Example:
+
+Case Note Input: "A 7-year-old female diagnosed with juvenile rheumatoid arthritis (JRA) presenting with polyarticular involvement..."
+
+Output: juvenile rheumatoid arthritis (JRA)
+
+Case Note Input: "10 y/o boy with systemic juvenile idiopathic arthritis (sJIA) with fever spikes and salmon-colored rash..."
+
+Output: systemic juvenile idiopathic arthritis (sJIA)
+
+Case Note Input: "A 12-year-old patient with Kawasaki disease complicated by coronary artery aneurysms..."
+
+Output: Kawasaki disease
+
+Extract the disease from the provided patient information. Only output the disease name, exactly as it is written in the case notes. Do not include any other text or formatting.
+
 Case notes:`
 };
 
@@ -215,7 +245,43 @@ Extract actionable events from the provided patient information, such as gene fu
 *   **Specificity:** Use specific terms (e.g., "Freezing of Gait" not just "gait problems"). Extract specific gene mutations.
 *   **Conciseness:** Output only the list of actionable terms/phrases, one per line or separated by a delimiter.
 
-Extract the actionable features from the provided patient information. Only output the list of actionable features/events. Do not include any other text or formatting.`
+Extract the actionable features from the provided patient information. Only output the list of actionable features/events. Do not include any other text or formatting.`,
+
+  general_pediatrics: `You are an expert pediatrician with extensive experience in pediatric rheumatology and autoimmune conditions. Your role is to analyze patient case notes, identify key actionable events that may guide treatment strategies, and formulate precise search queries for literature databases to retrieve relevant clinical research articles.
+
+**Input:** Patient case notes, as provided by a clinician. This will include information on diagnosis, treatment history, and relevant diagnostic findings including lab work and imaging results.
+
+**Task:**
+
+1. **Actionable Event Extraction:** 
+  *  Carefully analyze the patient case notes.
+  *  Identify and extract all clinically relevant and actionable events, such as:
+    *  **Autoimmune markers:** For example, "ANA positive", "RF positive", "anti-CCP positive", "HLA-B27 positive"
+    *  **Inflammatory markers:** For example, "elevated ESR", "elevated CRP", "elevated IL-6"
+    *  **Disease subtype:** For example, "oligoarticular JIA", "polyarticular JIA", "systemic JIA", "enthesitis-related arthritis"
+    *  **Joint involvement patterns:** For example, "knee arthritis", "polyarticular involvement", "small joint involvement", "sacroiliitis"
+    *  **Extra-articular manifestations:** For example, "uveitis", "psoriasis", "inflammatory bowel disease", "macrophage activation syndrome"
+    *  **Specific therapies:** "methotrexate", "etanercept", "adalimumab", "tocilizumab", "abatacept"
+    *  **Treatment response:** For example, "DMARD-resistant", "biologic failure", "steroid-dependent"
+    *  **Complications:** For example, "growth delay", "osteoporosis", "joint damage"
+   *  Focus on information that is directly relevant to potential therapy selection or clinical management. Avoid vague information like "doing well" or "improving". 
+   
+**Example:**
+
+*  **Case Note Input:** "A 9-year-old female diagnosed with polyarticular juvenile idiopathic arthritis (JIA) at age 6, initially presenting with symmetric involvement of knees, ankles, wrists, and small joints of hands. RF positive, anti-CCP positive with high titers. Despite methotrexate therapy for 18 months, she continued to have active synovitis in multiple joints. Etanercept was added but discontinued after 6 months due to recurrent infections. Currently on adalimumab with partial response - improved morning stiffness but persistent synovitis in bilateral wrists and MCPs. Recent labs show elevated ESR 45, CRP 3.2. MRI of hands shows early erosive changes. Also developed asymptomatic anterior uveitis detected on routine screening, currently managed with topical steroids. Growth velocity has declined (now 10th percentile, was 50th percentile at diagnosis)."
+
+**Output:**  
+"polyarticular JIA" "RF positive" "anti-CCP positive" "methotrexate" "etanercept" "adalimumab" "elevated ESR" "elevated CRP" "erosive changes" "anterior uveitis" "growth delay"
+
+**Reasoning and Guidance:**
+
+*  **Focus on Actionable Events:** We extract specific markers, medications, and complications that could influence treatment decisions.
+*  **Specificity:** Use exact terms for autoantibodies and medications to ensure precise literature searches.
+*  **Disease Characteristics:** Include specific subtypes and patterns of joint involvement that may guide therapy.
+*  **Treatment History:** Document both successful and failed therapies as this informs next treatment options.
+*  **Complications:** Include both articular and extra-articular manifestations that require management.
+
+Extract actionable events from the provided patient information, such as autoimmune markers, medications, and disease manifestations. Only output the list of actionable events. Do not include any other text or formatting.`
 };
 
 export const extractionPrompt = eventExtractionPrompts.oncology;
@@ -477,6 +543,94 @@ Please analyze the article and provide a JSON response with the following struct
     "novelty": true/false,
     "overall_points": 0
   }
+}`,
+
+  general_pediatrics: `You are an expert pediatrician with extensive experience in pediatric rheumatology and autoimmune conditions. Your goal is to evaluate full research articles related to pediatric rheumatology and autoimmune diseases to identify potential advancements in treatment and understanding of these conditions.
+
+The patient's disease is: {disease}
+
+The patient's actionable events are: {events}
+
+Journal Impact Data (SJR scores):
+The following is a list of journal titles and their SJR scores. When extracting the journal title from the article, find the best matching title from this list and use its SJR score. If no match is found, use 0 as the SJR score.
+
+Journal Titles and Scores:
+{journal_context}
+
+<Article>
+{article_text}
+</Article>
+
+<Instructions>
+Your task is to read the provided full article and extract key information, and then assess the article's relevance and potential impact. You will generate a JSON object containing metadata and a point-based assessment of the article's value. Please use a consistent JSON structure.
+
+As an expert pediatrician:
+1. Evaluate if the article's disease focus matches the patient's disease. Set disease_match to true if the article's autoimmune/rheumatologic condition is relevant to the patient's condition.
+2. Analyze treatment outcomes. Set treatment_shown to true if the article demonstrates positive treatment results.
+3. For each actionable event you find in the article, determine if it matches any of the patient's actionable events. For specific markers, create appropriate events:
+   - When you find relevant autoimmune markers (e.g., if the article mentions "RF" when patient has "RF positive"), create an event and set matches_query=true
+   - When you find specific medications or treatment approaches matching the patient's events, create corresponding events and set matches_query=true
+
+The scoring system will assess the following (not necessarily exhaustive and inferred):
+*   **Disease Match:** Articles that cover the exact disease in question receive significant points. As an expert pediatrician, carefully evaluate if the article's disease focus matches the patient's disease.
+*   **Clinical Relevance:** Clinical trials score highest, followed by case reports with therapeutic interventions.
+*   **Pediatric Focus:** Articles that focus specifically on pediatric populations receive a significant bonus.
+*   **Treatment Results:** Studies showing actual treatment results with positive outcomes are highly valued. Document specific treatment outcomes in the drug_results field.
+*   **Specific Findings:** Articles that report specific actionable events are given more points.
+*   **Additional Factors:** Cell studies, mice studies, and other research aspects contribute additional points.
+
+Here's the specific information to extract for each article and their points:
+
+1.  **Title:** The title of the paper. (0 Points)
+2.  **Link:** A link to the paper. (0 Points)
+3.  **Year:** Publication year (0 Points)
+4.  **Disease Focus:** Whether the article relates to autoimmune/rheumatologic conditions (Boolean, true or false) (0 Points, but essential for filtering).
+5.  **Pediatric Focus:** Whether the article focuses on pediatric patients specifically (Boolean, true or false) (If true, +20 points)
+6.  **Type of Disease:** The specific type of autoimmune/rheumatologic disease discussed (string, example: JIA, SLE, Kawasaki disease, etc.). (If matches query disease exactly, +50 points)
+7.  **Paper Type:** The type of study (e.g., clinical trial, case report, in vitro study, review, retrospective study, biological rationale). (+40 points for clinical trial, -5 points for review)
+8. **Actionable Event:** Any specific actionable event (e.g., RF positive, anti-CCP, specific medication) mentioned in the paper. Each event will be evaluated against the patient's extracted actionable events, and only matching events will receive points (15 points per matching event)
+9. **Drugs Tested:** Whether any drugs are mentioned as tested (Boolean true or false). (if true, +5 points)
+10. **Drug Results:** Specific results of drugs that were tested. (if positive results shown, +50 points for actual treatment)
+11. **Cell Studies:** Whether drugs were tested on cells in vitro (Boolean true or false) (if true, +5 points).
+12. **Mice Studies:** Whether drugs were tested on mice/animal models (Boolean true or false) (if true, +10 points).
+13. **Case Report:** Whether the article presents a case report (Boolean true or false). (if true, +5 points)
+14. **Series of Case Reports:** Whether the article presents multiple case reports (Boolean true or false) (if true, +10 points).
+15. **Clinical Study:** Whether the article describes a clinical study (Boolean true or false). (if true, +15 points).
+16. **Clinical Study on Children:** Whether the clinical study was specifically on children (Boolean true or false) (if true, +20 points).
+17. **Novelty:** If the paper describes a novel mechanism or therapeutic strategy (Boolean true or false) (if true +10 points)
+18. **Overall Points:** Sum of all points based on the above criteria. (Calculated by the output).
+
+Please analyze the article and provide a JSON response with the following structure:
+
+{
+  "article_metadata": {
+    "title": "...",
+    "journal_title": "...",  // Extract the journal title from the article
+    "journal_sjr": 0,        // Look up the SJR score from the provided list. Use the score of the best matching journal title, or 0 if no match found
+    "year": "...",
+    "disease_focus": true/false,
+    "pediatric_focus": true/false,
+    "type_of_disease": "...",
+    "disease_match": true/false,      // Set to true if article's disease matches patient's disease
+    "paper_type": "...",
+    "actionable_events": [
+      {
+        "event": "...",
+        "matches_query": true/false   // Set to true if this event matches any of the patient's extracted actionable events
+      }
+    ],
+    "drugs_tested": true/false,
+    "drug_results": ["...", "..."],
+    "treatment_shown": true/false,    // Set to true if article shows positive treatment outcomes
+    "cell_studies": true/false,
+    "mice_studies": true/false,
+    "case_report": true/false,
+    "series_of_case_reports": true/false,
+    "clinical_study": true/false,
+    "clinical_study_on_children": true/false,
+    "novelty": true/false,
+    "overall_points": 0
+  }
 }`
 };
 
@@ -525,6 +679,79 @@ After the iLTB discussion, in November 2023 the patient was enrolled in the SNDX
   adult_oncology: {
     caseNotes: '',
     labResults: ''
+  },
+  general_pediatrics: {
+    caseNotes: `Patient: 10-year-old female
+History of Present Illness:
+Emma is a 10-year-old girl diagnosed with juvenile rheumatoid arthritis (JRA) at age 7. She initially presented with symmetric polyarticular involvement affecting both knees, ankles, wrists, and multiple small joints of the hands and feet. Morning stiffness lasting 2-3 hours was prominent at diagnosis, along with significant fatigue and mild fever.
+
+Disease Course:
+Initial presentation included 14 active joints with visible synovitis and warmth. She tested positive for rheumatoid factor (RF) with high titers (RF 186 IU/mL, normal <14) and anti-cyclic citrullinated peptide (anti-CCP) antibodies (>300 U/mL, normal <20). Her disease has been particularly aggressive with early radiographic changes noted within the first year.
+
+Treatment History:
+- Started on naproxen and low-dose prednisone (0.2 mg/kg) at diagnosis
+- Methotrexate (15 mg/m2 subcutaneous weekly) initiated within 2 months due to persistent disease activity
+- After 6 months of inadequate response to methotrexate (persistent synovitis in 8 joints), etanercept was added
+- Etanercept discontinued after 8 months due to recurrent upper respiratory infections and one episode of cellulitis
+- Switched to adalimumab 18 months ago with initial good response
+- Currently on adalimumab 40mg every 2 weeks and methotrexate 20mg weekly
+
+Current Status:
+Despite combination therapy, Emma continues to have active synovitis in bilateral wrists, 2nd and 3rd MCPs bilaterally, and right knee. Morning stiffness has improved to 30-45 minutes. She has developed flexion contractures of both elbows (lacking 15 degrees of full extension).
+
+Complications:
+- Asymptomatic anterior uveitis detected 6 months ago on routine ophthalmology screening, currently managed with prednisolone eye drops
+- Growth deceleration: height dropped from 50th percentile at diagnosis to 15th percentile currently
+- Mild osteopenia on recent DEXA scan
+- Fatigue significantly impacts school attendance and participation in activities
+
+Family is concerned about long-term joint damage and exploring additional treatment options.`,
+    labResults: `Laboratory Results (Recent):
+Inflammatory Markers:
+- ESR: 52 mm/hr (normal 0-20)
+- CRP: 4.8 mg/dL (normal <0.5)
+- Ferritin: 89 ng/mL (normal 15-150)
+
+Autoimmune Profile:
+- RF: 198 IU/mL (normal <14) - persistently elevated
+- Anti-CCP: >300 U/mL (normal <20) - persistently elevated
+- ANA: 1:160 homogeneous pattern
+- Anti-dsDNA: negative
+- C3, C4: normal
+
+Complete Blood Count:
+- Hemoglobin: 10.8 g/dL (mild anemia of chronic disease)
+- WBC: 8,200/μL with normal differential
+- Platelets: 485,000/μL (mild thrombocytosis)
+
+Metabolic Panel:
+- Normal renal function
+- Mild transaminitis (ALT 48, AST 42) - stable, attributed to methotrexate
+
+Imaging:
+Hand/Wrist X-rays (6 months ago):
+- Periarticular osteopenia
+- Joint space narrowing in multiple MCPs and PIPs
+- Early erosive changes in right 2nd and 3rd MCPs
+- Soft tissue swelling around active joints
+
+Knee MRI (3 months ago):
+- Moderate synovial hypertrophy with enhancement
+- Small joint effusion
+- No cartilage loss or erosions
+
+Ophthalmology:
+- Slit lamp exam: Trace cells in anterior chamber of left eye
+- No synechiae or other complications
+
+DEXA Scan:
+- Lumbar spine Z-score: -1.8
+- Total body less head Z-score: -1.5
+
+Recent Drug Monitoring:
+- Methotrexate polyglutamate levels: therapeutic range
+- Adalimumab trough level: 8.2 μg/mL (therapeutic range 5-10)
+- No anti-drug antibodies detected`
   }
 };
 

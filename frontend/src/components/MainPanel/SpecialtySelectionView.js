@@ -19,7 +19,8 @@ const SpecialtySelectionView = ({ currentSpecialty, onSpecialtyChange, onConfirm
   const specialties = [
     { id: 'oncology', label: 'Pediatric Oncology' },
     { id: 'adult_oncology', label: 'Adult Oncology' },
-    { id: 'neurology', label: 'Neurology' }
+    { id: 'neurology', label: 'Neurology' },
+    { id: 'general_pediatrics', label: 'General Pediatrics' }
   ];
 
   const handleConfirm = () => {

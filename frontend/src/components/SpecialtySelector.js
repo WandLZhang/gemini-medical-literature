@@ -90,6 +90,19 @@ const SpecialtySelector = ({ isOpen, onClose, onSelectSpecialty }) => {
               <label htmlFor="neurology" className="ml-3 text-lg cursor-pointer">Neurology</label>
             </div>
           </div>
+          
+          {/* General Pediatrics Option */}
+          <div 
+            className={`border border-gray-200 rounded-lg p-4 cursor-pointer transition hover:border-blue-400 hover:bg-blue-50 ${selectedSpecialty === 'general_pediatrics' ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' : ''}`}
+            onClick={() => setSelectedSpecialty('general_pediatrics')}
+          >
+            <div className="flex items-center">
+              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedSpecialty === 'general_pediatrics' ? 'border-blue-500' : 'border-gray-400'}`}>
+                {selectedSpecialty === 'general_pediatrics' && <div className="w-3 h-3 rounded-full bg-blue-500"></div>}
+              </div>
+              <label htmlFor="general_pediatrics" className="ml-3 text-lg cursor-pointer">General Pediatrics</label>
+            </div>
+          </div>
         </div>
         
         <div className="flex justify-end mt-6">
