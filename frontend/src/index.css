@@ -622,3 +622,9 @@ select[multiple] option {
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+  input[type="number"].subtle-input {
+    @apply border-gray-200 !important;
+  }
+}

@@ -148,22 +148,24 @@ const MainPanel = ({
 
   if (showCaseInput) {
     return (
-      <main className="flex-1 flex flex-col items-center h-full p-4 pt-40 sm:pt-40 pb-32">
-        <div className="text-center mb-4" style={{ minHeight: '100px' }}>
+      <main className="flex-1 flex flex-col h-full overflow-hidden px-4">
+        <div className="flex-shrink-0 text-center pt-40 sm:pt-40 lg:pt-56" style={{ maxHeight: '20vh' }}>
           <WelcomeText show={true} firstName={firstName} />
         </div>
         {!specialtyConfirmed ? (
-          <div 
-            className={`${fadeAwayClass} w-full max-w-md mt-8 ${!specialtyConfirmed ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-          >
-            <SpecialtySelectionView
-              currentSpecialty={selectedSpecialty}
-              onSpecialtyChange={setSelectedSpecialty}
-              onConfirm={handleSpecialtyConfirmed}
-            />
+          <div className="flex-grow flex items-center justify-center">
+            <div 
+              className={`${fadeAwayClass} w-full max-w-md ${!specialtyConfirmed ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+            >
+              <SpecialtySelectionView
+                currentSpecialty={selectedSpecialty}
+                onSpecialtyChange={setSelectedSpecialty}
+                onConfirm={handleSpecialtyConfirmed}
+              />
+            </div>
           </div>
         ) : (
-          <div className="w-full sm:max-w-4xl mx-auto mt-8">
+          <div className="flex-grow w-full sm:max-w-2xl mx-auto mt-24 pb-32">
             <div className={`${fadeAwayClass} ${specialtyConfirmed ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
               <CaseInputSection
                 caseNotes={caseNotes}
