@@ -468,7 +468,6 @@ label {
   left: var(--unit-2);
   padding: 0 8px;
   z-index: 10;
-  background-color: var(--surface-variant);
   margin-bottom: 8px;
   color: (var(--on-surface-variant));
   font-size: 83%;
