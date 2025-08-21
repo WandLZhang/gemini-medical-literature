@@ -338,7 +338,7 @@ export const generateFinalAnalysis = async (caseNotes, disease, events, analyzed
       analyzed_articles: analyzedArticles
     });
 
-    const response = await fetch(`https://medical-lit-final-analysis-934163632848.us-central1.run.app`, {
+    const response = await fetch(`https://medical-lit-final-analysis-jlrwvtesnq-uc.a.run.app`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

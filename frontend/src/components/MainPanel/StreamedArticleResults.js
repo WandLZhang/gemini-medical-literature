@@ -83,9 +83,13 @@ const StreamedArticleResults = ({ currentProgress, article, initialExpanded = tr
           <tbody>
             <tr>
               <td className="px-4 py-2 text-xs border-t text-gray-500 max-h-20 overflow-y-auto">
-                <a href={`https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                  {article.pmid}
-                </a>
+                {article.link ? (
+                  <a href={article.link} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                    {article.pmid}
+                  </a>
+                ) : (
+                  <span>{article.pmid}</span>
+                )}
               </td>
               <td className="px-4 py-2 text-xs border-t text-gray-500" style={{ maxHeight: '80px', overflowY: 'auto', display: 'block', minWidth: '200px', padding: '8px 16px' }}>{article.title}</td>
               <td className="px-4 py-2 text-xs border-t text-gray-500">{article.year}</td>

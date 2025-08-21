@@ -7,6 +7,7 @@ import json
 import logging
 import time
 import math
+import os
 from datetime import datetime
 
 # Configure logging
@@ -20,12 +21,13 @@ def fetch_journal_impact_data():
     """Fetch journal impact data from BigQuery and store in memory."""
     global journal_impact_data
     project_id = os.environ.get('GENAI_PROJECT_ID', 'gemini-med-lit-review')
+    journal_dataset = os.environ.get('JOURNAL_DATASET', 'journal_rank')
     query = f"""
     SELECT
       `title`,
       `sjr`
     FROM
-      `{project_id}.journal_rank.scimagojr_2023`
+      `{project_id}.{journal_dataset}.scimagojr_2023`
     ORDER BY 
       sjr DESC
     """
@@ -33,19 +35,22 @@ def fetch_journal_impact_data():
         query_job = bq_client.query(query)
         results = query_job.result()
         
-        # Convert to dictionary for faster lookups
-        journal_impact_data = {row['title']: float(row['sjr']) for row in results}
-        logger.info(f"Loaded {len(journal_impact_data)} journal impact records")
+        # Convert to dictionary for faster lookups, handling None values
+        journal_impact_data = {}
+        for row in results:
+            if row['sjr'] is not None:
+                journal_impact_data[row['title']] = float(row['sjr'])
+        logger.info(f"Loaded {len(journal_impact_data)} journal impact records with valid SJR scores")
     except Exception as e:
         logger.error(f"Error fetching journal impact data: {str(e)}")
 
-# Initialize clients with environment variables
+# Initialize clients
 client = genai.Client(
     vertexai=True,
     project=os.environ.get('GENAI_PROJECT_ID', 'gemini-med-lit-review'),
     location=os.environ.get('LOCATION', 'us-central1'),
 )
-bq_client = bigquery.Client(project=os.environ.get('BIGQUERY_PROJECT_ID', 'playground-439016'))
+bq_client = bigquery.Client(project=os.environ.get('BIGQUERY_PROJECT_ID', 'wz-data-catalog-demo'))
 
 def normalize_journal_score(sjr):
     """Normalize journal SJR score to points between 0-25 to align with other scoring metrics."""
@@ -332,7 +337,7 @@ def analyze_with_gemini(article_text, pmid, methodology_content=None, disease=No
                 return None
                 
             metadata = analysis['article_metadata']
-            required_fields = ['title', 'journal_title', 'journal_sjr', 'type_of_disease', 'paper_type', 'actionable_events']
+            required_fields = ['title', 'journal_title', 'journal_sjr', 'disease_focus', 'type_of_disease', 'paper_type', 'actionable_events']
             for field in required_fields:
                 if field not in metadata:
                     logger.error(f"Invalid JSON structure - missing {field}")
@@ -345,9 +350,8 @@ def analyze_with_gemini(article_text, pmid, methodology_content=None, disease=No
         # Process metadata and calculate points
         if 'article_metadata' in analysis:
             metadata = analysis['article_metadata']
-            # Add PMID and generate link
+            # Store PMID if available, but we'll use PMCID for links
             metadata['PMID'] = pmid
-            metadata['link'] = f'https://pubmed.ncbi.nlm.nih.gov/{pmid}/'
             
             # Calculate points with disease information
             points, point_breakdown = calculate_points(metadata, disease)
@@ -364,35 +368,33 @@ def analyze_with_gemini(article_text, pmid, methodology_content=None, disease=No
         return None
 
 def create_bq_query(events_text, num_articles=15):
-    project_id = os.environ.get('BIGQUERY_PROJECT_ID', 'playground-439016')
+    project_id = os.environ.get('BIGQUERY_PROJECT_ID', 'wz-data-catalog-demo')
+    pmid_dataset = os.environ.get('PMID_DATASET', 'pubmed')
+    # Use the pre-joined table from the same project/dataset
+    pubmed_table = f'{project_id}.{pmid_dataset}.pmid_embed_nonzero_metadata'
+    embedding_model = f'{project_id}.{pmid_dataset}.textembed'
+    
     return f"""
     DECLARE query_text STRING;
     SET query_text = \"\"\"
-{events_text}
-\"\"\";
-    WITH query_embedding AS (
-      SELECT ml_generate_embedding_result AS embedding_col
-      FROM ML.GENERATE_EMBEDDING(
-        MODEL `{project_id}.pmid_uscentral.textembed`,
-        (SELECT query_text AS content),
-        STRUCT(TRUE AS flatten_json_output)
-      )
+    {events_text}
+    \"\"\";
+
+    WITH vector_results AS (
+        SELECT base.name AS PMCID, base.PMID, base.content, distance 
+        FROM VECTOR_SEARCH(
+            TABLE `{pubmed_table}`, 
+            'ml_generate_embedding_result', 
+            (SELECT ml_generate_embedding_result 
+             FROM ML.GENERATE_EMBEDDING(
+                 MODEL `{embedding_model}`, 
+                 (SELECT query_text AS content)
+             )), 
+            top_k => {num_articles}
+        )
     )
-    SELECT
-  base.name as PMCID,
-  base.content,
-  distance
-    FROM VECTOR_SEARCH(
-    TABLE `{project_id}.pmid_uscentral.pmid_embed_nonzero`,
-    'ml_generate_embedding_result',
-    (SELECT embedding_col FROM query_embedding),
-    top_k => {num_articles}
-    ) results
-    JOIN `{project_id}.pmid_uscentral.pmid_embed_nonzero` base 
-    ON results.base.name = base.name  -- Join on PMCID
-    JOIN {project_id}.pmid_uscentral.pmid_metadata metadata
-    ON base.name = metadata.AccessionID  -- Join on PMCID (AccessionID is PMCID)
-    ORDER BY distance ASC;
+    SELECT * FROM vector_results
+    ORDER BY distance
     """
 
 def stream_response(events_text, methodology_content=None, disease=None, num_articles=15):
@@ -404,15 +406,15 @@ def stream_response(events_text, methodology_content=None, disease=None, num_art
         results = list(query_job.result())
         total_articles = len(results)
         
-        # Get array of PMIDs from BigQuery results and stream immediately
-        retrieved_pmids = [row['PMID'] for row in results]
-        print(f"Retrieved PMIDs: {retrieved_pmids}")
+        # Get array of PMCIDs from BigQuery results and stream immediately
+        retrieved_pmcids = [row['PMCID'] for row in results]
+        print(f"Retrieved PMCIDs: {retrieved_pmcids}")
 
-        # Stream PMIDs immediately
+        # Stream PMCIDs immediately (keeping field name as "pmids" for frontend compatibility)
         yield json.dumps({
             "type": "pmids",
             "data": {
-                "pmids": retrieved_pmids
+                "pmids": retrieved_pmcids
             }
         }) + "\n"
 
@@ -428,8 +430,8 @@ def stream_response(events_text, methodology_content=None, disease=None, num_art
 
         # Process each article
         for idx, row in enumerate(results, 1):
-            pmcid = row['name']  # This is PMCID from base.name
-            pmid = row['PMID']   # This is PMID from metadata table
+            pmcid = row['PMCID']  # This is PMCID from the query result
+            pmid = row['PMID']   # This is PMID from the query result
             content = row['content']
             
             # Log article details before analysis
@@ -442,9 +444,12 @@ def stream_response(events_text, methodology_content=None, disease=None, num_art
             
             # Analyze with Gemini and prepare complete response object
             try:
-                # Pass PMID for URL generation and metadata
+                # Pass PMID for analysis but we'll use PMCID for links
                 analysis = analyze_with_gemini(content, pmid, methodology_content, disease, events_text)
-                if analysis:
+                if analysis and 'article_metadata' in analysis:
+                    # Add PMCID to metadata and generate PMC link
+                    analysis['article_metadata']['PMCID'] = pmcid
+                    analysis['article_metadata']['link'] = f'https://www.ncbi.nlm.nih.gov/pmc/articles/{pmcid}/'
                     # Create complete response object
                     response_obj = {
                         "type": "article_analysis",
@@ -459,22 +464,22 @@ def stream_response(events_text, methodology_content=None, disease=None, num_art
                     # Send complete JSON object with newline
                     yield json.dumps(response_obj) + "\n"
                 else:
-                    logger.error(f"Failed to analyze article {row['PMID']}")
+                    logger.error(f"Failed to analyze article PMCID: {row['PMCID']}")
                     error_obj = {
                         "type": "error",
                         "data": {
-                            "message": f"Failed to analyze article {row['PMID']}",
+                            "message": f"Failed to analyze article PMCID: {row['PMCID']}",
                             "article_number": idx,
                             "total_articles": total_articles
                         }
                     }
                     yield json.dumps(error_obj) + "\n"
             except Exception as e:
-                logger.error(f"Error processing article {row['PMID']}: {str(e)}")
+                logger.error(f"Error processing article PMCID: {row['PMCID']}: {str(e)}")
                 yield json.dumps({
                     "type": "error",
                     "data": {
-                        "message": f"Error processing article {row['PMID']}: {str(e)}",
+                        "message": f"Error processing article PMCID: {row['PMCID']}: {str(e)}",
                         "article_number": idx,
                         "total_articles": total_articles
                     }
@@ -500,9 +505,6 @@ def stream_response(events_text, methodology_content=None, disease=None, num_art
             }
         }) + "\n"
 
-# Fetch journal impact data when module loads
-fetch_journal_impact_data()
-
 @functions_framework.http
 def retrieve_full_articles(request):
     # Enable CORS
@@ -514,6 +516,10 @@ def retrieve_full_articles(request):
             'Access-Control-Max-Age': '3600'
         }
         return ('', 204, headers)
+    
+    # Fetch journal impact data on first request if not already loaded
+    if not journal_impact_data:
+        fetch_journal_impact_data()
 
     headers = {
         'Access-Control-Allow-Origin': '*',

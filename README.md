@@ -124,18 +124,20 @@ gcloud functions deploy process-lab \
   --allow-unauthenticated \
   --env-vars-file=.env.yaml
 
-# Retrieve Full Articles
-cd ../capricorn-retrieve-full-articles
-gcloud functions deploy retrieve-full-articles \
-  --gen2 \
-  --runtime=python311 \
+# Retrieve Full Articles (Cloud Run)
+cd ../med-lit-retrieve-full-articles
+gcloud run deploy med-lit-retrieve-full-articles \
+  --source . \
   --region=YOUR_REGION \
-  --source=. \
-  --entry-point=retrieve_full_articles \
-  --trigger-http \
+  --platform managed \
   --allow-unauthenticated \
-  --memory=1GB \
-  --timeout=540s \
+  --memory=8Gi \
+  --cpu=6 \
+  --timeout=3600 \
+  --min-instances=1 \
+  --max-instances=100 \
+  --concurrency=1 \
+  --cpu-boost \
   --env-vars-file=.env.yaml
 
 # Final Analysis

@@ -396,7 +396,9 @@ const handleSpecialtySelected = async (specialty) => {
             const analysis = data.data.analysis.article_metadata;
             const articleData = {
               pmid: analysis.PMID,
+              pmcid: analysis.PMCID,  // Add PMCID field
               title: analysis.title,
+              link: analysis.link,
               points: analysis.overall_points,
               content: data.data.analysis.full_article_text,
               journal_title: analysis.journal_title,
